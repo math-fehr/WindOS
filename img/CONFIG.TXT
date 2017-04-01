@@ -1,0 +1,7 @@
+fake_vsync_isr=1
+framebuffer_swap=0
+gpu_mem=64
+init_emmc_clock=100000000
+ramfsfile=CMOS
+ramfsaddr=0x508000
+kernel=kernel.img
