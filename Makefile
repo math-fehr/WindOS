@@ -44,7 +44,7 @@ run: $(TARGET)
 	$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -monitor stdio -serial pty
 
 runs: $(TARGET)
-		$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -serial stdio
+	$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -serial stdio
 
 $(TARGET) : $(BUILD)output.elf
 	$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET)
