@@ -22,7 +22,7 @@ LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
 CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mcpu=arm1176jzf-s -fpic -std=gnu99
 
-QEMU = ~/opt/src/qemu-fvm/arm-softmmu/fvm-arm
+QEMU = ~/opt/qemu-fvm/arm-softmmu/fvm-arm
 
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)

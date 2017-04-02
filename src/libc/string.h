@@ -1,7 +1,10 @@
-#ifndef STRING_H
-#define STRING_H
+#ifndef LIBC_STRING_H
+#define LIBC_STRING_H
 
-#include <stddef.h>
+/**
+ * This is the string module which contains the functions that deals with srings (char*)
+ * There is also functions that deals with raw data (functions starting with mem)
+ */
 
 //type returned by the sizeof operator
 typedef unsigned int size_t;
