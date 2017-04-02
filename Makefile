@@ -18,17 +18,16 @@ OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mcpu=arm1176jzf-s -fpic -std=gnu99
+
 QEMU = ~/opt/src/qemu/build/arm-softmmu/qemu-system-arm
 
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
 $(shell mkdir -p $(BUILD) >/dev/null)
-DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
-POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
+
 
 all: $(TARGET)
-
-rebuild: all
 
 mkfs:
 	qemu-img create fs.img 100M
@@ -55,14 +54,18 @@ $(BUILD)output.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 $(BUILD)%.o: $(SOURCE)%.s
 	$(ARMGNU)-as -I $(SOURCE) $< -o $@
 
+
+-include $(BUILD)$(OBJECTS_C:.o=.d)
+
 $(BUILD)%.o: $(SOURCE)%.c
-$(BUILD)%.o: $(SOURCE)%.c $(DEPDIR)/%.d
-	$(ARMGNU)-gcc $(DEPFLAGS) -mcpu=arm1176jzf-s -fpic -std=gnu99 -c $< -o $@ -O2 -Wall -Wextra -nostdlib -lgcc
+	$(ARMGNU)-gcc $(CFLAGS) -c $< -o $@
+	$(ARMGNU)-gcc $(CFLAGS) -MM $< -o $(BUILD)$*.d
+	@mv -f $(BUILD)$*.d $(BUILD)$*.d.tmp
+	@sed -e 's|.*:|$(BUILD)$*.o:|' < $(BUILD)$*.d.tmp > $(BUILD)$*.d
+	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILD)$*.d.tmp | fmt -1 | \
+	  sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILD)$*.d
+	@rm -f $(BUILD)$*.d.tmp
 
-$(DEPDIR)/%.d: ;
-.PRECIOUS: $(DEPDIR)/%.d
-
-include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS))))
 
 clean:
 	rm $(BUILD)*
