@@ -12,13 +12,38 @@ _start:
 	ldr pc, _fast_interrupt_vector_h
 
 _reset_h:                           .word   _reset_
-_undefined_instruction_vector_h:    .word   undefined_instruction_vector
-_software_interrupt_vector_h:       .word   software_interrupt_vector
-_prefetch_abort_vector_h:           .word   prefetch_abort_vector
-_data_abort_vector_h:               .word   data_abort_vector
+_undefined_instruction_vector_h:    .word   _undefined_instruction_vector
+_software_interrupt_vector_h:       .word   _software_interrupt_vector
+_prefetch_abort_vector_h:           .word   _prefetch_abort_vector
+_data_abort_vector_h:               .word   _data_abort_vector
 _unused_handler_h:                  .word   _reset_
-_interrupt_vector_h:                .word   interrupt_vector
-_fast_interrupt_vector_h:           .word   fast_interrupt_vector
+_interrupt_vector_h:                .word   _interrupt_vector
+_fast_interrupt_vector_h:           .word   _fast_interrupt_vector
+
+_undefined_instruction_vector:
+	mov sp, #0x1000
+	b undefined_instruction_vector
+
+_software_interrupt_vector:
+	mov sp, #0x1000
+	b software_interrupt_vector
+
+_prefetch_abort_vector:
+	mov sp, #0x1000
+	b prefetch_abort_vector
+
+_data_abort_vector:
+	mov sp, #0x1000
+	b data_abort_vector
+
+_interrupt_vector:
+	mov sp, #0x1000
+	b interrupt_vector
+
+_fast_interrupt_vector:
+	mov sp, #0x1000
+	b fast_interrupt_vector
+
 
 _reset_:
 	//Setting up interrupt table at adress 0x0000
@@ -47,6 +72,18 @@ zero_loop_end:
 
 	ldr r3, =kernel_main
 	blx r3
+
+enable_interrupts:
+	mrs     r0, cpsr
+	bic     r0, r0, #0x80
+	msr     cpsr_c, r0
+	mov     pc, lr
+
+disable_interrupts:
+	mrs     r0, cpsr
+	orr     r0, r0, #0x80
+	msr     cpsr_c, r0
+	mov     pc, lr
 
 fin:
 	wfe

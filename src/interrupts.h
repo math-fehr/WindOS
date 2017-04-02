@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "global.h"
 
 #ifdef RASPI2
 #define RPI_INTERRUPT_CONTROLLER_BASE 0x3F00B200

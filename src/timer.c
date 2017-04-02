@@ -1,4 +1,5 @@
 #include "timer.h"
+#include "interrupts.h"
 
 static rpi_sys_timer_t* rpiSystemTimer =
   (rpi_sys_timer_t*)RPI_SYSTIMER_BASE;
@@ -13,6 +14,8 @@ void Timer_Setup() {
   rpiArmTimer->control |= TIMER_CTRL_PRESCALE_1;
   rpiArmTimer->control |= TIMER_CTRL_HALT_STOP;
   rpiArmTimer->pre_divider = 249; // Gives a 1MHz timer.
+
+  RPI_GetIRQController()->Enable_Basic_IRQs |= RPI_BASIC_ARM_TIMER_IRQ;
 }
 
 void Timer_Enable() {
