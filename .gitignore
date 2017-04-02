@@ -1,0 +1,6 @@
+img/kernel.img
+build/
+.d/
+*.gch
+*.map
+*.o
