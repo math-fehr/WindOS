@@ -1,5 +1,5 @@
-#ifndef LIBC_STRING_H
-#define LIBC_STRING_H
+#ifndef __LIBC_STRING_H
+#define __LIBC_STRING_H
 
 /**
  * This is the string module which contains the functions that deals with srings (char*)
@@ -210,4 +210,6 @@ void* memmove(void* dest, const void* src, size_t count);
  */
 char* strerror(const int errnum);
 
-#endif
+
+
+#endif  //__LIBC_STRING_H

@@ -1,5 +1,5 @@
-#ifndef LIBC_CTYPE_H
-#define LIBC_CTYPE_H
+#ifndef __LIBC_CTYPE_H
+#define __LIBC_CTYPE_H
 
 /**
  * This is the modules that contains the is... and to... functions,
@@ -91,4 +91,5 @@ int tolower(int const c);
 int toupper(int const c);
 
 
-#endif
+
+#endif  //__LIBC_CTYPE_H
