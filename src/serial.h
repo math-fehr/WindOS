@@ -8,9 +8,11 @@
 #include "global.h"
 #include "gpio.h"
 #include "timer.h"
+#include "libc/string.h"
 
 void serial_init();
-void serial_write(unsigned char data);
+void serial_putc(unsigned char data);
+void serial_write(char* str);
 unsigned char serial_read();
 
 

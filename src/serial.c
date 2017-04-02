@@ -44,10 +44,16 @@ void serial_init() {
   getUARTController()->CR = CR_UARTEN | CR_TXE | CR_RXE;
 }
 
-void serial_write(unsigned char data) {
+void serial_putc(unsigned char data) {
   // read flag register, wait for ready and write.
   while (getUARTController()->FR & 1 << 5);//FR_RXBUSY);
 	getUARTController()->DR = data;
+}
+
+void serial_write(char* str){
+  for(int i=0;i<strlen(str);i++) {
+    serial_putc(str[i]);
+  }
 }
 
 unsigned char serial_read() {

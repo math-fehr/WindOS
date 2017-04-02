@@ -1,6 +1,7 @@
+#ifndef STRING_H
+#define STRING_H
 
-//null pointer constat
-#define NULL ((void*)0)
+#include <stddef.h>
 
 //type returned by the sizeof operator
 typedef unsigned int size_t;
@@ -205,3 +206,5 @@ void* memmove(void* dest, const void* src, size_t count);
  * The return value shall not be modified
  */
 char* strerror(const int errnum);
+
+#endif

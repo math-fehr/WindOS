@@ -14,7 +14,9 @@ MAP = kernel.map
 
 OBJECTS =  $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 
-OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
+rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.c))
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
@@ -25,6 +27,7 @@ QEMU = ~/opt/src/qemu-fvm/arm-softmmu/fvm-arm
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
 $(shell mkdir -p $(BUILD) >/dev/null)
+$(shell mkdir -p $(BUILD)/libc >/dev/null)
 
 
 all: $(TARGET)
@@ -45,7 +48,7 @@ runs1: $(TARGET)
 	qemu-system-arm -kernel img/kernel.img -cpu arm1176 -m 256 -M versatilepb -no-reboot  -serial stdio -append "root=/dev/sda2 panic=1" -hda fs.img
 
 run: $(TARGET)
-		$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -monitor stdio -serial pty
+	$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -monitor stdio -serial pty
 
 runs: $(TARGET)
 	$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -serial stdio

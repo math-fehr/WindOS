@@ -17,7 +17,7 @@ char *strncpy(char* restrict dest, const char* restrict src, const size_t count)
     if(!count) {
         return temp;
     }
-    size_t i;
+    size_t i=0;
     while((*dest++ = *src++) && ++i != count)
         ;
 
