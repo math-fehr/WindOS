@@ -20,10 +20,14 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	Timer_Setup();
 	Timer_SetLoad(200000);
 	Timer_Enable();
-	Timer_Enable_Interrupts();
 
+	serial_write("Entrez ce que vous voulez:\n");
+
+	char message[256];
 	while(1) {
-		serial_write("Boucle principale!\n");
-		Timer_WaitMicroSeconds(2000000);
+		serial_readline(message, 256);
+		serial_write("==> ");
+		serial_write(message);
+		serial_putc('\n');
 	}
 }
