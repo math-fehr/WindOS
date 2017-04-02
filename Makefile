@@ -20,7 +20,7 @@ LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
 CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mcpu=arm1176jzf-s -fpic -std=gnu99
 
-QEMU = ~/opt/src/qemu/build/arm-softmmu/qemu-system-arm
+QEMU = ~/opt/src/qemu-fvm/arm-softmmu/fvm-arm
 
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
@@ -38,9 +38,14 @@ img: fs.img
 fs.img: $(wildcard $(IMGDIR)*)
 	mcopy -D o -i fs.img $? ::
 
+run1: $(TARGET)
+	qemu-system-arm -kernel img/kernel.img -cpu arm1176 -m 256 -M versatilepb -no-reboot  -serial stdio -append "root=/dev/sda2 panic=1" -hda fs.img
+
+runs1: $(TARGET)
+	qemu-system-arm -kernel img/kernel.img -cpu arm1176 -m 256 -M versatilepb -no-reboot  -serial stdio -append "root=/dev/sda2 panic=1" -hda fs.img
+
 run: $(TARGET)
-	#qemu-system-arm -kernel img/kernel.img -cpu arm1176 -m 256 -M versatilepb -no-reboot  -serial stdio -append "root=/dev/sda2 panic=1" -hda fs.img
-	$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -monitor stdio -serial pty
+		$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -monitor stdio -serial pty
 
 runs: $(TARGET)
 		$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -serial stdio

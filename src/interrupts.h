@@ -35,5 +35,8 @@ typedef struct {
 #define RPI_BASIC_ACCESS_ERROR_1_IRQ    (1 << 6)
 #define RPI_BASIC_ACCESS_ERROR_0_IRQ    (1 << 7)
 
+rpi_irq_controller_t* RPI_GetIRQController(void);
+void enable_interrupts(void);
+void disable_interrupts(void);
 
 #endif
