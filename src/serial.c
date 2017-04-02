@@ -1,9 +1,9 @@
 #include "serial.h"
 
-static rpi_uart_controller_t* UARTController =
+static volatile rpi_uart_controller_t* UARTController =
   (rpi_uart_controller_t*) UART0_BASE;
 
-static rpi_uart_controller_t* getUARTController() {
+volatile rpi_uart_controller_t* getUARTController() {
   return UARTController;
 }
 
@@ -35,8 +35,6 @@ void serial_init() {
 
 	// Mask interrupts
   // Étrange, seuls les 4 premiers bits sont utiles selon la doc.
-	//ram_write(UART_IMSC, (1 << 1) | (1 << 4) | (1 << 5) | (1 << 6) |
-	//                       (1 << 7) | (1 << 8) | (1 << 9) | (1 << 10));
   getUARTController()->IMSC = (1 << 1) | (1 << 4) | (1 << 5) | (1 << 6) |
 	                       (1 << 7) | (1 << 8) | (1 << 9) | (1 << 10);
 
@@ -46,7 +44,7 @@ void serial_init() {
 
 void serial_putc(unsigned char data) {
   // read flag register, wait for ready and write.
-  while (getUARTController()->FR & 1 << 5);//FR_RXBUSY);
+  while (getUARTController()->FR & FR_TXFF);
 	getUARTController()->DR = data;
 }
 
@@ -57,6 +55,6 @@ void serial_write(char* str){
 }
 
 unsigned char serial_read() {
-  while (getUARTController()->FR & 1 << 4);//FR_TXFE);
+  while (getUARTController()->FR & FR_RXFE);
 	return getUARTController()->DR;
 }

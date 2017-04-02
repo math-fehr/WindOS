@@ -42,6 +42,11 @@ typedef struct {
   uint32_t DMACR; // 0x48
 } rpi_uart_controller_t;
 
+#define DR_OVERRUN_ERROR  (1 << 11)
+#define DR_BREAK_ERROR    (1 << 10)
+#define DR_PARITY_ERROR   (1 << 9)
+#define DR_FRAMING_ERROR  (1 << 8)
+
 #define LCRH_SPS 1 << 7
 #define LCRH_WLEN_8_BITS 1 << 6 | 1 << 5
 #define LCRH_WLEN_7_BITS 1 << 6
@@ -49,20 +54,22 @@ typedef struct {
 #define LCRH_WLEN_5_BITS 0
 #define LCRH_FIFO 1 << 4
 
-#define IMSC_RXIM 1 << 0
-#define IMSC_TXIM 1 << 1
-#define IMSC_BEIM 1 << 2
-#define IMSC_OEIM 1 << 3
+#define IMSC_OEIM   (1 << 10)
+#define IMSC_BEIM   (1 << 9)
+#define IMSC_PEIM   (1 << 8)
+#define IMSC_FEIM   (1 << 7)
+#define IMSC_RTIM   (1 << 6)
+#define IMSC_TXIM   (1 << 5)
+#define IMSC_RXIM   (1 << 4)
+#define IMSC_CTSMIM (1 << 1)
 
 #define CR_UARTEN 1
 #define CR_TXE    1 << 8
 #define CR_RXE    1 << 9
 
-#define FR_TXFE   1 << 4
-#define FR_TXFF   1 << 2
-#define FR_RXFF   1 << 3
-#define FR_RXFE   1 << 1
-#define FR_TXBUSY 1 << 0
-#define FR_RXBUSY 1 << 5
-
+#define FR_TXFE   (1 << 7)
+#define FR_RXFF   (1 << 6)
+#define FR_TXFF   (1 << 5)
+#define FR_RXFE   (1 << 4)
+#define FR_BUSY   (1 << 3)
 #endif
