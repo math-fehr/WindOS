@@ -1,9 +1,9 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "libc/stdbool.h"
+#include "libc/stddef.h"
+#include "libc/stdint.h"
 
 #include "global.h"
 #include "gpio.h"

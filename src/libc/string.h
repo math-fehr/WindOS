@@ -6,10 +6,10 @@
  * There is also functions that deals with raw data (functions starting with mem)
  */
 
-#ifndef __SIZE_T_DEFINED
-#define __SIZE_T_DEFINED
+#ifndef __size_t_DEFINED
+#define __size_t_DEFINED
 typedef unsigned long int size_t; //type returned by the sizeof operator
-#endif  //__SIZE_T_DEFINED
+#endif  //__size_t_DEFINED
 
 #ifndef NULL
 #define NULL 0  // The null pointer

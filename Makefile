@@ -76,4 +76,4 @@ $(BUILD)%.o: $(SOURCE)%.c
 
 
 clean:
-	rm $(BUILD)*
+	rm -r $(BUILD)*

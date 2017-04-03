@@ -49,7 +49,7 @@ void serial_putc(unsigned char data) {
 }
 
 void serial_write(char* str){
-  for(int i=0;i<strlen(str);i++) {
+  for(size_t i=0;i<strlen(str);i++) {
     serial_putc(str[i]);
   }
 }
