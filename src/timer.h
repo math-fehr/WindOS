@@ -5,13 +5,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "global.h"
-
 // TIP: RPI clock speed is 250MHz
 // http://raspberrypi.stackexchange.com/questions/699/what-spi-frequencies-does-raspberry-pi-support
 
 // The system timer isn't emulated in QEMU
-#ifdef RASPI2
+#ifdef RPI2
 #define RPI_SYSTIMER_BASE 0x3F003000
 #else
 #define RPI_SYSTIMER_BASE 0x20003000
@@ -31,7 +29,7 @@ void Timer_WaitMicroSeconds(uint32_t time);
 void Timer_WaitCycles(uint32_t count);
 
 // Found in page 196 of the BCM2835 manual.
-#ifdef RASPI2
+#ifdef RPI2
 #define RPI_ARMTIMER_BASE 0x3F00B400
 #else
 #define RPI_ARMTIMER_BASE 0x2000B400

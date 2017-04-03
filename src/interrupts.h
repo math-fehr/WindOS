@@ -5,9 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "global.h"
-
-#ifdef RASPI2
+#ifdef RPI2
 #define RPI_INTERRUPT_CONTROLLER_BASE 0x3F00B200
 #else
 #define RPI_INTERRUPT_CONTROLLER_BASE 0x2000B200

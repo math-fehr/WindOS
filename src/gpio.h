@@ -5,9 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "global.h"
 
-#ifdef RASPI2
+#ifdef RPI2
 #define GPIO_BASE 0x3F200000
 #else
 #define GPIO_BASE 0x20200000

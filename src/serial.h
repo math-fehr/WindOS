@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "global.h"
 #include "gpio.h"
 #include "timer.h"
 #include <string.h>
@@ -18,7 +17,7 @@ int serial_readline(char* buffer, int buffer_size);
 
 
 
-#ifdef RASPI2
+#ifdef RPI2
 #define UART0_BASE 0x3F201000
 #else
 #define UART0_BASE 0x20201000

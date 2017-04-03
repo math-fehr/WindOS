@@ -20,7 +20,7 @@ OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mcpu=arm1176jzf-s -fpic -std=gnu99 -D RPI2
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -march=armv7-a -mtune=cortex-a7 -fpic -std=gnu99 -D RPI2
 
 QEMU = ~/opt/qemu-fvm/arm-softmmu/fvm-arm
 
