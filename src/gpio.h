@@ -1,9 +1,9 @@
 #ifndef GPIO_H
 #define GPIO_H
 
-#include "libc/stdbool.h"
-#include "libc/stddef.h"
-#include "libc/stdint.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include "global.h"
 
@@ -56,5 +56,4 @@ rpi_gpio_controller_t* getGPIOController(void);
 void setPinFunction(uint8_t pin, uint8_t function) ;
 void setOutputPin(uint8_t pin);
 void setPinValue(uint8_t pin, bool value);
-
 #endif
