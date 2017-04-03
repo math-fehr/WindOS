@@ -6,8 +6,14 @@
  * There is also functions that deals with raw data (functions starting with mem)
  */
 
-//type returned by the sizeof operator
-typedef unsigned int size_t;
+#ifndef __SIZE_T_DEFINED
+#define __SIZE_T_DEFINED
+typedef unsigned long int size_t; //type returned by the sizeof operator
+#endif  //__SIZE_T_DEFINED
+
+#ifndef NULL
+#define NULL 0  // The null pointer
+#endif  //NULL
 
 
 /**
