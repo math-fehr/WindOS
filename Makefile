@@ -20,7 +20,7 @@ OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mcpu=arm1176jzf-s -fpic -std=gnu99
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mcpu=arm1176jzf-s -fpic -std=gnu99 -D RPI2
 
 QEMU = ~/opt/qemu-fvm/arm-softmmu/fvm-arm
 
@@ -31,6 +31,9 @@ $(shell mkdir -p $(BUILD)/libc >/dev/null)
 
 
 all: $(TARGET)
+
+rpi: CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s
+rpi: all
 
 mkfs:
 	qemu-img create fs.img 100M

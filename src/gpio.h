@@ -53,7 +53,8 @@ typedef struct {
 
 
 rpi_gpio_controller_t* getGPIOController(void);
-void setPinFunction(uint8_t pin, uint8_t function) ;
-void setOutputPin(uint8_t pin);
-void setPinValue(uint8_t pin, bool value);
+void GPIO_setPinFunction(int pin, int function) ;
+void GPIO_setOutputPin(int pin);
+void GPIO_setPinValue(int pin, bool value);
+
 #endif
