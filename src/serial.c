@@ -54,6 +54,11 @@ void serial_write(char* str){
   }
 }
 
+void serial_newline() {
+    serial_putc('\r');
+    serial_putc('\n');
+}
+
 unsigned char serial_readc() {
   while (getUARTController()->FR & FR_RXFE);
 	return getUARTController()->DR;
