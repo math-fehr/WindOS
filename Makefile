@@ -20,7 +20,7 @@ OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -march=armv7-a -mtune=cortex-a7 -fpic -std=gnu99 -D RPI2
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -std=gnu99 -D RPI2
 
 QEMU = ~/opt/qemu-fvm/arm-softmmu/fvm-arm
 
@@ -55,6 +55,9 @@ run: $(TARGET)
 
 runs: $(TARGET)
 	$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -serial stdio
+
+#minicom:
+#    minicom -b 115200 -o -D /dev/pts/1
 
 $(TARGET) : $(BUILD)output.elf
 	$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET)
