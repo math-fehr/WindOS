@@ -5,10 +5,13 @@ BUILD = build/
 SOURCE = src/
 
 TARGET = img/kernel.img
+TARGET_QEMU = img/kernel_qemu.img
 
 IMGDIR = img/
 
 LINKER = kernel.ld
+
+LINKER_QEMU = kernel_qemu.ld
 
 MAP = kernel.map
 
@@ -32,6 +35,8 @@ $(shell mkdir -p $(BUILD)/libc >/dev/null)
 
 all: $(TARGET)
 
+qemu: $(TARGET_QEMU)
+
 rpi: CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s
 rpi: all
 
@@ -44,17 +49,11 @@ img: fs.img
 fs.img: $(wildcard $(IMGDIR)*)
 	mcopy -D o -i fs.img $? ::
 
-run1: $(TARGET)
-	qemu-system-arm -kernel img/kernel.img -cpu arm1176 -m 256 -M versatilepb -no-reboot  -serial stdio -append "root=/dev/sda2 panic=1" -hda fs.img
+run: $(TARGET_QEMU)
+	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty
 
-runs1: $(TARGET)
-	qemu-system-arm -kernel img/kernel.img -cpu arm1176 -m 256 -M versatilepb -no-reboot  -serial stdio -append "root=/dev/sda2 panic=1" -hda fs.img
-
-run: $(TARGET)
-	$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -monitor stdio -serial pty
-
-runs: $(TARGET)
-	$(QEMU) -kernel $(TARGET) -m 256 -M raspi2 -serial stdio
+runs: $(TARGET_QEMU)
+	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -serial stdio
 
 #minicom:
 #    minicom -b 115200 -o -D /dev/pts/1
@@ -62,8 +61,14 @@ runs: $(TARGET)
 $(TARGET) : $(BUILD)output.elf
 	$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET)
 
+$(TARGET_QEMU) : $(BUILD)output_qemu.elf
+	$(ARMGNU)-objcopy $(BUILD)output_qemu.elf -O binary $(TARGET_QEMU)
+
 $(BUILD)output.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) -lgcc
+
+$(BUILD)output_qemu.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
+	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) -Map $(MAP) -o $(BUILD)output_qemu.elf -T $(LINKER_QEMU) -lgcc
 
 $(BUILD)%.o: $(SOURCE)%.s
 	$(ARMGNU)-as -I $(SOURCE) $< -o $@
