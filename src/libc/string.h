@@ -1,15 +1,13 @@
 #ifndef __LIBC_STRING_H
 #define __LIBC_STRING_H
 
+#include <stddef.h>
+
 /**
  * This is the string module which contains the functions that deals with srings (char*)
  * There is also functions that deals with raw data (functions starting with mem)
  */
 
-#ifndef __size_t_DEFINED
-#define __size_t_DEFINED
-typedef unsigned long int size_t; //type returned by the sizeof operator
-#endif  //__size_t_DEFINED
 
 #ifndef NULL
 #define NULL 0  // The null pointer
