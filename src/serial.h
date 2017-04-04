@@ -12,6 +12,7 @@
 void serial_init();
 void serial_putc(unsigned char data);
 void serial_write(char* str);
+void serial_newline();
 unsigned char serial_readc();
 int serial_readline(char* buffer, int buffer_size);
 
