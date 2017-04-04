@@ -24,7 +24,7 @@ void GPIO_setOutputPin(int pin) {
 }
 
 void GPIO_setPinValue(int pin, bool value) {
-  int set = pin >= 32;
+  int set = (pin >= 32);
   pin &= 31;
 
   if(value) {

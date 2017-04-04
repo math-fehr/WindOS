@@ -7,7 +7,7 @@
 
 #include "gpio.h"
 #include "timer.h"
-#include <string.h>
+#include "libc/string.h"
 
 void serial_init();
 void serial_putc(unsigned char data);
