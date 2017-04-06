@@ -23,9 +23,10 @@ OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -std=gnu99 -D RPI2
-
+CFLAGS = -O0 -Wall -Wextra -nostdlib -lgcc -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -std=gnu99 -D RPI2
 QEMU = ~/opt/qemu-fvm/arm-softmmu/fvm-arm
+
+SD_NAPPY = /media/nappy/boot/
 
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
@@ -61,7 +62,7 @@ runs: $(TARGET_QEMU)
 $(TARGET) : $(BUILD)output.elf
 	$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET)
 
-$(TARGET_QEMU) : $(BUILD)output_qemu.elf
+$(TARGET_QEMU) : $(BUILD)output_qemu.elf img
 	$(ARMGNU)-objcopy $(BUILD)output_qemu.elf -O binary $(TARGET_QEMU)
 	qemu-img create ramdisk 20M
 	dd if=$(TARGET_QEMU) of=ramdisk bs=2048 conv=notrunc
@@ -88,6 +89,8 @@ $(BUILD)%.o: $(SOURCE)%.c
 	  sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILD)$*.d
 	@rm -f $(BUILD)$*.d.tmp
 
+copy_nappy: all
+	cp $(IMGDIR)* $(SD_NAPPY)
 
 clean:
 	rm -r $(BUILD)*

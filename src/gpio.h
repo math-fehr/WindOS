@@ -7,9 +7,9 @@
 
 
 #ifdef RPI2
-#define GPIO_BASE 0x3F200000
+#define GPIO_BASE 0x3F200000UL
 #else
-#define GPIO_BASE 0x20200000
+#define GPIO_BASE 0x20200000UL
 #endif
 
 #define PIN_OUTPUT  0b001

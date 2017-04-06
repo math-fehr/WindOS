@@ -19,7 +19,7 @@ int first_data_sector;
 bool fat_init_fs(storage_driver* disk_) {
   disk = disk_;
 
-  uint32_t signature;
+  uint32_t signature=0;
   disk->read(510, &signature, 2 );
 
   if (signature != 0xAA55) {
