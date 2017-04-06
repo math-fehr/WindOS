@@ -1,9 +1,9 @@
 #ifndef INTERRUPTS_H
 #define INTERRUPTS_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "stdbool.h"
+#include "stddef.h"
+#include "stdint.h"
 
 #ifdef RPI2
 #define RPI_INTERRUPT_CONTROLLER_BASE 0x3F00B200

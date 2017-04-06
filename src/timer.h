@@ -1,9 +1,9 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "stdbool.h"
+#include "stddef.h"
+#include "stdint.h"
 
 // TIP: RPI clock speed is 250MHz
 // http://raspberrypi.stackexchange.com/questions/699/what-spi-frequencies-does-raspberry-pi-support

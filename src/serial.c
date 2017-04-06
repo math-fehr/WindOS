@@ -1,4 +1,5 @@
 #include "serial.h"
+#include "string.h"
 
 static volatile rpi_uart_controller_t* UARTController =
   (rpi_uart_controller_t*) UART0_BASE;
@@ -49,9 +50,9 @@ void serial_putc(unsigned char data) {
 }
 
 void serial_write(char* str){
-  for(size_t i=0;i<strlen(str);i++) {
-    serial_putc(str[i]);
-  }
+    while(str != '\0') {
+        serial_putc(*(str++));
+    }
 }
 
 void serial_newline() {

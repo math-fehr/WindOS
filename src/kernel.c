@@ -1,9 +1,9 @@
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-#include "libc/string.h"
+#include "stdbool.h"
+#include "stddef.h"
+#include "stdint.h"
+#include "stdlib.h"
+#include "string.h"
+#include "stdio.h"
 
 #include "serial.h"
 #include "timer.h"
@@ -18,6 +18,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r1;
 	(void) atags;
 
+    int* a = malloc(100*sizeof(int));
+    a[10] = 4;
+
 	GPIO_setOutputPin(GPIO_LED_PIN);
 	while(1) {
 		GPIO_setPinValue(GPIO_LED_PIN, true);
@@ -25,10 +28,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 		GPIO_setPinValue(GPIO_LED_PIN, false);
 		Timer_WaitCycles(500000);
     }
-	//enable_interrupts();
-	//Timer_Setup();
-	//Timer_SetLoad(200000);
-	//Timer_Enable();
+	enable_interrupts();
+	Timer_Setup();
+	Timer_SetLoad(200000);
+	Timer_Enable();
 
     serial_init();
 

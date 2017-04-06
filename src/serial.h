@@ -1,13 +1,12 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "stddef.h"
+#include "stdint.h"
 
 #include "gpio.h"
 #include "timer.h"
-#include "libc/string.h"
+
 
 void serial_init();
 void serial_putc(unsigned char data);
