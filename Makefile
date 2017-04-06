@@ -23,9 +23,10 @@ OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -std=gnu99 -D RPI2
-
+CFLAGS = -O0 -Wall -Wextra -nostdlib -lgcc -mfpu=neon-vfpv4 -mfloat-abi=hard -march=armv7-a -mtune=cortex-a7 -std=gnu99 -D RPI2
 QEMU = ~/opt/qemu-fvm/arm-softmmu/fvm-arm
+
+SD_NAPPY = /media/nappy/boot/
 
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
@@ -85,6 +86,8 @@ $(BUILD)%.o: $(SOURCE)%.c
 	  sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILD)$*.d
 	@rm -f $(BUILD)$*.d.tmp
 
+copy_nappy: all
+	cp $(IMGDIR)* $(SD_NAPPY)
 
 clean:
 	rm -r $(BUILD)*

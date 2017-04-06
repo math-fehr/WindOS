@@ -1,11 +1,10 @@
 #include "gpio.h"
 
-
 static rpi_gpio_controller_t* GPIOController =
   (rpi_gpio_controller_t*) GPIO_BASE;
 
 rpi_gpio_controller_t* getGPIOController(void) {
-  return GPIOController;
+    return GPIOController;
 }
 
 void GPIO_setPinFunction(int pin, int function) {
@@ -24,12 +23,12 @@ void GPIO_setOutputPin(int pin) {
 }
 
 void GPIO_setPinValue(int pin, bool value) {
-  int set = (pin >= 32);
-  pin &= 31;
+    int set = (pin >= 32);
+    pin &= 31;
 
-  if(value) {
-    getGPIOController()->GPSET[set] |= 1 << pin;
-  } else {
-    getGPIOController()->GPCLR[set] |= 1 << pin;
-  }
+    if(value) {
+        getGPIOController()->GPSET[set] |= 1 << pin;
+    } else {
+        getGPIOController()->GPCLR[set] |= 1 << pin;
+    }
 }
