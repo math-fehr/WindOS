@@ -36,7 +36,6 @@ SECTIONS {
 	}
 	. = ALIGN(4096);
 	__data_end = .;
-
 	__bss_start = .;
 	.bss :
 	{
