@@ -41,19 +41,19 @@ rpi: CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 -mfpu=vfp -mfloat-abi
 rpi: all
 
 mkfs:
-	qemu-img create fs.img 100M
-	mkfs -t fat fs.img
+	qemu-img create fs.img 10M
+	mkfs.vfat -n "HELLOFAT" fs.img
 
-img: fs.img
+img: mkfs fs.img
 
-fs.img: $(wildcard $(IMGDIR)*)
-	mcopy -D o -i fs.img $? ::
+fs.img: $(TARGET)
+	mcopy -D o -i fs.img img/* ::
 
 run: $(TARGET_QEMU)
-	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty
+	$(QEMU) -kernel ramdisk -m 256 -M raspi2 -monitor stdio -serial pty
 
 runs: $(TARGET_QEMU)
-	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -serial stdio
+	$(QEMU) -kernel ramdisk -m 256 -M raspi2 -serial stdio
 
 #minicom:
 #    minicom -b 115200 -o -D /dev/pts/1
@@ -63,6 +63,9 @@ $(TARGET) : $(BUILD)output.elf
 
 $(TARGET_QEMU) : $(BUILD)output_qemu.elf
 	$(ARMGNU)-objcopy $(BUILD)output_qemu.elf -O binary $(TARGET_QEMU)
+	qemu-img create ramdisk 20M
+	dd if=$(TARGET_QEMU) of=ramdisk bs=2048 conv=notrunc
+	dd if=fs.img of=ramdisk bs=2048 seek=8M oflag=seek_bytes
 
 $(BUILD)output.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) -lgcc
