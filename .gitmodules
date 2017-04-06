@@ -1,0 +1,12 @@
+[submodule "qemu-fvm"]
+	path = qemu-fvm
+	url = https://github.com/fanwenyi0529/qemu-fvm/
+[submodule "newlib-cygwin"]
+	path = newlib-cygwin
+	url = git://sourceware.org/git/newlib-cygwin.git
+[submodule "qemu"]
+	path = qemu-fvm
+	url = https://github.com/fanwenyi0529/qemu-fvm/
+[submodule "newlib"]
+	path = newlib-cygwin
+	url = git://sourceware.org/git/newlib-cygwin.git
