@@ -10,15 +10,18 @@ superblock_t* ext2fs_initialize(storage_driver* disk) {
   disk->read(1024, sb, sizeof(ext2_superblock_t));
 
   if (sb->signature != 0xef53) {
-    kernel_error("ext2.c", "Could not setup filesystem: wrong signature.");
-    print_hex(sb->signature, 2);
+    kernel_printf("[ERROR][EXT2] Could not setup filesystem: wrong signature.\n");
+    kernel_printf("                0xEF53 != %#04X\n", sb->signature);
     free(sb);
     return NULL;
   }
+  kernel_printf("[INFO][EXT2] Signature found. Loading filesystem superblock.\n");
 
   ext2_extended_superblock_t* esb = (ext2_extended_superblock_t*) malloc(sizeof(ext2_extended_superblock_t));
+
   //print_hex(sb->major_version,1);
   //print_hex(sb->minor_version,1);
+  kernel_printf("[INFO][EXT2] Version is %d.%d\n", sb->major_version, sb->minor_version);
   if (sb->major_version >= 1) {
     disk->read(1024 + 84, esb, sizeof(ext2_extended_superblock_t));
   } else {
@@ -80,7 +83,7 @@ dir_list_t* ext2_lsdir(superblock_t* fs, int inode) {
   dir_list_t* dir_list = 0;
   ext2_inode_t result = ext2_get_inode_descriptor(fs, inode);
   if (!(result.type_permissions & EXT2_INODE_DIRECTORY)) {
-    kernel_info("ext2.c", "This inode is not a directory.");
+    kernel_printf("[INFO][EXT2] Inode %d is not a directory.", inode);
     return 0;
   }
 
@@ -88,14 +91,12 @@ dir_list_t* ext2_lsdir(superblock_t* fs, int inode) {
   uint8_t* data =  (uint8_t*) malloc(block_size);
   for (int i=0; i<12; i++) {
     if (result.direct_block_ptr[i] != 0) { // There is data in the block
-      //print_hex(result.direct_block_ptr[i]*block_size,4);
       disk->read(result.direct_block_ptr[i]*block_size, data, block_size);
       int explorer = 0;
       while (explorer < block_size) {
         int entry_size = data[explorer+4] + (data[explorer+5] << 8);
         int l_inode;
-        memcpy(&l_inode, &data[explorer], 4);//    = (uint32_t) (*data);
-        //print_hex(l_inode, 4);
+        memcpy(&l_inode, &data[explorer], 4);
         if (l_inode == 0) {
           if (entry_size == 0) {
             explorer = block_size;
@@ -147,7 +148,6 @@ dir_list_t* ext2_lsdir(superblock_t* fs, int inode) {
       }
     }
   }
-  //kernel_info("ext2.c", "Finished.");
   free(data);
   return dir_list;
 }

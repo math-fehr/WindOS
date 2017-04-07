@@ -74,13 +74,12 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	serial_write(a);
 	serial_newline();
 
-	kernel_info("kernel.c","Serial output is hopefully ON.");
-	serial_write("[INFO] Ramdisk location is ");
-	print_hex(__ramdisk, 4);
+	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
 
 	storage_driver memorydisk;
 	memorydisk.read = memory_read;
 	memorydisk.write = memory_write;
+
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
 	if (fsroot != 0) {

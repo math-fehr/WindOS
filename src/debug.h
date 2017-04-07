@@ -6,8 +6,7 @@
 #include <stdint.h>
 #include "serial.h"
 
-void kernel_error(char* source, char* message);
-void kernel_info(char* source, char* message);
+void kernel_printf(const char* fmt, ...);
 
 void print_hex(int number, int nbytes);
 
