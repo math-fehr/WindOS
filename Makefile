@@ -84,11 +84,11 @@ $(TARGET_QEMU) : $(BUILD)output_qemu.elf
 
 $(BUILD)output.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) \
-							 -o $(BUILD)output.elf -T $(LINKER) -lgcc -lg
+							 -o $(BUILD)output.elf -T $(LINKER) -lg -lgcc
 
 $(BUILD)output_qemu.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) \
-							 -o $(BUILD)output_qemu.elf -lgcc -lg -T $(LINKER_QEMU)
+							 -o $(BUILD)output_qemu.elf -T $(LINKER_QEMU) -lg -lgcc
 
 $(BUILD)%.o: $(SOURCE)%.s
 	$(ARMGNU)-as -I $(SOURCE) $< -o $@ $(SFLAGS)
