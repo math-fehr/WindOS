@@ -10,7 +10,7 @@
 #include "interrupts.h"
 #include "gpio.h"
 #include "debug.h"
-#include "fat.h"
+#include "ext2.h"
 #include "storage_driver.h"
 
 #define GPIO_LED_PIN 47
@@ -54,8 +54,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	serial_newline();
 
 	kernel_info("kernel.c","Serial output is hopefully ON.");
-
-	while(1) {}
 	serial_write("[INFO] Ramdisk location is ");
 	print_hex(__ramdisk, 4);
 
@@ -63,7 +61,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	memorydisk.read = memory_read;
 	memorydisk.write = memory_write;
 
-	fat_init_fs(&memorydisk);
-	fat_ls_root();
+	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
+	if (fsroot != 0)
+		lsdir(fsroot, fsroot->root);
 	while(1) {}
 }

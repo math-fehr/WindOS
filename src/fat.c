@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef NON
 fatinfo_t* devices[10];
 int current_device=0;
 
@@ -148,7 +149,7 @@ int lsdir (inode_t* dir, int index) {
 }
 
 void fat_ls_root() {
-  /*
+
   int pos_byte = fat_compute_root_directory()*
                   data_1.bytes_per_sectors;
 
@@ -202,5 +203,7 @@ void fat_ls_root() {
       }
     }
     pos_byte += 32;
-  } while (current_entry.name[0] != 0);*/
+  } while (current_entry.name[0] != 0);
 }
+
+#endif

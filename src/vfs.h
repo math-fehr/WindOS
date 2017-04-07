@@ -27,7 +27,6 @@ typedef struct {
 typedef struct {
   int number;
   int attr;
-  void* data;
   superblock_t* sb;
   inode_operations_t* op;
 } inode_t;
@@ -36,11 +35,12 @@ typedef struct {
   superblock_t* sb;
   inode_t* inode;
   file_operations_t* op;
-} file_t;
+} file_t; 
 
 struct superblock_t {
   int id;                  // device ID
-  inode_t* root;           // root node
+  int root;                // root node
+  void* data;
   super_operations_t* op;  // superblock methods
 };
 

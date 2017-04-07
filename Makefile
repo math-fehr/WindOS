@@ -47,7 +47,7 @@ rpi: all
 
 mkfs:
 	qemu-img create fs.img 10M
-	mkfs.vfat -n "HELLOFAT" fs.img
+	mkfs.ext2 fs.img
 
 img: mkfs fs.img
 
@@ -70,7 +70,7 @@ $(TARGET_QEMU) : $(BUILD)output_qemu.elf img
 	$(ARMGNU)-objcopy $(BUILD)output_qemu.elf -O binary $(TARGET_QEMU)
 	qemu-img create ramdisk 20M
 	dd if=$(TARGET_QEMU) of=ramdisk bs=2048 conv=notrunc
-	dd if=fs.img of=ramdisk bs=2048 seek=8M oflag=seek_bytes
+	dd if=fs_bak.img of=ramdisk bs=2048 seek=8M oflag=seek_bytes
 
 $(BUILD)output.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) -lgcc -lg
