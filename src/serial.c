@@ -50,7 +50,7 @@ void serial_putc(unsigned char data) {
 }
 
 void serial_write(char* str){
-    while(str != '\0') {
+    while((*str) != '\0') {
         serial_putc(*(str++));
     }
 }

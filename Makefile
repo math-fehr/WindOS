@@ -22,11 +22,11 @@ OBJECTS_C =  $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 NEWLIB = newlib-cygwin
-INCLUDE_C = $(NEWLIB)/newlib/libc/include
-LIBC = $(NEWLIB)/arm-none-eabi/newlib/libm.a
+#INCLUDE_C = -I $(NEWLIB)/newlib/libc/include
+#LIBC = $(NEWLIB)/arm-none-eabi/newlib/libm.a
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -mtune=cortex-a7 -std=gnu99 -D RPI2 -I $(INCLUDE_C)
-SFLAGS = -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -I $(INCLUDE_C)
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=soft -mtune=cortex-a7 -std=gnu99 -D RPI2 $(INCLUDE_C)
+SFLAGS = -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=soft $(INCLUDE_C)
 
 QEMU = qemu-fvm/arm-softmmu/fvm-arm
 
@@ -42,7 +42,7 @@ all: $(TARGET)
 
 qemu: $(TARGET_QEMU)
 
-rpi: CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -I $(INCLUDE_C)
+rpi: CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 -mfpu=vfp -mfloat-abi=soft -march=armv6zk -mtune=arm1176jzf-s -I $(INCLUDE_C)
 rpi: all
 
 mkfs:
@@ -51,7 +51,7 @@ mkfs:
 
 img: mkfs fs.img
 
-fs.img: $(TARGET)
+fs.img:
 	mcopy -D o -i fs.img img/* ::
 
 run: $(TARGET_QEMU)
@@ -76,7 +76,7 @@ $(BUILD)output.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) -lgcc
 
 $(BUILD)output_qemu.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
-	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) -Map $(MAP) -o $(BUILD)output_qemu.elf -T $(LINKER_QEMU) -lgcc
+	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) -Map $(MAP) -o $(BUILD)output_qemu.elf -lgcc -lg --verbose -T $(LINKER_QEMU)
 
 $(BUILD)%.o: $(SOURCE)%.s
 	$(ARMGNU)-as -I $(SOURCE) $< -o $@ $(SFLAGS)

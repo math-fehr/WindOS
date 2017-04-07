@@ -1,5 +1,5 @@
 #include "fat.h"
-#include "libc/string.h"
+#include <string.h>
 
 storage_driver* disk;
 fat_bpb data_1;
@@ -120,14 +120,13 @@ int entry_value_of_cluster(int N) {
         &result,
         4
       );
+      result &= 0x0FFFFFFF; // ignore the high 4 bits
     }
     return result;
     /*
     int fat_sec_num = data_1->reserved_sectors_cnt + (fat_offset / data_1->bytes_per_sectors);
     int fat_ent_offset = fat_offset % data_1->bytes_per_sectors;
     */
-
-
   }
 }
 

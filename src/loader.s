@@ -54,7 +54,7 @@ _reset_:
 	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9} // on copie les données suivantes
 	stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
 
-	mov sp, #0x8000
+	ldr sp, =(64*1024*1024) // 64MB of stack
 	ldr r4, =__bss_start
 	ldr r9, =__bss_end
 	mov r5, #0

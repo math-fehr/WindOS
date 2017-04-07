@@ -5,6 +5,7 @@
 *	A linker script for generation of raspberry pi kernel images.
 ******************************************************************************/
 
+SEARCH_DIR("=/usr/lib/arm-none-eabi/lib");
 SECTIONS {
 	/*
 	* INFO: 0x10000 for QEMU and 0x8000 for raspi2
