@@ -117,9 +117,16 @@ typedef struct {
   ext2_superblock_t* sb;
 } ext2_device_t;
 
+typedef struct dir_list_t dir_list_t;
 
+struct dir_list_t {
+  dir_list_t* next;
+  int val;
+  uint8_t attr;
+  char* name;
+};
 
 superblock_t* ext2fs_initialize(storage_driver* disk);
-void ext2_inode_info(superblock_t* fs, int inode);
-void lsdir(superblock_t* fs, int inode);
+ext2_inode_t ext2_inode_info(superblock_t* fs, int inode);
+dir_list_t* ext2_lsdir(superblock_t* fs, int inode);
 #endif

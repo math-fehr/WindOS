@@ -35,13 +35,35 @@ int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	return 0;
 }
 
+void tree(superblock_t* fs, int inode, int depth) {
+	dir_list_t* result = ext2_lsdir(fs, inode);
+
+	while(result != 0) {
+		if (result->name[0] != '.') {
+			for (int i=0;i<depth;i++) {
+				serial_write("| ");
+			}
+			if (result->attr == EXT2_ENTRY_DIRECTORY )
+				serial_write("|=");
+			else
+				serial_write("|-");
+			serial_putc('>');
+			serial_write(result->name);
+			serial_newline();
+			if (result->attr == EXT2_ENTRY_DIRECTORY ) {
+				tree(fs, result->val, depth+1);
+			}
+		}
+		result = result->next;
+	}
+}
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r0;
 	(void) r1;
 	(void) atags;
 
-  char* a = malloc(100*sizeof(int));
+  char* a = (char*)malloc(100*sizeof(char));
   a[10] = 4;
 	for (int i=0;i<100;i++) {
 		a[i] = 0x41+i;
@@ -50,7 +72,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	serial_init();
 
 	serial_write(a);
-	print_hex(a,4);
 	serial_newline();
 
 	kernel_info("kernel.c","Serial output is hopefully ON.");
@@ -62,7 +83,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	memorydisk.write = memory_write;
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
-	if (fsroot != 0)
-		lsdir(fsroot, fsroot->root);
+	if (fsroot != 0) {
+		tree(fsroot, fsroot->root, 0);
+	}
 	while(1) {}
 }
