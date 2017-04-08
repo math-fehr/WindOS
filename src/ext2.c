@@ -72,6 +72,92 @@ ext2_inode_t ext2_get_inode_descriptor(superblock_t* fs, int inode) {
   return inode_descriptor;
 }
 
+// reads from a block: offset < block_size and offset+size <= block_size
+void ext2_inode_read_block(superblock_t* fs, ext2_inode_t inode, char* buffer, int block, int offset, int size) {
+  kernel_printf("[INFO][EXT2] Reading block %d for inode from %d to %d\n", block, offset, offset+size);
+  ext2_superblock_t* sb = devices[fs->id].sb;
+  storage_driver* disk = devices[fs->id].disk;
+
+  int block_size = 1024 << sb->log_block_size;
+  int ind_size = block_size / 4;
+  uintptr_t base_address = 0;
+
+  if (block < 12) {
+    base_address = inode.direct_block_ptr[block];
+  } else if (block < 12+ind_size) { // singly indirect block
+    int block_1 = block - 12;
+    // Address of the first block.
+    uintptr_t s_ind_block =  (uintptr_t) inode.singly_indirect_block_ptr;
+    disk->read(s_ind_block + 4*block_1, &base_address, 4);
+  } else if (block < 12+ind_size+ind_size*ind_size) {// doubly indirect block
+    block = block - 12 - ind_size;
+    int block_1 = block / ind_size;
+    int block_2 = block % ind_size;
+    // Address of the first block;
+    uintptr_t d_ind_block = (uintptr_t) inode.doubly_indirect_block_ptr;
+    uintptr_t s_ind_block = 0;
+    disk->read(d_ind_block + 4*block_1, &s_ind_block, 4);
+    disk->read(s_ind_block + 4*block_2, &base_address, 4);
+  } else { // triply indirect block
+    block = block - 12 - ind_size - ind_size*ind_size;
+    int block_1 = block / (ind_size*ind_size);
+    int block_2 = (block % (ind_size*ind_size)) / ind_size;
+    int block_3 = block % ind_size;
+    uintptr_t t_ind_block = (uintptr_t) inode.triply_indirect_block_ptr;
+    uintptr_t d_ind_block = 0;
+    uintptr_t s_ind_block = 0;
+    // From the first block, reads the address of the second block.
+    disk->read(t_ind_block + 4*block_1, &d_ind_block, 4);
+    // From the second block, reads the address of the third block.
+    disk->read(d_ind_block + 4*block_2, &s_ind_block, 4);
+    // From the third block, reads the address of the data block.
+    disk->read(s_ind_block + 4*block_3, &base_address, 4);
+  }
+
+  disk->read(base_address*block_size+offset, buffer, size);
+}
+
+
+
+int ext2_fread(superblock_t* fs, int inode, char* buffer, int position, int size) {
+  kernel_printf("[INFO][EXT2] Reading file inode %d\n", inode);
+  ext2_superblock_t* sb = devices[fs->id].sb;
+
+  ext2_inode_t info = ext2_get_inode_descriptor(fs, inode);
+  if (!(info.type_permissions & EXT2_INODE_FILE)) {
+    kernel_printf("[INFO][EXT2] Inode %d is not a file.\n", inode);
+    return 0;
+  }
+
+  if (position + size > info.size) {
+    size = info.size - position;
+  }
+
+  int block_size = 1024 << sb->log_block_size;
+  int first_block = position / block_size;
+  int last_block = (position+size-1) / block_size;
+
+  if (last_block >= (12 + 256 + 256*256)) {
+    kernel_printf("[ERROR][EXT2] Triply-indirect block not supported. \n");
+    return 0;
+  }
+
+  int offset = position % block_size;
+
+  if (offset+size <= block_size) { // data on single block
+    ext2_inode_read_block(fs, info, buffer, first_block, offset, size);
+  } else { // data on several blocks
+    ext2_inode_read_block(fs, info, buffer, first_block, offset, block_size-offset);
+    int buffer_position = block_size - offset;
+    for (int block=first_block+1; block < last_block; block++) {
+      ext2_inode_read_block(fs, info, buffer+buffer_position, block, 0, block_size);
+      buffer_position += block_size;
+    }
+    ext2_inode_read_block(fs, info, buffer+buffer_position, last_block, 0, size-buffer_position);
+  }
+  return size;
+}
+
 /*
  * List the child elements of an inode.
  */
@@ -95,7 +181,7 @@ dir_list_t* ext2_lsdir(superblock_t* fs, int inode) {
       int explorer = 0;
       while (explorer < block_size) {
         int entry_size = data[explorer+4] + (data[explorer+5] << 8);
-        int l_inode;
+        uint32_t l_inode = 0;
         memcpy(&l_inode, &data[explorer], 4);
         if (l_inode == 0) {
           if (entry_size == 0) {
@@ -112,7 +198,6 @@ dir_list_t* ext2_lsdir(superblock_t* fs, int inode) {
           entry->next = dir_list;
           entry->name = name;
           entry->val  = l_inode;
-
           if (sb->major_version < 1) {
             ext2_inode_t r = ext2_get_inode_descriptor(fs, l_inode);
             switch (r.type_permissions & 0xF000) {

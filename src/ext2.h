@@ -4,7 +4,7 @@
 #include "storage_driver.h"
 #include "debug.h"
 #include "vfs.h"
- 
+
 //http://wiki.osdev.org/Ext2
 
 #pragma pack(push, 1)
@@ -65,7 +65,7 @@ typedef struct {
 typedef struct {
   uint16_t type_permissions;
   uint16_t user_id;
-  uint32_t size_lo;
+  uint32_t size;
   uint32_t last_access_time;
   uint32_t creation_time;
   uint32_t last_modification_time;
@@ -127,6 +127,8 @@ struct dir_list_t {
 };
 
 superblock_t* ext2fs_initialize(storage_driver* disk);
-ext2_inode_t ext2_inode_info(superblock_t* fs, int inode);
+void ext2_inode_read_block(superblock_t* fs, ext2_inode_t inode, char* buffer, int block, int offset, int size);
+int ext2_fread(superblock_t* fs, int inode, char* buffer, int position, int size);
+ext2_inode_t ext2_get_inode_descriptor(superblock_t* fs, int inode);
 dir_list_t* ext2_lsdir(superblock_t* fs, int inode);
 #endif

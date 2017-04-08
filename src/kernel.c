@@ -83,7 +83,23 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
 	if (fsroot != 0) {
-		tree(fsroot, fsroot->root, 0);
+		dir_list_t* result = ext2_lsdir(fsroot, fsroot->root);
+		char* target = "fat";
+
+		while(result != 0) {
+			if (strcmp(result->name, target) == 0) {
+				kernel_printf("[INFO][KERNEL] Watch out! I'm reading the file %s:\n\n", target);
+				ext2_inode_t data = ext2_get_inode_descriptor(fsroot, result->val);
+				char* buffer = (char*) malloc(data.size+1);
+				buffer[data.size] = 0;
+				ext2_fread(fsroot, result->val, buffer, 81, 2048);
+				kernel_printf("%s\n", buffer);
+			}
+
+
+			result = result->next;
+		}
+		//tree(fsroot, fsroot->root, 0);
 	}
 	while(1) {}
 }
