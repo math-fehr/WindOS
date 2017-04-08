@@ -4,6 +4,7 @@
 #include "storage_driver.h"
 #include "debug.h"
 #include "vfs.h"
+#include "timer.h"
 
 //http://wiki.osdev.org/Ext2
 
@@ -117,18 +118,18 @@ typedef struct {
   ext2_superblock_t* sb;
 } ext2_device_t;
 
-typedef struct dir_list_t dir_list_t;
-
-struct dir_list_t {
-  dir_list_t* next;
-  int val;
-  uint8_t attr;
-  char* name;
-};
 
 superblock_t* ext2fs_initialize(storage_driver* disk);
 void ext2_inode_read_block(superblock_t* fs, ext2_inode_t inode, char* buffer, int block, int offset, int size);
 int ext2_fread(superblock_t* fs, int inode, char* buffer, int position, int size);
 ext2_inode_t ext2_get_inode_descriptor(superblock_t* fs, int inode);
-dir_list_t* ext2_lsdir(superblock_t* fs, int inode);
+vfs_dir_list_t* ext2_lsdir(superblock_t* fs, inode_t inode_p);
+
+int ext2_get_free_inode(superblock_t* fs);
+int ext2_get_free_block(superblock_t* fs);
+void ext2_update_inode_data(superblock_t* fs, int inode, ext2_inode_t data);
+bool ext2_register_inode(superblock_t* fs, int inode);
+bool ext2_register_block(superblock_t* fs, int number);
+bool ext2_free_inode(superblock_t* fs, int inode);
+bool ext2_free_block(superblock_t* fs, int number);
 #endif

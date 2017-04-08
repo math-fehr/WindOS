@@ -66,4 +66,6 @@ void Timer_SetReload(uint32_t value);
 void Timer_ClearInterrupt();
 uint32_t Timer_GetTime();
 
+uint32_t timer_get_posix_time();
+
 #endif

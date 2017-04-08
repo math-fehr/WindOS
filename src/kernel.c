@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "debug.h"
 #include "ext2.h"
+#include "vfs.h"
 #include "storage_driver.h"
 
 #define GPIO_LED_PIN 47
@@ -34,7 +35,7 @@ int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	memcpy((void*) (intptr_t) (address + base), buffer, size);
 	return 0;
 }
-
+/*
 void tree(superblock_t* fs, int inode, int depth) {
 	dir_list_t* result = ext2_lsdir(fs, inode);
 
@@ -56,7 +57,7 @@ void tree(superblock_t* fs, int inode, int depth) {
 		}
 		result = result->next;
 	}
-}
+}*/
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r0;
@@ -83,20 +84,14 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
 	if (fsroot != 0) {
-		dir_list_t* result = ext2_lsdir(fsroot, fsroot->root);
-		char* target = "fat";
+		vfs_setup();
+		vfs_mount(fsroot,"/");
+
+		vfs_dir_list_t* result = vfs_readdir("/test/");
 
 		while(result != 0) {
-			if (strcmp(result->name, target) == 0) {
-				kernel_printf("[INFO][KERNEL] Watch out! I'm reading the file %s:\n\n", target);
-				ext2_inode_t data = ext2_get_inode_descriptor(fsroot, result->val);
-				char* buffer = (char*) malloc(data.size+1);
-				buffer[data.size] = 0;
-				ext2_fread(fsroot, result->val, buffer, 81, 2048);
-				kernel_printf("%s\n", buffer);
-			}
-
-
+			perm_str_t res = vfs_permission_string(result->inode.attr);
+			kernel_printf("%# 6d   %s   %s\n", result->inode.number, res.str,result->name);
 			result = result->next;
 		}
 		//tree(fsroot, fsroot->root, 0);

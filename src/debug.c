@@ -21,10 +21,28 @@ void print_hex(int number, int nbytes) {
   for (int i=0;i<2*nbytes;i++) {
     char hx = (number >> (4*(2*nbytes-1-i))) & 15;
     if (hx < 10) {
-      serial_putc(48+hx);
+      serial_putc(48+hx); 
     } else {
       serial_putc(65+hx-10);
     }
   }
   serial_newline();
+}
+
+int min(int a, int b) {
+  return a < b ? a : b;
+}
+
+// computes a^b
+int ipow(int a, int b) {
+  int result = 1;
+
+  while (b){
+    if (b&1){
+      result *= a;
+    }
+    b >>=1 ;
+    a *= a;
+  }
+  return result;
 }
