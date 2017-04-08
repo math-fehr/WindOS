@@ -66,6 +66,9 @@ runs: $(RAMIMG_QEMU)
 	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -serial stdio
 
 
+minicom:
+	minicom -b 115200 -o -D /dev/pts/2
+
 $(RAMIMG): $(TARGET) $(BUILD)fs.img
 	qemu-img create $(RAMIMG) 20M
 	dd if=$(TARGET) of=$(RAMIMG) bs=2048 conv=notrunc
