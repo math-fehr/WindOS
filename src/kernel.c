@@ -12,6 +12,8 @@
 #include "debug.h"
 #include "ext2.h"
 #include "storage_driver.h"
+#include "process.h"
+#include "scheduler.h"
 
 #define GPIO_LED_PIN 47
 
@@ -63,16 +65,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r1;
 	(void) atags;
 
-  char* a = (char*)malloc(100*sizeof(char));
-  a[10] = 4;
-	for (int i=0;i<100;i++) {
-		a[i] = 0x41+i;
-	}
-	a[20] = 0;
 	serial_init();
-
-	serial_write(a);
-	serial_newline();
 
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
 
@@ -85,5 +78,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	if (fsroot != 0) {
 		tree(fsroot, fsroot->root, 0);
 	}
-	while(1) {}
+
+    test_scheduler();
+	while(1) {
+    }
 }
