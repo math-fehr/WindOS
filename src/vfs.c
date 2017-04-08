@@ -1,4 +1,5 @@
 #include "vfs.h"
+#include <stdlib.h>
 
 inode_t root_inode;
 mount_point_t mount_points[20];
@@ -6,13 +7,20 @@ int nmounted = 0;
 
 void vfs_setup() {}
 
-inode_t vfs_path_to_inode(char *path) {
+inode_t vfs_path_to_inode(char *path_) {
+  char* path = malloc(strlen(path_)+1);
+  strcpy(path, path_);
+
+  inode_t dummy;
+  dummy.number = 0;
+
   if (path[0] != '/') {
-    kernel_printf("[ERROR][VFS] Bad path name: %s\n", path);
-    return root_inode;
+    free(path);
+  //  kernel_printf("[ERROR][VFS] Bad path name: %s\n", path);
+    return dummy;
   }
 
-  kernel_printf("[INFO][VFS] Resolving path %s\n", path);
+  //kernel_printf("[INFO][VFS] Resolving path %s\n", path);
 
   inode_t position = root_inode;
   char* pch = path+1;
@@ -30,8 +38,10 @@ inode_t vfs_path_to_inode(char *path) {
     }
 
     if (!found) {
-      kernel_printf("[ERROR][VFS] Bad path name: %s\n", path);
-      return root_inode;
+    //  kernel_printf("[ERROR][VFS] Bad path name: %s\n", path);
+
+      free(path);
+      return dummy;
     }
 
     old_pch = pch+1;
@@ -49,11 +59,13 @@ inode_t vfs_path_to_inode(char *path) {
   }
 
   if (!found && old_pch[0] != 0) {
-    kernel_printf("[ERROR][VFS] Bad path name: %s\n", path);
-    return root_inode;
+    free(path);
+    //kernel_printf("[ERROR][VFS] Bad path name: %s\n", path);
+    return dummy;
   }
 
-  kernel_printf("[INFO][VFS] %s -> %d\n", path, position.number);
+  free(path);
+  //kernel_printf("[INFO][VFS] %s -> %d\n", path, position.number);
   return position;
 }
 

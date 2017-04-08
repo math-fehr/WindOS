@@ -4,6 +4,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
+#include "wesh.h"
 
 #include "serial.h"
 #include "timer.h"
@@ -67,30 +68,22 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) atags;
 
 	serial_init();
-
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
+
+	int n = 5;
+	setup_scheduler();
+	for(int i = 0; i<n; i++) {
+			create_process();
+	}
 
 	storage_driver memorydisk;
 	memorydisk.read = memory_read;
 	memorydisk.write = memory_write;
 
-
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
-	if (fsroot != 0) {
-		vfs_setup();
-		vfs_mount(fsroot,"/");
 
-		vfs_dir_list_t* result = vfs_readdir("/test/");
+	vfs_setup();
+	vfs_mount(fsroot,"/");
 
-		while(result != 0) {
-			perm_str_t res = vfs_permission_string(result->inode.attr);
-			kernel_printf("%# 6d   %s   %s\n", result->inode.number, res.str,result->name);
-			result = result->next;
-		}
-		//tree(fsroot, fsroot->root, 0);
-	}
-
-    test_scheduler();
-	while(1) {
-    }
+	wesh();
 }

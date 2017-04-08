@@ -4,72 +4,21 @@
 #include "debug.h"
 #include "string.h"
 
-void test_scheduler() {
-    char command[256];
-    int n = 5;
-    setup_scheduler();
-    for(int i = 0; i<n; i++) {
-        create_process();
-    }
-    while(1) {
-        serial_readline(command,256);
-        char* token = strtok(command," ");
-        if(!strcmp("display",command)) {
-            for(int i = 0; i<number_active_processes; i++) {
-                kernel_printf("pid: %d    dummy: %d",active_processes[i],process_list[active_processes[i]].dummy);
-                if(process_list[active_processes[i]].status == status_zombie) {
-                    kernel_printf(" zombie");
-                }
-                serial_newline();
-            }
-        }
-        else if(!strcmp("create",token)) {
-            int number = atoi(strtok(NULL," "));
-            int i = 0;
-            bool error = false;
-            while(i < number && !error) {
-                int temp = create_process();
-                if(temp == -1) {
-                    error = true;
-                }
-                i++;
-            }
-            if(error) {
-                serial_write("Limit of processes reached");
-                serial_newline();
-            }
-        }
-        else if(!strcmp("kill",token)) {
-            int number = atoi(strtok(NULL," "));
-            serial_newline();
-            int temp= kill_process(number);
-            if(temp == -1) {
-                serial_write("Can't kill that process");
-                serial_newline();
-            }
-        }
-        else if(!strcmp("step",token)) {
-            int number = atoi(strtok(NULL," "));
-            bool error = false;
-            for(int i = 0; i<number && !error; i++) {
-                int pid = get_next_process();
-                if(pid == -1) {
-                    error = true;
-                }
-                else {
-                    process_list[pid].dummy++;
-                }
-            }
-        }
-        else {
-            serial_write("Unrecognized command");
-            serial_newline();
-        }
-        serial_newline();
-    }
-}
+static process process_list[MAX_PROCESSES];
+static int active_processes[MAX_PROCESSES];
+static int free_processes[MAX_PROCESSES];
+
+static int current_process;
+static int number_active_processes;
+static int number_free_processes;
+
+int get_number_active_processes() {return number_active_processes;}
+
+process* get_process_list() {return process_list;}
+int* get_active_processes() {return active_processes;}
 
 void setup_scheduler() {
+    kernel_printf("[SHED] Scheduler set up!\n");
     current_process = 0;
     number_active_processes = 0;
     number_free_processes = MAX_PROCESSES;

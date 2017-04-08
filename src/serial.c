@@ -47,6 +47,10 @@ void serial_putc(unsigned char data) {
   // read flag register, wait for ready and write.
   while (getUARTController()->FR & FR_TXFF);
 	getUARTController()->DR = data;
+
+  if (data == '\n') {
+    serial_putc('\r');
+  }
 }
 
 void serial_write(char* str){
@@ -56,7 +60,6 @@ void serial_write(char* str){
 }
 
 void serial_newline() {
-    serial_putc('\r');
     serial_putc('\n');
 }
 
@@ -69,8 +72,22 @@ int serial_readline(char* buffer, int buffer_size) {
   int i = 0;
   char c;
   while (((c = serial_readc()) != '\r') && (i < buffer_size-1)){
-    buffer[i++] = c;
+    if (c == 0x7F) {
+      if (i > 0) {
+        buffer[--i] = 0;
+        serial_write("\033[D");
+        serial_putc(' ');
+        serial_write("\033[D");
+      }
+    } else if (c == 0x1B) {
+      serial_readc();
+      serial_readc();
+    } else {
+      buffer[i++] = c;
+      serial_putc(c);
+    }
   }
+  serial_newline();
   buffer[i] = 0;
   return i;
 }
