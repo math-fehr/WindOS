@@ -3,6 +3,8 @@
 
 #include "storage_driver.h"
 #include "debug.h"
+#include "vfs.h" 
+
 // https://staff.washington.edu/dittrich/misc/fatgen103.pdf
 
 #pragma pack(push, 1)
@@ -57,7 +59,7 @@ typedef struct {
   uint16_t wrt_date;
   uint16_t first_cluster_number_HI;
   uint32_t file_size;
-} entry;
+} fat_entry_t;
 
 #define FAT_ATTR_READ_ONLY 0x01
 #define FAT_ATTR_HIDDEN 0x02
@@ -69,7 +71,19 @@ typedef struct {
 
 #pragma pack(pop)
 
-bool fat_init_fs(storage_driver* disk_);
+typedef struct {
+  storage_driver* disk;
+  fat_bpb data_1;
+  fat_bs data_2;
+  fat32_bs data_2_fat32;
+  int fat_version;
+  int root_dir_sectors;
+  int FATsz;
+  int tot_sec;
+  int first_data_sector;
+} fatinfo_t;
+
+superblock_t* fat_init_fs(storage_driver* disk);
 int fat_compute_root_directory();
 void fat_ls_root();
 

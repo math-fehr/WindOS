@@ -10,7 +10,7 @@
 #include "interrupts.h"
 #include "gpio.h"
 #include "debug.h"
-#include "fat.h"
+#include "ext2.h"
 #include "storage_driver.h"
 
 #define GPIO_LED_PIN 47
@@ -35,16 +35,55 @@ int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	return 0;
 }
 
+void tree(superblock_t* fs, int inode, int depth) {
+	dir_list_t* result = ext2_lsdir(fs, inode);
+
+	while(result != 0) {
+		if (result->name[0] != '.') {
+			for (int i=0;i<depth;i++) {
+				serial_write("| ");
+			}
+			if (result->attr == EXT2_ENTRY_DIRECTORY )
+				serial_write("|=");
+			else
+				serial_write("|-");
+			serial_putc('>');
+			serial_write(result->name);
+			serial_newline();
+			if (result->attr == EXT2_ENTRY_DIRECTORY ) {
+				tree(fs, result->val, depth+1);
+			}
+		}
+		result = result->next;
+	}
+}
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r0;
 	(void) r1;
 	(void) atags;
 
+  char* a = (char*)malloc(100*sizeof(char));
+  a[10] = 4;
+	for (int i=0;i<100;i++) {
+		a[i] = 0x41+i;
+	}
+	a[20] = 0;
 	serial_init();
 
-	while(1) {
-    }
-	serial_write("[INFO] Ramdisk location is ");
-	print_hex(__ramdisk, 4);
+	serial_write(a);
+	serial_newline();
+
+	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
+
+	storage_driver memorydisk;
+	memorydisk.read = memory_read;
+	memorydisk.write = memory_write;
+
+
+	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
+	if (fsroot != 0) {
+		tree(fsroot, fsroot->root, 0);
+	}
+	while(1) {}
 }

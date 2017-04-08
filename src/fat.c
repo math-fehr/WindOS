@@ -1,101 +1,114 @@
 #include "fat.h"
 #include <string.h>
+#include <stdlib.h>
 
-storage_driver* disk;
-fat_bpb data_1;
+#ifdef NON
+fatinfo_t* devices[10];
+int current_device=0;
 
-fat_bs data_2;
-fat32_bs data_2_fat32;
+int first_sector_of_cluster(superblock_t* s, int N) {
+  fatinfo_t* f = devices[s->id];
+  return ((N - 2)*f->data_1.sectors_per_cluster) + f->first_data_sector;
+}
 
-int fat_version;
-
-int root_dir_sectors;
-int FATsz;
-int tot_sec;
-
-int first_data_sector;
-
-
-bool fat_init_fs(storage_driver* disk_) {
-  disk = disk_;
-
+/*
+ * Takes a memory device, reads the superblock and if OK, constructs a FAT structure.
+ */
+superblock_t* fat_init_fs(storage_driver* disk) {
+  fatinfo_t* f = malloc(sizeof(fatinfo_t));
+  f->disk = disk;
   uint32_t signature=0;
   disk->read(510, &signature, 2 );
 
   if (signature != 0xAA55) {
     kernel_error("fat.c", "Wrong signature code.");
     print_hex(signature, 2);
-    return false;
+    return NULL;
   }
 
-  disk->read(0, &data_1, sizeof(fat_bpb));
-  print_hex(data_1.sectors_per_cluster,2);
-  print_hex(data_1.reserved_sectors_cnt,2);
-  print_hex(data_1.bytes_per_sectors,2);
+  disk->read(0, &f->data_1, sizeof(fat_bpb));
+  print_hex(f->data_1.sectors_per_cluster, 2);
+  print_hex(f->data_1.reserved_sectors_cnt, 2);
+  print_hex(f->data_1.bytes_per_sectors, 2);
 
-  disk->read(sizeof(fat_bpb), &data_2_fat32, sizeof(fat32_bs));
+  disk->read(sizeof(fat_bpb), &f->data_2_fat32, sizeof(fat32_bs));
 
-  root_dir_sectors = ((data_1.root_ent_cnt * 32) + (data_1.bytes_per_sectors - 1)) / data_1.bytes_per_sectors;
+  f->root_dir_sectors = ((f->data_1.root_ent_cnt * 32) + (f->data_1.bytes_per_sectors - 1)) / f->data_1.bytes_per_sectors;
 
-  if (data_1.FATsz16 != 0) {
-    FATsz = data_1.FATsz16;
+  if (f->data_1.FATsz16 != 0) {
+    f->FATsz = f->data_1.FATsz16;
   } else {
-    FATsz = data_2_fat32.FATsz32;
+    f->FATsz = f->data_2_fat32.FATsz32;
   }
 
-  if (data_1.tot_sec_16 != 0) {
-    tot_sec = data_1.tot_sec_16;
+  if (f->data_1.tot_sec_16 != 0) {
+    f->tot_sec = f->data_1.tot_sec_16;
   } else {
-    tot_sec = data_1.tot_sec_32;
+    f->tot_sec = f->data_1.tot_sec_32;
   }
-  print_hex(tot_sec,2);
-  print_hex(FATsz,2);
+  print_hex(f->tot_sec,2);
+  print_hex(f->FATsz,2);
 
-  int data_sec = tot_sec - (data_1.reserved_sectors_cnt + (data_1.num_FATs * FATsz) + root_dir_sectors);
-  int count_of_clusters = data_sec / data_1.sectors_per_cluster;
+  int data_sec = f->tot_sec - (f->data_1.reserved_sectors_cnt + (f->data_1.num_FATs * f->FATsz) + f->root_dir_sectors);
+  int count_of_clusters = data_sec / f->data_1.sectors_per_cluster;
 
   if (count_of_clusters < 4085) {
-    fat_version = 12;
+    f->fat_version = 12;
     kernel_info("fat.c","FAT12 volume identified.");
-    disk->read(sizeof(fat_bpb), &data_2, sizeof(fat_bs));
+    disk->read(sizeof(fat_bpb), &f->data_2, sizeof(fat_bs));
 
   } else if (count_of_clusters < 65525) {
-    fat_version = 16;
+    f->fat_version = 16;
     kernel_info("fat.c","FAT16 volume identified.");
-    disk->read(sizeof(fat_bpb), &data_2, sizeof(fat_bs));
+    disk->read(sizeof(fat_bpb), &f->data_2, sizeof(fat_bs));
 
   } else {
-    fat_version = 32;
+    f->fat_version = 32;
     kernel_info("fat.c","FAT32 volume identified.");
-    disk->read(64, &data_2, sizeof(fat_bs));
+    disk->read(64, &f->data_2, sizeof(fat_bs));
   }
 
 
-  first_data_sector = data_1.reserved_sectors_cnt + (data_1.num_FATs * FATsz) + root_dir_sectors;
+  f->first_data_sector = f->data_1.reserved_sectors_cnt + (f->data_1.num_FATs * f->FATsz) + f->root_dir_sectors;
 
 
   char vol_label[12];
-  memcpy(vol_label, &data_2.vol_label, 11);
+  memcpy(vol_label, &f->data_2.vol_label, 11);
   vol_label[11] = 0;
   kernel_info("fat.c", "FAT initialized, volume label is ");
   kernel_info("fat.c", vol_label);
-  return true;
+
+  devices[current_device] = f;
+  superblock_t* superblock = malloc(sizeof(superblock_t));
+
+  superblock->id = current_device;
+  superblock->root = malloc(sizeof(inode_t));
+  superblock->root->number = get_inode();
+  superblock->root->attr   = VFS_DIRECTORY | VFS_READ | VFS_WRITE;
+
+  int rootdir_sector;
+  if (f->fat_version == 32) { // a tester.
+    rootdir_sector = first_sector_of_cluster(superblock, f->data_2_fat32.root_cluster);
+  } else {
+    rootdir_sector = f->data_1.reserved_sectors_cnt + (f->data_1.num_FATs * f->FATsz);
+  }
+  superblock->root->data = (void*)(uintptr_t)rootdir_sector;
+  return superblock;
 }
 
-int first_sector_of_cluster(int N) {
-  return ((N - 2)*data_1.sectors_per_cluster) + first_data_sector;
-}
 
-int entry_value_of_cluster(int N) {
+
+int entry_value_of_cluster(superblock_t* s, int N) {
+  fatinfo_t* f = devices[s->id];
   int result=0;
-  if (fat_version == 12) {
+  if (f->fat_version == 12) {
     int fat_offset = N + (N / 2);
     /*
     int fat_sec_num = data_1->reserved_sectors_cnt + (fat_offset / data_1->bytes_per_sectors);
     int fat_ent_offset = fat_offset % data_1->bytes_per_sectors;
 */
-    disk->read(
-      data_1.reserved_sectors_cnt*data_1.bytes_per_sectors + fat_offset,
+    f->disk->read(
+      f->data_1.reserved_sectors_cnt*f->data_1.bytes_per_sectors + fat_offset,
       &result,
       2
     ); // read 16 bits but we only need 12.
@@ -106,17 +119,17 @@ int entry_value_of_cluster(int N) {
     }
   } else {
     int fat_offset;
-    if (fat_version == 16) {
+    if (f->fat_version == 16) {
       fat_offset = N*2;
-      disk->read(
-        data_1.reserved_sectors_cnt*data_1.bytes_per_sectors + fat_offset,
+      f->disk->read(
+        f->data_1.reserved_sectors_cnt*f->data_1.bytes_per_sectors + fat_offset,
         &result,
         2
       );
     } else {
       fat_offset = N*4;
-      disk->read(
-        data_1.reserved_sectors_cnt*data_1.bytes_per_sectors + fat_offset,
+      f->disk->read(
+        f->data_1.reserved_sectors_cnt*f->data_1.bytes_per_sectors + fat_offset,
         &result,
         4
       );
@@ -130,15 +143,13 @@ int entry_value_of_cluster(int N) {
   }
 }
 
-int fat_compute_root_directory() {
-  if (fat_version == 32) {
-    return first_sector_of_cluster(data_2_fat32.root_cluster);
-  } else {
-    return data_1.reserved_sectors_cnt + (data_1.num_FATs * FATsz);
-  }
+
+int lsdir (inode_t* dir, int index) {
+  return 0;
 }
 
 void fat_ls_root() {
+
   int pos_byte = fat_compute_root_directory()*
                   data_1.bytes_per_sectors;
 
@@ -194,3 +205,5 @@ void fat_ls_root() {
     pos_byte += 32;
   } while (current_entry.name[0] != 0);
 }
+
+#endif

@@ -1,21 +1,20 @@
 #include "debug.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-void kernel_error(char* source, char* message) {
-  serial_write("[ERROR] ");
-  serial_write(source);
-  serial_write(" : ");
-  serial_write(message);
-  serial_newline();
+
+void kernel_printf(const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  int size = vsnprintf(NULL, 0, fmt, args);
+  char* buffer = (char*) malloc(size+1);
+  vsnprintf(buffer, size+1, fmt, args);
+  va_end(args);
+  buffer[size] = 0;
+  serial_write(buffer);
+  free(buffer);
 }
-
-void kernel_info(char* source, char* message) {
-  serial_write("[INFO] ");
-  serial_write(source);
-  serial_write(" : ");
-  serial_write(message);
-  serial_newline();
-}
-
 
 void print_hex(int number, int nbytes) {
   serial_write("  0x");
