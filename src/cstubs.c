@@ -13,5 +13,6 @@ intptr_t _sbrk(int incr) {
 
   prev_heap_end = heap_end;
   heap_end += incr;
-  return (intptr_t)prev_heap_end;
+  return (intptr_t)prev_heap_end; 
 }
+

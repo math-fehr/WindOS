@@ -60,8 +60,8 @@ run: $(TARGET_QEMU)
 runs: $(TARGET_QEMU)
 	$(QEMU) -kernel ramdisk -m 256 -M raspi2 -serial stdio
 
-#minicom:
-#    minicom -b 115200 -o -D /dev/pts/1
+minicom:
+	minicom -b 115200 -o -D /dev/pts/2
 
 $(TARGET) : $(BUILD)output.elf
 	$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET)
@@ -73,7 +73,7 @@ $(TARGET_QEMU) : $(BUILD)output_qemu.elf img
 	dd if=fs.img of=ramdisk bs=2048 seek=8M oflag=seek_bytes
 
 $(BUILD)output.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
-	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) -lgcc
+	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) -lgcc -lg -T $(LINKER_QEMU)
 
 $(BUILD)output_qemu.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) -Map $(MAP) -o $(BUILD)output_qemu.elf -lgcc -lg --verbose -T $(LINKER_QEMU)
