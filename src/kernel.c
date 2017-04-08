@@ -41,29 +41,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r1;
 	(void) atags;
 
-  char* a = malloc(100*sizeof(int));
-  a[10] = 4;
-	for (int i=0;i<100;i++) {
-		a[i] = 0x41+i;
-	}
-	a[20] = 0;
 	serial_init();
 
-	serial_write(a);
-	print_hex(a,4);
-	serial_newline();
-
-	kernel_info("kernel.c","Serial output is hopefully ON.");
-
-	while(1) {}
+	while(1) {
+    }
 	serial_write("[INFO] Ramdisk location is ");
 	print_hex(__ramdisk, 4);
-
-	storage_driver memorydisk;
-	memorydisk.read = memory_read;
-	memorydisk.write = memory_write;
-
-	fat_init_fs(&memorydisk);
-	fat_ls_root();
-	while(1) {}
 }
