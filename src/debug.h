@@ -11,8 +11,8 @@ void kernel_printf(const char* fmt, ...);
 void print_hex(int number, int nbytes);
 
 int min(int a, int b);
+int max(int a, int b);
 
 // computes a^b
 int ipow(int a, int b);
 #endif
- 

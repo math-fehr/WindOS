@@ -118,12 +118,20 @@ typedef struct {
   ext2_superblock_t* sb;
 } ext2_device_t;
 
-
+ 
 superblock_t* ext2fs_initialize(storage_driver* disk);
+
+// Interface functions with the VFS
+int ext2_fwrite(inode_t inode, char* buf, int len, int ofs);
+int ext2_fread(inode_t inode, char* buffer, int len, int ofs);
+vfs_dir_list_t* ext2_lsdir(inode_t inode_p);
+
+
+void ext2_replace_file(superblock_t* fs, int inode, char* buffer, int size, int ofs);
+void ext2_append_file(superblock_t* fs, int inode, char* buffer, int size);
+
 void ext2_inode_read_block(superblock_t* fs, ext2_inode_t inode, char* buffer, int block, int offset, int size);
-int ext2_fread(superblock_t* fs, int inode, char* buffer, int position, int size);
 ext2_inode_t ext2_get_inode_descriptor(superblock_t* fs, int inode);
-vfs_dir_list_t* ext2_lsdir(superblock_t* fs, inode_t inode_p);
 
 int ext2_get_free_inode(superblock_t* fs);
 int ext2_get_free_block(superblock_t* fs);
@@ -132,4 +140,12 @@ bool ext2_register_inode(superblock_t* fs, int inode);
 bool ext2_register_block(superblock_t* fs, int number);
 bool ext2_free_inode(superblock_t* fs, int inode);
 bool ext2_free_block(superblock_t* fs, int number);
+
+void ext2_free_inode_blocks(superblock_t* fs, int inode);
+
+void ext2_set_block_group_descriptor(superblock_t* fs, ext2_block_group_descriptor_t data, int bg);
+
+int ext2_mkdir (inode_t, char*, int);
+int ext2_rm (inode_t, char*);
+int ext2_mkfile (inode_t, char*, int);
 #endif

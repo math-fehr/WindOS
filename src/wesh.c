@@ -164,6 +164,29 @@ void vfs_handler() {
     }
   } else if(!strcmp("pwd",token)) {
     kernel_printf("%s\n", position);
+  } else if(!strcmp("read",token)) {
+    char* token = strtok(NULL, " ");
+    char obj[255];
+    strcpy(obj, position);
+    strcat(obj, token);
+
+    int fd = vfs_fopen(obj);
+    kernel_printf("fopen => %d: \n", fd);
+    char buffer[255];
+    kernel_printf("fread:\n");
+    while (vfs_fread(fd,buffer,254) > 0) {
+      kernel_printf(buffer);
+    }
+    kernel_printf("\n");
+  } else if(!strcmp("touch",token)) {
+    char* name = strtok(NULL," ");
+    vfs_mkfile(position, name, 0x7FF);
+  } else if(!strcmp("mkdir",token)) {
+    char* name = strtok(NULL," ");
+    vfs_mkdir(position, name, 0x7FF);
+  } else if(!strcmp("rm", token)) {
+    char* name = strtok(NULL," ");
+    vfs_rm(position, name);
   } else {
     serial_write("[VFS] Unrecognized command\n");
   }

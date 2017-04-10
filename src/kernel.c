@@ -38,29 +38,6 @@ int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	memcpy((void*) (intptr_t) (address + base), buffer, size);
 	return 0;
 }
-/*
-void tree(superblock_t* fs, int inode, int depth) {
-	dir_list_t* result = ext2_lsdir(fs, inode);
-
-	while(result != 0) {
-		if (result->name[0] != '.') {
-			for (int i=0;i<depth;i++) {
-				serial_write("| ");
-			}
-			if (result->attr == EXT2_ENTRY_DIRECTORY )
-				serial_write("|=");
-			else
-				serial_write("|-");
-			serial_putc('>');
-			serial_write(result->name);
-			serial_newline();
-			if (result->attr == EXT2_ENTRY_DIRECTORY ) {
-				tree(fs, result->val, depth+1);
-			}
-		}
-		result = result->next;
-	}
-}*/
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r0;
