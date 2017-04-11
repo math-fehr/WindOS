@@ -17,8 +17,6 @@
 #include "process.h"
 #include "scheduler.h"
 
-#define GPIO_LED_PIN 47
-
 // Arbitrarily high adress so it doesn't conflict with something else.
 // = 8MB
 uint32_t __ramdisk = 0x0800000;
@@ -85,5 +83,5 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	vfs_setup();
 	vfs_mount(fsroot,"/");
 
-	wesh();
+    wesh();
 }
