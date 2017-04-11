@@ -102,7 +102,7 @@ void vfs_handler() {
 
 		while(result != 0) {
 			perm_str_t res = vfs_permission_string(result->inode.attr);
-			kernel_printf("%# 6d   %s   %s\n", result->inode.number, res.str,result->name);
+			kernel_printf("%# 6d    %s   %# 7d   %s\n", result->inode.number, res.str, result->inode.size,result->name);
 			result = result->next;
 		}
   } else if(!strcmp("tree",token)) {
@@ -149,7 +149,9 @@ void vfs_handler() {
         strcat(obj, token);
 
         inode_t data = vfs_path_to_inode(obj);
-        if (data.attr & VFS_DIRECTORY) {
+        if (data.number == 0) {
+          kernel_printf("cd: %s: no such file or directory.\n", token);
+        } else if (data.attr & VFS_DIRECTORY) {
           strcpy(position, obj);
         } else {
           kernel_printf("cd: %s: This is not a directory.\n", obj);
@@ -196,8 +198,10 @@ void vfs_handler() {
 
 void wesh() {
   char command[256];
-  for (int i=0;i<255;i++)
+  for (int i=0;i<255;i++){
     position[i] = 0;
+    command[i]=0;
+  }
   position[0] = '/';
 
   while(1) {
