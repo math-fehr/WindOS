@@ -18,12 +18,21 @@ typedef struct {
 typedef struct vfs_dir_list_t vfs_dir_list_t;
 
 typedef struct {
-  vfs_dir_list_t* (*read_dir) (superblock_t*,inode_t);
+  vfs_dir_list_t* (*read_dir) (inode_t);
+  int (*read) (inode_t, char*, int, int);
+  int (*write) (inode_t, char*, int, int);
+
+  int (*mkdir) (inode_t, char*, int);
+  int (*rm) (inode_t, char*);
+  int (*mkfile) (inode_t, char*, int);
 } inode_operations_t;
 
 typedef struct {
 
 } file_operations_t;
+
+#define VFS_MAX_OPEN_FILES 1000
+#define VFS_MAX_OPEN_INODES 1000
 
 #define VFS_FIFO         0x1000
 #define VFS_CHAR_DEVICE  0x2000
@@ -51,15 +60,15 @@ typedef struct {
 
 struct inode_t {
   int number;
+  int size;
   superblock_t* sb;
   inode_operations_t* op;
   uint32_t attr;
 };
 
 typedef struct {
-  superblock_t* sb;
   inode_t* inode;
-  file_operations_t* op;
+  int current_offset;
 } file_t;
 
 struct superblock_t {
@@ -86,17 +95,16 @@ typedef struct {
 void vfs_setup();
 inode_t vfs_path_to_inode(char *path);
 void vfs_mount(superblock_t* sb, char* path);
-int vfs_fopen(char* path, int mode);
+int vfs_fopen(char* path);
 int vfs_fclose(int fd);
 int vfs_fseek(int fd, int offset);
 int vfs_fwrite(int fd, char* buffer, int length);
 int vfs_fread(int fd, char* buffer, int length);
 vfs_dir_list_t* vfs_readdir(char* path);
-int vfs_permissions(char* path);
-void vfs_mkdir(char* path, char* name, int permissions);
-void vfs_rmdir(char* path, char* name);
-void vfs_mkfile(char* path, char* name, int permissions);
-void vfs_rmfile(char* path, char* name);
+int vfs_attr(char* path);
+int vfs_mkdir(char* path, char* name, int permissions);
+int vfs_rm(char* path, char* name);
+int vfs_mkfile(char* path, char* name, int permissions);
 perm_str_t vfs_permission_string(int attr);
 
 #endif
