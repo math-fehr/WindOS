@@ -30,7 +30,7 @@ void Timer_Enable_Interrupts() {
 void Timer_Disable_Interrupts() {
   rpiArmTimer->control &= ~TIMER_CTRL_INTERRUPT_BIT;
 }
- 
+
 void Timer_Disable() {
   rpiArmTimer->control &= ~TIMER_CTRL_ENABLE_BIT;
   rpiArmTimer->control &= ~TIMER_CTRL_FREERUNNING_COUNTER;
