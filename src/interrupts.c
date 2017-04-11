@@ -11,9 +11,17 @@ void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
 }
 
 void __attribute__ ((interrupt("IRQ"))) interrupt_vector(void) {
-  disable_interrupts();
-  serial_write("Ici l'interruption!\n");
-  Timer_ClearInterrupt();
+    disable_interrupts();
+    static bool on = false;
+    if(on) {
+        GPIO_setPinValue(GPIO_LED_PIN,true);
+    }
+    else {
+        GPIO_setPinValue(GPIO_LED_PIN,false);
+    }
+    on = !on;
+    GPIO_setPinValue(47,false);
+    Timer_ClearInterrupt();
 }
 
 void __attribute__ ((interrupt("SWI"))) software_interrupt_vector(void) {
@@ -36,17 +44,9 @@ rpi_irq_controller_t* RPI_GetIRQController(void) {
 }
 
 void enable_interrupts(void) {
-  asm volatile
-  ("mrs r0, cpsr\n"
-    "bic r0, r0, #0x80\n"
-    "msr cpsr_c, r0\n"
-  );
+    asm volatile("cpsie i");
 }
 
 void disable_interrupts(void) {
-  asm volatile
-  ("mrs r0, cpsr\n"
-    "orr r0, r0, #0x80\n"
-    "msr cpsr_c, r0\n"
-  );
+    asm volatile("cpsid i");
 }
