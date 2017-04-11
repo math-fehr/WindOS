@@ -34,7 +34,7 @@ inode_t vfs_path_to_inode(char *path_) {
     return dummy;
   }
 
-  //kernel_printf("[INFO][VFS] Resolving path %s\n", path);
+  kdebug(D_VFS, 1, "Resolving path %s\n", path);
 
   inode_t position = root_inode;
   char* pch = path+1;
@@ -52,8 +52,7 @@ inode_t vfs_path_to_inode(char *path_) {
     }
 
     if (!found) {
-    //  kernel_printf("[ERROR][VFS] Bad path name: %s\n", path);
-
+      kdebug(D_VFS, 3, "Bad path name: %s\n", path);
       free(path);
       return dummy;
     }
@@ -73,13 +72,13 @@ inode_t vfs_path_to_inode(char *path_) {
   }
 
   if (!found && old_pch[0] != 0) {
+    kdebug(D_VFS, 3, "ls: Bad path name: %s\n", path);
     free(path);
-    //kernel_printf("[ERROR][VFS] Bad path name: %s\n", path);
     return dummy;
   }
 
+  kdebug(D_VFS, 1, "ls: %s -> %d\n", path, position.number);
   free(path);
-  //kernel_printf("[INFO][VFS] %s -> %d\n", path, position.number);
   return position;
 }
 
@@ -190,7 +189,10 @@ int vfs_fread(int fd, char* buffer, int length) {
 
 vfs_dir_list_t* vfs_readdir(char* path) {
   inode_t position = vfs_path_to_inode(path);
-  return position.op->read_dir(position);
+  if (position.number > 0)
+    return position.op->read_dir(position);
+  else
+    return 0;
 }
 
 int vfs_attr(char* path) {

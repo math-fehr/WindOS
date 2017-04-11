@@ -4,4 +4,4 @@ gpu_mem=64
 init_emmc_clock=100000000
 ramfsfile=CMOS
 ramfsaddr=0x508000
-kernel=kernel.img
+kernel=ram.img

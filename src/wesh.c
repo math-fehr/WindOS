@@ -68,16 +68,16 @@ void tree(char* pos, int depth) {
   while(result != 0) {
     if (strcmp(result->name,".") && strcmp(result->name,"..")) {
       for (int i=0;i<depth;i++) {
-        kernel_printf("│ ");
+        kernel_printf("| ");
       }
 
       if (result->inode.attr & VFS_DIRECTORY)
-        kernel_printf("├─\e[1m%s\e[0m\n",result->name);
+        kernel_printf("|-\e[1m%s\e[0m\n",result->name);
       else
-        kernel_printf("├─%s\n",result->name);
+        kernel_printf("|-%s\n",result->name);
 
 
-      if (result->inode.attr & VFS_DIRECTORY) {
+      if (result->inode.attr & VFS_DIRECTORY && (strcmp(result->name,"lost+found"))) {
         char* buf = malloc(strlen(pos) + strlen(result->name) + 2);
         strcpy(buf,pos);
         strcat(buf,result->name);
@@ -202,7 +202,7 @@ void wesh() {
 
   while(1) {
     kernel_printf("%s$ ", position);
-    serial_readline(command, 256);
+    serial_readline(command, 255);
     char* token = strtok(command," ");
     if(!strcmp("s",token)) {
       scheduler_handler();

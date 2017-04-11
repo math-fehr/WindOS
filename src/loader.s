@@ -88,3 +88,20 @@ disable_interrupts:
 fin:
 	wfe
 	b fin
+
+
+// From https://github.com/xinu-os/xinu/blob/master/system/arch/arm/memory_barrier.S
+// When accessing different peripherals, data can arrive out of order.
+// data-memory barrier ensure all data has been transferred before moving on
+/* From BCM 2835 manual page 7:
+You should place:
+•	A memory write barrier before the first write to a
+peripheral.
+•	A memory read barrier after the last read of a periphe
+ral
+*/
+.globl dmb
+dmb:
+	mov	r12, #0
+	mcr	p15, 0, r12, c7, c10, 5
+	mov 	pc, lr

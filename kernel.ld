@@ -10,6 +10,7 @@ SECTIONS {
 	/*
 	* INFO: 0x10000 for QEMU and 0x8000 for raspi2
 	*/
+	__start = 0x8000;
 	.init 0x8000 : {
 		*(.init)
 	}

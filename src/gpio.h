@@ -5,6 +5,7 @@
 #include "stddef.h"
 #include "stdint.h"
 
+#include "debug.h"
 
 #ifdef RPI2
 #define GPIO_BASE 0x3F200000UL

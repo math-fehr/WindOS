@@ -8,6 +8,51 @@
 #include "timer.h"
 
 
+#ifdef RPI2
+#define AUX_BASE 0x3f215000
+#else
+#define AUX_BASE 0x20215000
+#endif
+
+
+
+typedef struct {
+  volatile unsigned int IRQ;
+  volatile unsigned int ENABLES;
+
+  volatile unsigned int reserved1[((0x40 - 0x04) / 4) - 1];
+
+  volatile unsigned int MU_IO;
+  volatile unsigned int MU_IER;
+  volatile unsigned int MU_IIR;
+  volatile unsigned int MU_LCR;
+  volatile unsigned int MU_MCR;
+  volatile unsigned int MU_LSR;
+  volatile unsigned int MU_MSR;
+  volatile unsigned int MU_SCRATCH;
+  volatile unsigned int MU_CNTL;
+  volatile unsigned int MU_STAT;
+  volatile unsigned int MU_BAUD;
+
+  volatile unsigned int reserved2[(0x80 - 0x68) / 4];
+
+  volatile unsigned int SPI0_CNTL0;
+  volatile unsigned int SPI0_CNTL1;
+  volatile unsigned int SPI0_STAT;
+  volatile unsigned int SPI0_IO;
+  volatile unsigned int SPI0_PEEK;
+
+  volatile unsigned int reserved3[(0xC0 - 0x94) / 4];
+
+  volatile unsigned int SPI1_CNTL0;
+  volatile unsigned int SPI1_CNTL1;
+  volatile unsigned int SPI1_STAT;
+  volatile unsigned int SPI1_IO;
+  volatile unsigned int SPI1_PEEK;
+} aux_t;
+
+
+aux_t* serial_get_aux();
 void serial_init();
 void serial_putc(unsigned char data);
 void serial_write(char* str);
@@ -17,59 +62,108 @@ int serial_readline(char* buffer, int buffer_size);
 
 
 
-#ifdef RPI2
-#define UART0_BASE 0x3F201000
-#else
-#define UART0_BASE 0x20201000
-#endif
 
-typedef struct {
-  uint32_t DR; // 0x00
-  uint32_t RSR_ECR; // 0x04
-  uint8_t reserved1[0x10]; //0x08
-  uint32_t FR; //0x18
-  uint8_t reserved2[0x4]; // 0x1c
-  uint32_t LPR; // 0x20
-  uint32_t IBRD; // 0x24
-  uint32_t FBRD; // 0x28
-  uint32_t LCR_H; // 0x2c
-  uint32_t CR; // 0x30
-  uint32_t IFLS; // 0x34
-  uint32_t IMSC; // 0x38
-  uint32_t RIS; // 0x3c
-  uint32_t MIS; // 0x40
-  uint32_t ICR; // 0x44
-  uint32_t DMACR; // 0x48
-} rpi_uart_controller_t;
+#define AUX_ENA_MINIUART            ( 1 << 0 )
+#define AUX_ENA_SPI1                ( 1 << 1 )
+#define AUX_ENA_SPI2                ( 1 << 2 )
 
-#define DR_OVERRUN_ERROR  (1 << 11)
-#define DR_BREAK_ERROR    (1 << 10)
-#define DR_PARITY_ERROR   (1 << 9)
-#define DR_FRAMING_ERROR  (1 << 8)
+#define AUX_IRQ_SPI2                ( 1 << 2 )
+#define AUX_IRQ_SPI1                ( 1 << 1 )
+#define AUX_IRQ_MU                  ( 1 << 0 )
 
-#define LCRH_SPS 1 << 7
-#define LCRH_WLEN_8_BITS 1 << 6 | 1 << 5
-#define LCRH_WLEN_7_BITS 1 << 6
-#define LCRH_WLEN_6_BITS          1 << 5
-#define LCRH_WLEN_5_BITS 0
-#define LCRH_FIFO 1 << 4
+#define AUX_MULCR_8BIT_MODE         ( 3 << 0 )  /* See errata for this value */
+#define AUX_MULCR_BREAK             ( 1 << 6 )
+#define AUX_MULCR_DLAB_ACCESS       ( 1 << 7 )
 
-#define IMSC_OEIM   (1 << 10)
-#define IMSC_BEIM   (1 << 9)
-#define IMSC_PEIM   (1 << 8)
-#define IMSC_FEIM   (1 << 7)
-#define IMSC_RTIM   (1 << 6)
-#define IMSC_TXIM   (1 << 5)
-#define IMSC_RXIM   (1 << 4)
-#define IMSC_CTSMIM (1 << 1)
+#define AUX_MUMCR_RTS               ( 1 << 1 )
 
-#define CR_UARTEN 1
-#define CR_TXE    1 << 8
-#define CR_RXE    1 << 9
+#define AUX_MULSR_DATA_READY        ( 1 << 0 )
+#define AUX_MULSR_RX_OVERRUN        ( 1 << 1 )
+#define AUX_MULSR_TX_EMPTY          ( 1 << 5 )
+#define AUX_MULSR_TX_IDLE           ( 1 << 6 )
 
-#define FR_TXFE   (1 << 7)
-#define FR_RXFF   (1 << 6)
-#define FR_TXFF   (1 << 5)
-#define FR_RXFE   (1 << 4)
-#define FR_BUSY   (1 << 3)
+#define AUX_MUMSR_CTS               ( 1 << 5 )
+
+#define AUX_MUCNTL_RX_ENABLE        ( 1 << 0 )
+#define AUX_MUCNTL_TX_ENABLE        ( 1 << 1 )
+#define AUX_MUCNTL_RTS_FLOW         ( 1 << 2 )
+#define AUX_MUCNTL_CTS_FLOW         ( 1 << 3 )
+#define AUX_MUCNTL_RTS_FIFO         ( 3 << 4 )
+#define AUX_MUCNTL_RTS_ASSERT       ( 1 << 6 )
+#define AUX_MUCNTL_CTS_ASSERT       ( 1 << 7 )
+
+#define AUX_MUSTAT_SYMBOL_AV        ( 1 << 0 )
+#define AUX_MUSTAT_SPACE_AV         ( 1 << 1 )
+#define AUX_MUSTAT_RX_IDLE          ( 1 << 2 )
+#define AUX_MUSTAT_TX_IDLE          ( 1 << 3 )
+#define AUX_MUSTAT_RX_OVERRUN       ( 1 << 4 )
+#define AUX_MUSTAT_TX_FIFO_FULL     ( 1 << 5 )
+#define AUX_MUSTAT_RTS              ( 1 << 6 )
+#define AUX_MUSTAT_CTS              ( 1 << 7 )
+#define AUX_MUSTAT_TX_EMPTY         ( 1 << 8 )
+#define AUX_MUSTAT_TX_DONE          ( 1 << 9 )
+#define AUX_MUSTAT_RX_FIFO_LEVEL    ( 7 << 16 )
+#define AUX_MUSTAT_TX_FIFO_LEVEL    ( 7 << 24 )
+
+
+#define FSEL0(x)        ( x )
+#define FSEL1(x)        ( x << 3 )
+#define FSEL2(x)        ( x << 6 )
+#define FSEL3(x)        ( x << 9 )
+#define FSEL4(x)        ( x << 12 )
+#define FSEL5(x)        ( x << 15 )
+#define FSEL6(x)        ( x << 18 )
+#define FSEL7(x)        ( x << 21 )
+#define FSEL8(x)        ( x << 24 )
+#define FSEL9(x)        ( x << 27 )
+
+#define FSEL10(x)       ( x )
+#define FSEL11(x)       ( x << 3 )
+#define FSEL12(x)       ( x << 6 )
+#define FSEL13(x)       ( x << 9 )
+#define FSEL14(x)       ( x << 12 )
+#define FSEL15(x)       ( x << 15 )
+#define FSEL16(x)       ( x << 18 )
+#define FSEL17(x)       ( x << 21 )
+#define FSEL18(x)       ( x << 24 )
+#define FSEL19(x)       ( x << 27 )
+
+#define FSEL20(x)       ( x )
+#define FSEL21(x)       ( x << 3 )
+#define FSEL22(x)       ( x << 6 )
+#define FSEL23(x)       ( x << 9 )
+#define FSEL24(x)       ( x << 12 )
+#define FSEL25(x)       ( x << 15 )
+#define FSEL26(x)       ( x << 18 )
+#define FSEL27(x)       ( x << 21 )
+#define FSEL28(x)       ( x << 24 )
+#define FSEL29(x)       ( x << 27 )
+
+#define FSEL30(x)       ( x )
+#define FSEL31(x)       ( x << 3 )
+#define FSEL32(x)       ( x << 6 )
+#define FSEL33(x)       ( x << 9 )
+#define FSEL34(x)       ( x << 12 )
+#define FSEL35(x)       ( x << 15 )
+#define FSEL36(x)       ( x << 18 )
+#define FSEL37(x)       ( x << 21 )
+#define FSEL38(x)       ( x << 24 )
+#define FSEL39(x)       ( x << 27 )
+
+#define FSEL40(x)       ( x )
+#define FSEL41(x)       ( x << 3 )
+#define FSEL42(x)       ( x << 6 )
+#define FSEL43(x)       ( x << 9 )
+#define FSEL44(x)       ( x << 12 )
+#define FSEL45(x)       ( x << 15 )
+#define FSEL46(x)       ( x << 18 )
+#define FSEL47(x)       ( x << 21 )
+#define FSEL48(x)       ( x << 24 )
+#define FSEL49(x)       ( x << 27 )
+
+#define FSEL50(x)       ( x )
+#define FSEL51(x)       ( x << 3 )
+#define FSEL52(x)       ( x << 6 )
+#define FSEL53(x)       ( x << 9 )
+
 #endif
