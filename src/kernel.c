@@ -18,27 +18,33 @@
 #include "scheduler.h"
 #include "paging.h"
 
+
 extern void start_mmu(uint32_t ttl_adress, uint32_t flags);
 
 // Arbitrarily high adress so it doesn't conflict with something else.
 // = 8MB
 uint32_t __ramdisk = 0x0800000;
+extern uint32_t __start;
+extern void dmb();
 
 int memory_read(uint32_t address, void* buffer, uint32_t size) {
-	uint32_t base = 0x10000 + __ramdisk; // The FS is concatenated with the kernel image.
-	//TODO: don't hardcode that, because in real hardware the offset is 0x8000
-	memcpy(buffer, (void*) (intptr_t) (address + base), size);
-//	kernel_info("kernel.c","Disk access at address");
-//	print_hex(address,2);
+	intptr_t base = (intptr_t)&__start + __ramdisk; // The FS is concatenated with the kernel image.
+	memcpy(buffer, (void*) (address + base), size);
+	dmb();
 
-	return 0;
+  kdebug(D_KERNEL, 1, "Disk read request at address 0x%#08x of size %d\n", address, size);
+  return 0;
 }
 
 int memory_write(uint32_t address, void* buffer, uint32_t size) {
-	uint32_t base = 0x10000 + __ramdisk;
-	memcpy((void*) (intptr_t) (address + base), buffer, size);
+	intptr_t base = (intptr_t)&__start + __ramdisk;
+  kdebug(D_KERNEL, 1, "Disk write request at address 0x%#08x of size %d\n", address, size);
+	dmb();
+	memcpy((void*) (address + base), buffer, size);
 	return 0;
 }
+
+volatile unsigned int tim;
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r0;
@@ -50,6 +56,23 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 
     serial_init();
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
+
+	GPIO_setOutputPin(GPIO_LED_PIN);
+
+
+	Timer_Setup();
+
+	for(int i=1;i<10;i++) {
+		Timer_WaitCycles(500000);
+		GPIO_setPinValue(GPIO_LED_PIN, true);
+		Timer_WaitCycles(500000);
+		GPIO_setPinValue(GPIO_LED_PIN, false);
+	}
+
+//	enable_interrupts();
+	Timer_SetLoad(1000000);
+	Timer_Enable();
+	Timer_Enable_Interrupts();
 
     /**
      * MMU TEST

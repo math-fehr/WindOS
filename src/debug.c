@@ -3,6 +3,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define N_SOURCES 8
+
+const char sources[N_SOURCES][9]= { "KERNEL", "SERIAL", "WESH",
+                                    "TIMER" , "IRQ"   , "VFS" ,
+                                    "EXT2"  , "GPIO"           };
+
+const int enable_source[N_SOURCES] = { 10,10,10,
+                                       10,10,10,
+                                       10,10};
 
 void kernel_printf(const char* fmt, ...) {
   va_list args;
@@ -16,17 +25,24 @@ void kernel_printf(const char* fmt, ...) {
   free(buffer);
 }
 
-void print_hex(int number, int nbytes) {
-  serial_write("  0x");
-  for (int i=0;i<2*nbytes;i++) {
-    char hx = (number >> (4*(2*nbytes-1-i))) & 15;
-    if (hx < 10) {
-      serial_putc(48+hx);
-    } else {
-      serial_putc(65+hx-10);
-    }
-  }
-  serial_newline();
+void vkernel_printf(const char* fmt, va_list args) {
+  int size = vsnprintf(NULL, 0, fmt, args);
+  char* buffer = (char*) malloc(size+1);
+  vsnprintf(buffer, size+1, fmt, args);
+  buffer[size] = 0;
+  serial_write(buffer);
+  free(buffer);
+}
+
+void kdebug(int from, int level, const char* fmt, ...) {
+  if (from < 0 || from >= N_SOURCES) return;
+  if (enable_source[from] > level) return;
+  kernel_printf("[%s][%d] ", sources[from], level);
+
+  va_list args;
+  va_start(args, fmt);
+  vkernel_printf(fmt, args);
+  va_end(args);
 }
 
 int min(int a, int b) {

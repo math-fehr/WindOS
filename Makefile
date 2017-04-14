@@ -26,7 +26,7 @@ RAMFS_OBJ = $(call rwildcard, $(RAMFS), *)
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 $(INCLUDE_C)
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 $(INCLUDE_C) -mno-unaligned-access
 
 HARDWARE_FLAGS = -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=soft \
 								 -mtune=cortex-a7
@@ -37,6 +37,7 @@ SFLAGS = $(INCLUDE_C)
 QEMU = qemu-fvm/arm-softmmu/fvm-arm
 
 SD_NAPPY = /media/nappy/boot/
+SD_LORTEX = /media/lucas/460D-5801/
 
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
@@ -50,6 +51,7 @@ qemu: $(RAMIMG_QEMU)
 
 #rpi: sets the flag for the RPI1 build.
 rpi: RPI_FLAG = -D RPI
+rpi: HARDWARE_FLAGS = -mfpu=vfp -mfloat-abi=soft -march=armv6zk -mtune=arm1176jzf-s
 rpi: all
 
 #rpi: sets the flag for the RPI2 build.
@@ -63,7 +65,7 @@ run: $(RAMIMG_QEMU)
 	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -serial stdio
 
 runs: $(RAMIMG_QEMU)
-	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -serial stdio
+	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -serial pty -serial stdio
 
 
 minicom:
@@ -109,6 +111,8 @@ $(BUILD)%.o: $(SOURCE)%.c
 
 copy_nappy: all
 	cp $(IMGDIR)* $(SD_NAPPY)
+copy_lortex: rpi
+	cp $(IMGDIR)* $(SD_LORTEX)
 
 clean:
 	@rm -fr $(BUILD)*

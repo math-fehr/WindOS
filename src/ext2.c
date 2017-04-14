@@ -4,7 +4,7 @@
 #include <math.h>
 
 ext2_device_t devices[10];
-int i = 0; 
+int i = 0;
 
 static inode_operations_t ext2_inode_operations = {
   .read_dir = ext2_lsdir,
@@ -20,18 +20,15 @@ superblock_t* ext2fs_initialize(storage_driver* disk) {
   disk->read(1024, sb, sizeof(ext2_superblock_t));
 
   if (sb->signature != 0xef53) {
-    kernel_printf("[ERROR][EXT2] Could not setup filesystem: wrong signature.\n");
-    kernel_printf("                0xEF53 != %#04X\n", sb->signature);
+    kdebug(D_EXT2, 3, "Could not setup filesystem: wrong signature.\n \
+                       0xEF53 != %#04X\n", sb->signature);
     free(sb);
     return NULL;
   }
-  kernel_printf("[INFO][EXT2] Signature found. Loading filesystem superblock.\n");
-
+  kdebug(D_EXT2, 1, "Signature found. Loading filesystem superblock.\n");
   ext2_extended_superblock_t* esb = (ext2_extended_superblock_t*) malloc(sizeof(ext2_extended_superblock_t));
 
-  //print_hex(sb->major_version,1);
-  //print_hex(sb->minor_version,1);
-  kernel_printf("[INFO][EXT2] Version is %d.%d\n", sb->major_version, sb->minor_version);
+  kdebug(D_EXT2, 1, "Version is %d.%d\n", sb->major_version, sb->minor_version);
   if (sb->major_version >= 1) {
     disk->read(1024 + 84, esb, sizeof(ext2_extended_superblock_t));
   } else {
@@ -52,6 +49,7 @@ superblock_t* ext2fs_initialize(storage_driver* disk) {
   result->root.sb = result;
   result->root.op = &ext2_inode_operations;
   result->root.size = ext2_get_inode_descriptor(result, 2).size;
+  result->root.attr = EXT2_INODE_DIRECTORY;
   i++;
   return result;
 }
@@ -173,7 +171,7 @@ int ext2_fread( inode_t vfs_inode, char* buffer, int size, int position) {
 
   ext2_inode_t info = ext2_get_inode_descriptor(fs, inode);
   if (!(info.type_permissions & EXT2_INODE_FILE)) {
-    kernel_printf("[INFO][EXT2] Inode %d is not a file.\n", inode);
+    kdebug(D_EXT2, 2, "Inode %d is not a file.\n", inode);
     return 0;
   }
 
@@ -237,7 +235,7 @@ void ext2_add_dir_entry(superblock_t* fs, int dir, int dest, char* name) {
   memcpy(entry, &dest, 4);
   entry[6] = strlen(name);
   entry[7] = EXT2_ENTRY_DIRECTORY;
-  strcpy(entry+8, name);
+  memcpy(entry+8, name, strlen(name)); // a strcpy writes a zero at the end.
   if (new_entry_size > block_size-last_entry_size-pos) { // create a new block
     uint16_t w_size = block_size;
     memcpy(entry+4, &w_size, 2);
@@ -248,6 +246,7 @@ void ext2_add_dir_entry(superblock_t* fs, int dir, int dest, char* name) {
     data.size = n_size;
     ext2_update_inode_data(fs, dir, data);
   } else { // append and update previous entry.
+    last_entry_size = 4*((last_entry_size + 3)/4); // 4-byte align.
     ext2_replace_file(fs, dir, (char*)&last_entry_size, 2, 4+pos+last_block*block_size);
 
     uint16_t w_size = block_size-last_entry_size-pos;
@@ -329,7 +328,7 @@ int ext2_rm (inode_t inode, char* name) {
             lst = lst->next;
           }
           if (cnt > 0) {
-            kernel_printf("[ERROR][VFS] Directory isn't empty. (%d)\n",cnt);
+            kdebug(D_EXT2, 2, "Directory isn't empty. (%d)\n",cnt);
             ok_to_delete = false;
           }
         }
@@ -391,15 +390,18 @@ vfs_dir_list_t* ext2_lsdir(inode_t inode_p) {
   vfs_dir_list_t* dir_list = 0;
   ext2_inode_t result = ext2_get_inode_descriptor(fs, inode);
   if (!(result.type_permissions & EXT2_INODE_DIRECTORY)) {
-    kernel_printf("[INFO][EXT2] Inode %d is not a directory.", inode);
+    kdebug(D_EXT2, 2, "Inode %d is not a directory.\n", inode);
     return 0;
   }
 
   int block_size = 1024 << sb->log_block_size;
+  int n_blocks = result.size / block_size;
   uint8_t* data =  (uint8_t*) malloc(block_size);
-  for (int i=0; i<12; i++) {
-    if (result.direct_block_ptr[i] != 0) { // There is data in the block
-      disk->read(result.direct_block_ptr[i]*block_size, data, block_size);
+  kdebug(D_EXT2, 1, "Inode %d, %d blocks\n", inode, n_blocks);
+  for (int i=0; i<n_blocks; i++) {
+    uintptr_t addr = ext2_get_block_address(fs, result, i);
+    if (addr != 0) { // There is data in the block
+      disk->read(addr*block_size, data, block_size);
       int explorer = 0;
       while (explorer < block_size) {
         int entry_size = data[explorer+4] + (data[explorer+5] << 8);
@@ -415,7 +417,7 @@ vfs_dir_list_t* ext2_lsdir(inode_t inode_p) {
           uint8_t length = data[explorer+6];
           char* name = (char*) malloc(length+1);
           name[length] = 0;
-          memcpy(name, &data[explorer+8], length);
+          memcpy(name, &data[explorer+8], 4*((length+3)/4)); //4-byte align TODO: check if useful
           vfs_dir_list_t* entry = malloc(sizeof(vfs_dir_list_t));
           entry->next = dir_list;
           entry->name = name;
@@ -425,6 +427,7 @@ vfs_dir_list_t* ext2_lsdir(inode_t inode_p) {
           ext2_inode_t r = ext2_get_inode_descriptor(fs, l_inode);
           entry->inode.attr = r.type_permissions;
           entry->inode.size = r.size;
+
 
           dir_list = entry;
 
@@ -461,10 +464,12 @@ int ext2_get_free_inode(superblock_t* fs) {
         }
       }
       free(bitmap);
-      return 1 + found + sb->inodes_per_group*i;
+      int free_inode = 1 + found + sb->inodes_per_group*i;
+      kdebug(D_EXT2, 1, "ext2_get_free_inode: here you go: %d\n", free_inode);
+      return free_inode;
     }
   }
-  kernel_printf("[INFO][EXT2] ext2_get_free_inode: error. No available inode.");
+  kdebug(D_EXT2, 2, "ext2_get_free_inode: error. No available inode.\n");
   return 0;
 }
 
@@ -495,7 +500,7 @@ int ext2_get_free_block(superblock_t* fs) {
       return found + sb->blocks_per_group*i;
     }
   }
-  kernel_printf("[INFO][EXT2] ext2_get_free_block: error. No available block.");
+  kdebug(D_EXT2, 2, "ext2_get_free_block: error. No available block.");
   return -1;
 }
 
@@ -721,7 +726,7 @@ bool ext2_register_inode(superblock_t* fs, int inode) {
              1);
 
   if (byte & (1 << (offset%8))) {
-    kernel_printf("[ERROR][EXT2] Inode %d is already taken.", inode);
+    kdebug(D_EXT2, 3, "Inode %d is already taken.", inode);
     return false;
   }
   group_descriptor.unallocated_inode_count--;
@@ -753,7 +758,7 @@ bool ext2_register_block(superblock_t* fs, int number) {
              1);
 
   if (byte & (1 << (offset%8))) {
-    kernel_printf("[ERROR][EXT2] Block %d is already taken.", number);
+    kdebug(D_EXT2, 3, "Block %d is already taken.", number);
     return false;
   }
   group_descriptor.unallocated_block_count--;
@@ -783,7 +788,7 @@ bool ext2_free_inode(superblock_t* fs, int inode) {
              1);
 
   if (!(byte & (1 << (offset%8)))) {
-    kernel_printf("[ERROR][EXT2] Inode %d is already free.", inode);
+    kdebug(D_EXT2, 2, "Inode %d is already free.", inode);
     return false;
   }
   // TODO: Setup a mutex here..
@@ -812,7 +817,7 @@ bool ext2_free_block(superblock_t* fs, int number) {
              1);
 
   if (!(byte & (1 << (offset%8)))) {
-    kernel_printf("[ERROR][EXT2] Block %d is already free.", number);
+    kdebug(D_EXT2, 2, "Block %d is already free.", number);
     return false;
   }
   // TODO: Setup a mutex here..

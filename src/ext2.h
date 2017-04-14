@@ -9,7 +9,7 @@
 //http://wiki.osdev.org/Ext2
 
 #pragma pack(push, 1)
-
+ 
 typedef struct {
   uint32_t total_inode_count;
   uint32_t total_block_count;
@@ -118,7 +118,7 @@ typedef struct {
   ext2_superblock_t* sb;
 } ext2_device_t;
 
- 
+
 superblock_t* ext2fs_initialize(storage_driver* disk);
 
 // Interface functions with the VFS
