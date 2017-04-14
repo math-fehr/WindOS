@@ -16,6 +16,9 @@
 #include "storage_driver.h"
 #include "process.h"
 #include "scheduler.h"
+#include "paging.h"
+
+extern void start_mmu(uint32_t ttl_adress, uint32_t flags);
 
 // Arbitrarily high adress so it doesn't conflict with something else.
 // = 8MB
@@ -42,8 +45,20 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r1;
 	(void) atags;
 
-	serial_init();
+    mmu_setup_mmu();
+    start_mmu(TTB_ADRESS,0x00000001);
+
+    serial_init();
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
+
+    /**
+     * MMU TEST
+     */
+    mmu_add_section(0x04200000, 0x02400000, 0);
+    volatile int* ptr = 0x04200042;
+    volatile int* ptr2 = 0x02400042;
+    *ptr = 42;
+    kernel_printf("ptr : %d\nptr2 : %d \n", *ptr, *ptr2);
 
 	int n = 5;
 	setup_scheduler();
