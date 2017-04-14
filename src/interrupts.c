@@ -12,15 +12,6 @@ void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
 
 void __attribute__ ((interrupt("IRQ"))) interrupt_vector(void) {
     disable_interrupts();
-    static bool on = false;
-    if(on) {
-        GPIO_setPinValue(GPIO_LED_PIN,true);
-    }
-    else {
-        GPIO_setPinValue(GPIO_LED_PIN,false);
-    }
-    on = !on;
-    GPIO_setPinValue(47,false);
     Timer_ClearInterrupt();
 }
 
