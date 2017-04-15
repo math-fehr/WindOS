@@ -48,6 +48,18 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) atags;
 
 	serial_init();
+	uint32_t* atags_ptr = 0x100;
+
+	#define ATAG_NONE 0
+	#define ATAG_CORE 0x54410001
+	#define ATAG_MEM  0x54410002
+
+	while (*(atags_ptr+1) != ATAG_NONE) {
+		if (*(atags_ptr+1) == ATAG_MEM) {
+			kernel_printf("Memory size: %#08x\n",*(atags_ptr+2));
+		}
+		atags_ptr += (*atags_ptr);
+	}
 
 	GPIO_setOutputPin(GPIO_LED_PIN);
 
