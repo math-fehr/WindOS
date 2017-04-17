@@ -3,6 +3,9 @@
 #include "serial.h"
 #include "debug.h"
 
+/**
+ * function used to make sure data is sent in order to GPIO
+ */
 extern void dmb();
 
 void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector(void) {

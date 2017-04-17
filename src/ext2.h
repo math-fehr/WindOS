@@ -8,8 +8,12 @@
 
 //http://wiki.osdev.org/Ext2
 
+/**
+ * Theses functions are used to manipulates ext2 filesystem
+ */
+
 #pragma pack(push, 1)
- 
+
 typedef struct {
   uint32_t total_inode_count;
   uint32_t total_block_count;
@@ -148,4 +152,5 @@ void ext2_set_block_group_descriptor(superblock_t* fs, ext2_block_group_descript
 int ext2_mkdir (inode_t, char*, int);
 int ext2_rm (inode_t, char*);
 int ext2_mkfile (inode_t, char*, int);
-#endif
+
+#endif //EXT2_H

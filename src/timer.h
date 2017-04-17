@@ -8,13 +8,16 @@
 // TIP: RPI clock speed is 250MHz
 // http://raspberrypi.stackexchange.com/questions/699/what-spi-frequencies-does-raspberry-pi-support
 
-// The system timer isn't emulated in QEMU
+// Base adress of the system timer
 #ifdef RPI2
 #define RPI_SYSTIMER_BASE 0x3F003000
 #else
 #define RPI_SYSTIMER_BASE 0x20003000
 #endif
 
+/**
+ * Structure of the system timer
+ */
 typedef struct {
   volatile uint32_t control_status;
   volatile uint32_t counter_lo;
@@ -25,16 +28,27 @@ typedef struct {
   volatile uint32_t compare3;
 } rpi_sys_timer_t;
 
+
+/**
+ * Wait in the function for time microseconds
+ */
 void Timer_WaitMicroSeconds(uint32_t time);
+
+/**
+ * Wait in the function for approximately count cycles (not precise)
+ */
 void Timer_WaitCycles(uint32_t count);
 
-// Found in page 196 of the BCM2835 manual.
+// Base adress of the arm timer
 #ifdef RPI2
 #define RPI_ARMTIMER_BASE 0x3F00B400
 #else
 #define RPI_ARMTIMER_BASE 0x2000B400
 #endif
 
+/**
+ * Scructure of the ARM timer
+ */
 typedef struct {
   volatile uint32_t load;
   const volatile uint32_t value;
@@ -47,6 +61,9 @@ typedef struct {
   volatile uint32_t freerunning_counter;
 } rpi_arm_timer_t;
 
+/**
+ * Defines used by the functions
+ */
 #define TIMER_CTRL_COUNTER_23BITS (1 << 1)
 #define TIMER_CTRL_PRESCALE_1 0
 #define TIMER_CTRL_PRESCALE_16 (1 << 2)
@@ -56,16 +73,59 @@ typedef struct {
 #define TIMER_CTRL_HALT_STOP (1 << 8) // Timer halted if ARM is in debug halt mode
 #define TIMER_CTRL_FREERUNNING_COUNTER (1 << 9)
 
+/**
+ * Setup the timer
+ */
 void Timer_Setup();
+
+/**
+ * Enable the timer
+ * The function Timer_SetLoad or SetReload must have been called
+ * to change the frequency of the clock
+ */
 void Timer_Enable();
+
+/**
+ * Enable the interrupts
+ */
 void Timer_Enable_Interrupts();
+
+/**
+ * Disable the interrupts
+ */
 void Timer_Disable_Interrupts();
+
+/**
+ * Disable the timer
+ */
 void Timer_Disable();
+
+/**
+ * Change the frequency of the timer (in microseconds)
+ * Calling this function reset the timer
+ */
 void Timer_SetLoad(uint32_t value);
+
+/**
+ * Change the frequency of the timer (in microseonds)
+ * The frequency is reset on the next tick
+ */
 void Timer_SetReload(uint32_t value);
+
+/**
+ * Inform the timer that the interruption has been treated
+ */
 void Timer_ClearInterrupt();
+
+/**
+ * Return the current time
+ */
 uint32_t Timer_GetTime();
 
+/**
+ * Return posix time (not implemented)
+ * TODO implement that function
+ */
 uint32_t timer_get_posix_time();
 
-#endif
+#endif //TIMER_H

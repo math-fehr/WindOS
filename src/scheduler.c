@@ -4,18 +4,20 @@
 #include "debug.h"
 #include "string.h"
 
+//The list of possible processes (not all are active)
 static process process_list[MAX_PROCESSES];
+//The list of active processes (only the first number_active_processes are active)
 static int active_processes[MAX_PROCESSES];
+//The list of free processes (only the first number_free_processes are active)
 static int free_processes[MAX_PROCESSES];
 
+//The current process running
 static int current_process;
+//The number of active processes
 static int number_active_processes;
+//The number of free processes
 static int number_free_processes;
 
-int get_number_active_processes() {return number_active_processes;}
-
-process* get_process_list() {return process_list;}
-int* get_active_processes() {return active_processes;}
 
 void setup_scheduler() {
     kernel_printf("[SHED] Scheduler set up!\n");
@@ -76,4 +78,19 @@ int create_process() {
     process_list[new_process_id].dummy = 0;
     process_list[new_process_id].status = status_active;
     return new_process_id;
+}
+
+
+int get_number_active_processes() {
+    return number_active_processes;
+}
+
+
+process* get_process_list() {
+    return process_list;
+}
+
+
+int* get_active_processes() {
+    return active_processes;
 }

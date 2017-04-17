@@ -13,6 +13,13 @@ intptr_t _sbrk(int incr) {
 
   prev_heap_end = heap_end;
   heap_end += incr;
-  return (intptr_t)prev_heap_end; 
+  return (intptr_t)prev_heap_end;
 }
 
+int min(int const a, int const b) {
+    return a < b ? a : b;
+}
+
+int max(int const a, int const b) {
+    return a > b ? a : b;
+}

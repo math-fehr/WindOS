@@ -1,6 +1,9 @@
 .section .init
 .globl _start
 
+  /**
+   * redirect to functions that handle interrupts
+   */
 _start:
 	ldr pc, _reset_h
 	ldr pc, _undefined_instruction_vector_h
@@ -11,6 +14,9 @@ _start:
 	ldr pc, _interrupt_vector_h
 	ldr pc, _fast_interrupt_vector_h
 
+  /**
+   * Adress of functions that handle interrupts
+   */
 _reset_h:                           .word   _reset_
 _undefined_instruction_vector_h:    .word   _undefined_instruction_vector
 _software_interrupt_vector_h:       .word   _software_interrupt_vector
@@ -20,6 +26,10 @@ _unused_handler_h:                  .word   _reset_
 _interrupt_vector_h:                .word   _interrupt_vector
 _fast_interrupt_vector_h:           .word   _fast_interrupt_vector
 
+
+  /**
+   * Theses functions call the C functions
+   */
 _undefined_instruction_vector:
 	mov sp, #0x1000
 	b undefined_instruction_vector
@@ -49,56 +59,46 @@ _reset_:
 	//Setting up interrupt table at adress 0x0000
 	ldr     r0, =_start
 	mov     r1, #0x0000
-	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9} // on copie l'IVT
+	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9} // copy the IVT
 	stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
-	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9} // on copie les données suivantes
+	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
 	stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
 
 	ldr sp, =(64*1024*1024) // 64MB of stack
-	ldr r4, =__bss_start
-	ldr r9, =__bss_end
+	ldr r4, =__bss_start //	this value is set by gcc
+	ldr r9, =__bss_end   //	this value is set by gcc
 	mov r5, #0
 	mov r6, #0
 	mov r7, #0
 	mov r8, #0
 	b zero_loop_end
 
-zero_loop_beg: // On met à zéro le segment bss
+
+zero_loop_beg: // We set the bss section to zero
 	stmia r4!, {r5-r8}
+
 
 zero_loop_end:
 	cmp r4, r9
 	blo zero_loop_beg
 
-	ldr r3, =kernel_main
+	ldr r3, =kernel_main //We call kernel_main, the entry of the C kernel
 	blx r3
 
-enable_interrupts:
-	mrs     r0, cpsr
-	bic     r0, r0, #0x80
-	msr     cpsr_c, r0
-	mov     pc, lr
 
-disable_interrupts:
-	mrs     r0, cpsr
-	orr     r0, r0, #0x80
-	msr     cpsr_c, r0
-	mov     pc, lr
-
-fin:
+end: //If kernel_main returns, the code here traps the program counter
 	wfe
-	b fin
+	b end
 
 
-// From https://github.com/xinu-os/xinu/blob/master/system/arch/arm/memory_barrier.S
+
+//  From https://github.com/xinu-os/xinu/blob/master/system/arch/arm/memory_barrier.S
 // When accessing different peripherals, data can arrive out of order.
 // data-memory barrier ensure all data has been transferred before moving on
 /* From BCM 2835 manual page 7:
 You should place:
-•	A memory write barrier before the first write to a
-peripheral.
-•	A memory read barrier after the last read of a periphe
-ral
+•	A memory write barrier before the first write to a peripheral.
+•	A memory read barrier after the last read of a peripheral
 */
 .globl dmb
 dmb:

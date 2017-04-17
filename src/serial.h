@@ -7,7 +7,9 @@
 #include "gpio.h"
 #include "timer.h"
 
-
+/**
+ * base adress of the peripheral
+ */
 #ifdef RPI2
 #define AUX_BASE 0x3f215000
 #else
@@ -15,7 +17,9 @@
 #endif
 
 
-
+/**
+ * Structure of the peripheral
+ */
 typedef struct {
   volatile unsigned int IRQ;
   volatile unsigned int ENABLES;
@@ -52,16 +56,48 @@ typedef struct {
 } aux_t;
 
 
+/**
+ * Return a pointer to the peripheral
+ */
 aux_t* serial_get_aux();
+
+/**
+ * Initialize the serial
+ */
 void serial_init();
+
+/**
+ * Output a single character
+ */
 void serial_putc(unsigned char data);
+
+/**
+ * Output a string
+ */
 void serial_write(char* str);
+
+/**
+ * Print a new line
+ */
 void serial_newline();
+
+/**
+ * Read a character from the serial
+ */
 unsigned char serial_readc();
+
+/**
+ * Read from the serial until a end of line is detected
+ * If the line is larger than buffer_size,
+ * only the firsts buffer_size characters are read
+ * Returns the number of characters read
+ */
 int serial_readline(char* buffer, int buffer_size);
 
 
-
+/**
+ * Some defines used by the peripheral
+ */
 
 #define AUX_ENA_MINIUART            ( 1 << 0 )
 #define AUX_ENA_SPI1                ( 1 << 1 )
