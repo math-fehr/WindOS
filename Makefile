@@ -20,7 +20,7 @@ LINKER_QEMU = kernel_qemu.ld
 # recursive wildcard.
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
-OBJECTS 	=  $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
+OBJECTS 	=  $(patsubst $(SOURCE)%.S,$(BUILD)%.o,$(wildcard $(SOURCE)*.S))
 OBJECTS_C = $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.c))
 RAMFS_OBJ = $(call rwildcard, $(RAMFS), *)
 
@@ -95,7 +95,7 @@ $(BUILD)output_qemu.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) \
 							 -o $(BUILD)output_qemu.elf -T $(LINKER_QEMU) -lg -lgcc
 
-$(BUILD)%.o: $(SOURCE)%.s
+$(BUILD)%.o: $(SOURCE)%.S
 	$(ARMGNU)-as -I $(SOURCE) $< -o $@ $(SFLAGS)
 
 -include $(BUILD)$(OBJECTS_C:.o=.d)

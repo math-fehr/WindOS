@@ -354,9 +354,7 @@ int ext2_rm (inode_t inode, char* name) {
   return 0;
 }
 
-int ext2_mkfile (inode_t inode, char* name, int perm) {
-  int new_file = ext2_get_free_inode(inode.sb);
-  ext2_register_inode(inode.sb, new_file);
+ext2_inode_t ext2_create_inode(int perm) {
   ext2_inode_t data;
   data.creation_time = timer_get_posix_time();
   data.last_access_time = timer_get_posix_time();
@@ -370,6 +368,14 @@ int ext2_mkfile (inode_t inode, char* name, int perm) {
   data.singly_indirect_block_ptr = 0;
   data.doubly_indirect_block_ptr = 0;
   data.triply_indirect_block_ptr = 0;
+  data.flags = 0;
+  return data;
+}
+
+int ext2_mkfile (inode_t inode, char* name, int perm) {
+  int new_file = ext2_get_free_inode(inode.sb);
+  ext2_register_inode(inode.sb, new_file);
+  ext2_inode_t data = ext2_create_inode(perm);
   ext2_update_inode_data(inode.sb, new_file, data);
 
   ext2_add_dir_entry(inode.sb, inode.number, new_file, name);

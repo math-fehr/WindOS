@@ -51,19 +51,11 @@ rpi_irq_controller_t* RPI_GetIRQController(void) {
 }
 
 void enable_interrupts(void) {
-  kdebug(D_IRQ, 1, "Enabling interrupts.\n");
-  asm volatile
-  ("mrs r0, cpsr\n"
-    "bic r0, r0, #0x80\n"
-    "msr cpsr_c, r0\n"
-  );
+    kdebug(D_IRQ, 1, "Enabling interrupts.\n");
+    asm volatile("cpsie i");
 }
 
 void disable_interrupts(void) {
-  kdebug(D_IRQ, 1, "Disabling interrupts.\n");
-  asm volatile
-  ("mrs r0, cpsr\n"
-    "orr r0, r0, #0x80\n"
-    "msr cpsr_c, r0\n"
-  );
+    kdebug(D_IRQ, 1, "Disabling interrupts.\n");
+    asm volatile("cpsid i");
 }
