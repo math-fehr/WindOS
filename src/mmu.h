@@ -80,4 +80,6 @@ void mmu_add_tiny_page(uintptr_t fine_table_address, uintptr_t from,
 
 void mmu_delete_tiny_page(uintptr_t fine_table_address, uintptr_t address);
 
+void free_section(uintptr_t ttb_address, uintptr_t section);
+
 #endif //PAGING_H

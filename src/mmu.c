@@ -1,4 +1,5 @@
-#include "paging.h"
+#include "mmu.h"
+#include "stdlib.h"
 
 
 void mmu_setup_ttb_kernel(uintptr_t ttb_address) {
