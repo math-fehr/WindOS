@@ -7,7 +7,9 @@ static rpi_sys_timer_t* rpiSystemTimer =
 static rpi_arm_timer_t* rpiArmTimer =
   (rpi_arm_timer_t*)RPI_ARMTIMER_BASE;
 
-
+/**
+ * Ensure the data comes in order to the peripheral
+ */
 extern void dmb();
 
 void Timer_Setup() {
@@ -83,4 +85,5 @@ void Timer_WaitCycles(uint32_t count) {
   for (;val>0;--val);
 }
 
+//TODO implement the function
 uint32_t timer_get_posix_time() {return 42;}

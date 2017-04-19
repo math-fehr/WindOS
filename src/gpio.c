@@ -2,12 +2,14 @@
 
 extern void dmb();
 
-static rpi_gpio_controller_t* GPIOController =
+static volatile rpi_gpio_controller_t* GPIOController =
   (rpi_gpio_controller_t*) GPIO_BASE;
- 
+
+
 rpi_gpio_controller_t* getGPIOController(void) {
     return GPIOController;
 }
+
 
 void GPIO_setPinFunction(int pin, int function) {
   kdebug(D_GPIO, 1, "Set pin %d to function %d\n", pin, function);
@@ -16,15 +18,17 @@ void GPIO_setPinFunction(int pin, int function) {
 
   int mask = ~(0b111 << (ofs*3));
   function &= 0b111;
-  dmb();
+  dmb(); //this ensure that the gpio will recieve data in order
   getGPIOController()->GPFSEL[reg] &= mask;
   getGPIOController()->GPFSEL[reg] |= (function << ofs*3);
-  dmb();
+  dmb(); //this too
 }
+
 
 void GPIO_setOutputPin(int pin) {
   GPIO_setPinFunction(pin, PIN_OUTPUT);
 }
+
 
 void GPIO_setPinValue(int pin, bool value) {
   kdebug(D_GPIO, 1, "Set pin %d to value %d\n", pin, value);
@@ -33,11 +37,11 @@ void GPIO_setPinValue(int pin, bool value) {
     set = 1;
   }
   pin &= 31;
-  dmb();
+  dmb(); //this ensure that the gpio will recieve data in order
   if(value) {
       getGPIOController()->GPSET[set] |= (1 << pin);
   } else {
       getGPIOController()->GPCLR[set] |= (1 << pin);
   }
-  dmb();
+  dmb(); //this too
 }

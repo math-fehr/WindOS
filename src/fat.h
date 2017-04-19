@@ -7,6 +7,10 @@
 
 // https://staff.washington.edu/dittrich/misc/fatgen103.pdf
 
+/**
+ * Theses functions are used to manipulate the fat filesystem
+ */
+
 #pragma pack(push, 1)
 
 typedef struct {
@@ -87,4 +91,4 @@ superblock_t* fat_init_fs(storage_driver* disk);
 int fat_compute_root_directory();
 void fat_ls_root();
 
-#endif
+#endif //FAT_H

@@ -206,4 +206,4 @@ void fat_ls_root() {
   } while (current_entry.name[0] != 0);
 }
 
-#endif
+#endif //NON

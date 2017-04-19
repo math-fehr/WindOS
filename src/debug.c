@@ -3,15 +3,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * The number of sources
+ */
 #define N_SOURCES 8
 
+/**
+ * The sources of log
+ */
 const char sources[N_SOURCES][9]= { "KERNEL", "SERIAL", "WESH",
                                     "TIMER" , "IRQ"   , "VFS" ,
                                     "EXT2"  , "GPIO"           };
 
+/**
+ * The value used to know when to output log
+ */
 const int enable_source[N_SOURCES] = { 10,10,10,
                                        10,10,10,
                                        10,10};
+
 
 void kernel_printf(const char* fmt, ...) {
   va_list args;
@@ -25,6 +35,11 @@ void kernel_printf(const char* fmt, ...) {
   free(buffer);
 }
 
+
+/**
+ * Used in function kdebug.
+ * Act the same as kernel_printf, but when the va_list is already set up
+ */
 void vkernel_printf(const char* fmt, va_list args) {
   int size = vsnprintf(NULL, 0, fmt, args);
   char* buffer = (char*) malloc(size+1);
@@ -33,6 +48,7 @@ void vkernel_printf(const char* fmt, va_list args) {
   serial_write(buffer);
   free(buffer);
 }
+
 
 void kdebug(int from, int level, const char* fmt, ...) {
   if (from < 0 || from >= N_SOURCES) return;
@@ -45,15 +61,7 @@ void kdebug(int from, int level, const char* fmt, ...) {
   va_end(args);
 }
 
-int min(int a, int b) {
-  return a < b ? a : b;
-}
 
-int max(int a, int b) {
-  return a > b ? a : b;
-}
-
-// computes a^b
 int ipow(int a, int b) {
   int result = 1;
 

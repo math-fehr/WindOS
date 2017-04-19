@@ -6,6 +6,9 @@
 
 static aux_t* auxiliary = (aux_t*)AUX_BASE;
 
+/**
+ * Ensures that data comes in order when accessing the peripheral
+ */
 extern void dmb();
 
 aux_t* serial_get_aux()

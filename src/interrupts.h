@@ -5,12 +5,22 @@
 #include "stddef.h"
 #include "stdint.h"
 
+/**
+ * Theses functions handle interrupts made by the processor
+ */
+
+/**
+ * The base adress of the interrupt controller
+ */
 #ifdef RPI2
 #define RPI_INTERRUPT_CONTROLLER_BASE 0x3F00B200UL
 #else
 #define RPI_INTERRUPT_CONTROLLER_BASE 0x2000B200UL
 #endif
 
+/**
+ * The structure of the interrupt controller
+ */
 typedef struct {
   volatile uint32_t IRQ_basic_pending;
   volatile uint32_t IRQ_pending_1;
@@ -24,8 +34,10 @@ typedef struct {
   volatile uint32_t Disable_Basic_IRQs;
 } rpi_irq_controller_t;
 
-/** @brief Bits in the Enable_Basic_IRQs register to enable various interrupts.
-        See the BCM2835 ARM Peripherals manual, section 7.5 */
+/**
+ * Bits in the Enable_Basic_IRQs register to enable various interrupts.
+ * See the BCM2835 ARM Peripherals manual, section 7.5
+ */
 #define RPI_BASIC_ARM_TIMER_IRQ         (1 << 0)
 #define RPI_BASIC_ARM_MAILBOX_IRQ       (1 << 1)
 #define RPI_BASIC_ARM_DOORBELL_0_IRQ    (1 << 2)
@@ -35,8 +47,20 @@ typedef struct {
 #define RPI_BASIC_ACCESS_ERROR_1_IRQ    (1 << 6)
 #define RPI_BASIC_ACCESS_ERROR_0_IRQ    (1 << 7)
 
+/**
+ * Return a pointer to the interrupt controller
+ */
 rpi_irq_controller_t* RPI_GetIRQController(void);
+
+
+/**
+ * enable interrupts
+ */
 void enable_interrupts(void);
+
+/**
+ * disable interrupts
+ */
 void disable_interrupts(void);
 
-#endif
+#endif //INTERRUPTS_H

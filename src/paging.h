@@ -4,28 +4,80 @@
 #include "stdint.h"
 
 //Number of possible pages
-#define NB_ENTRIES_TTB 4096
+#define NB_SECTION_TTB 4096
+#define NB_PAGES_COARSE_TABLE 256
+#define NB_PAGES_FINE_TABLE 1024
 
 /**
  * Definition of 2 bits domain control for paging
  */
-#define DC_2B_NO_ACCESS (0b00 << 10)  //Accesses generates a domain fault
-#define DC_2B_CLIENT    (0b01 << 10)  //Accesses are checked with access permission bits
-#define DC_2B_RESERVED  (0b10 << 10)  //Using this value produce unpredictable values
-#define DC_2B_MANAGER   (0b11 << 10)  //Permission fault are not generated
+#define DC_NO_ACCESS 0b00  //Accesses generates a domain fault
+#define DC_CLIENT    0b01  //Read/Write for Priviledged, and no access for User
+#define DC_RESERVED  0b10  //Read/Write for Priviledged, and Read for User
+#define DC_MANAGER   0b11  //Read/Write for User and Priviledged
+
+/**
+ * The domain bits are the 8:5 bits
+ */
 
 /**
  * Definition of other flags
  */
 #define ENABLE_CACHE        (1 << 3) //Use the cache
 #define ENABLE_WRITE_BUFFER (1 << 2) //Enable write buffer
-#define SECTION_1MB         (1 << 1) //The flag to have a 1Mb section
 
 
-#define TTB_ADRESS 0x4000  //The adress of the table translation base
+/**
+ * Definition of formats for first-level descriptor
+ */
+#define UNALLOWED_SECTION   0b00 //declare an unallowed section
+#define SECTION             0b10 //define a 1Mb section
+#define COARSE_PAGE_TABLE   0b01 //redirect a section to a coarse page table
+#define FINE_PAGE_TABLE     0b11 //redirect a section to a fine page table
 
-void mmu_setup_mmu();
 
-void mmu_add_section(uint32_t const from, uint32_t const to, uint32_t const flags);
+/**
+ * Definition of formats for second-level descriptor
+ */
+#define UNALLOWED_PAGE      0b00 //defines an unallowed page
+#define LARGE_PAGE          0b10 //defines a 64kb page
+#define SMALL_PAGE          0b01 //defines a 4kb page
+#define TINY_PAGE           0b11 //defines a 1kb page
+
+
+//ttb_address should be 16kb aligned
+void mmu_setup_ttb(uintptr_t ttb_address);
+
+//ttb_address should be 16kb aligned
+void mmu_setup_ttb_kernel(uintptr_t ttb_address);
+
+
+void mmu_setup_coarse_table(uintptr_t coarse_table_address, uintptr_t ttb_address,
+                            uintptr_t from);
+
+
+void mmu_setup_fine_table(uintptr_t fine_table_address, uintptr_t ttb_address,
+                          uintptr_t from);
+
+
+void mmu_add_section(uintptr_t ttb_address, uintptr_t from,
+                     uintptr_t to, uint32_t flags);
+
+
+void mmu_delete_section(uintptr_t ttb_address, uintptr_t address);
+
+
+void mmu_add_small_page(uintptr_t coarse_table_address, uintptr_t from,
+                        uintptr_t to, uint32_t flags);
+
+
+void mmu_delete_small_page(uintptr_t coarse_table_address, uintptr_t address);
+
+
+void mmu_add_tiny_page(uintptr_t fine_table_address, uintptr_t from,
+                       uintptr_t to, uint32_t flags);
+
+
+void mmu_delete_tiny_page(uintptr_t fine_table_address, uintptr_t address);
 
 #endif //PAGING_H

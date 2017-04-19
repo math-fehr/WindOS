@@ -62,7 +62,7 @@ $(BUILD)fs.img: $(RAMFS_OBJ)
 	genext2fs -b 4096 -d $(RAMFS) $(BUILD)fs.img
 
 run: $(RAMIMG_QEMU)
-	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty -serial pty
+	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty
 
 runs: $(RAMIMG_QEMU)
 	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -serial pty -serial stdio

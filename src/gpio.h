@@ -7,12 +7,19 @@
 
 #include "debug.h"
 
+/**
+ * The base adress of the GPIO
+ */
 #ifdef RPI2
 #define GPIO_BASE 0x3F200000UL
 #else
 #define GPIO_BASE 0x20200000UL
 #endif
 
+
+/**
+ * The flags identifying the functions of the pins
+ */
 #define PIN_OUTPUT  0b001
 #define PIN_INPUT   0b000
 #define PIN_FUN0    0b100
@@ -23,6 +30,9 @@
 #define PIN_FUN5    0b010
 
 
+/**
+ * The structure of the GPIO in memory
+ */
 typedef struct {
   volatile uint32_t GPFSEL[6];
   volatile uint32_t GP_Reserved_0;
@@ -52,9 +62,27 @@ typedef struct {
 } rpi_gpio_controller_t;
 
 
+/**
+ * Return a pointer to the GPIO
+ */
 rpi_gpio_controller_t* getGPIOController(void);
+
+
+/**
+ * Set a function to a pin
+ */
 void GPIO_setPinFunction(int pin, int function) ;
+
+
+/**
+ * Set a pin in output mode
+ */
 void GPIO_setOutputPin(int pin);
+
+/**
+ * Set a value to a pin
+ * true for activee and false for inactive
+ */
 void GPIO_setPinValue(int pin, bool value);
 
 #endif
