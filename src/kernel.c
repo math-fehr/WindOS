@@ -16,12 +16,12 @@
 #include "storage_driver.h"
 #include "process.h"
 #include "scheduler.h"
-#include "paging.h"
+#include "mmu.h"
 
 
-extern void start_mmu(uint32_t ttl_adress, uint32_t flags);
+extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
-// Arbitrarily high adress so it doesn't conflict with something else.
+// Arbitrarily high address so it doesn't conflict with something else.
 // = 8MB
 uint32_t __ramdisk = 0x0800000;
 extern uint32_t __start;
@@ -46,13 +46,15 @@ int memory_write(uint32_t address, void* buffer, uint32_t size) {
 
 volatile unsigned int tim;
 
+volatile unsigned int __ram_size;
+
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r0;
 	(void) r1;
 	(void) atags;
 
 	serial_init();
-	uint32_t* atags_ptr = 0x100;
+	uint32_t* atags_ptr = (uint32_t*)0x100;
 
 	#define ATAG_NONE 0
 	#define ATAG_CORE 0x54410001
@@ -62,15 +64,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 		if (*(atags_ptr+1) == ATAG_MEM) {
 			kernel_printf("Memory size: %#08x\n",*(atags_ptr+2));
 		}
+		__ram_size = *(atags_ptr+2);
 		atags_ptr += (*atags_ptr);
 	}
-  mmu_setup_mmu();
-  start_mmu(TTB_ADRESS,0x00000001);
 
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
 
 	GPIO_setOutputPin(GPIO_LED_PIN);
-
 
 	Timer_Setup();
 
@@ -81,19 +81,21 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 		GPIO_setPinValue(GPIO_LED_PIN, false);
 	}
 
-//	enable_interrupts();
+	enable_interrupts();
 	Timer_SetLoad(1000000);
 	Timer_Enable();
 	Timer_Enable_Interrupts();
 
     /**
      * MMU TEST
-     */
-    mmu_add_section(0x04200000, 0x02400000, 0);
-    volatile int* ptr = 0x04200042;
-    volatile int* ptr2 = 0x02400042;
+
+    mmu_setup_ttb_kernel(0x00800000);
+    *(uint32_t*)(0x00800000 | 0x4) = 0;
+    start_mmu(0x00800000,0x00000001);
+    volatile int* ptr = 0x00100042;
     *ptr = 42;
-    kernel_printf("ptr : %d\nptr2 : %d \n", *ptr, *ptr2);
+    kernel_printf("ptr : %d\n", *ptr);
+    */
 
 	int n = 5;
 	setup_scheduler();

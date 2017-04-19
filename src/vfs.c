@@ -158,6 +158,18 @@ int vfs_fseek(int fd, int offset) {
   return pos - cur_ofs;
 }
 
+int vfs_fmove(int fd, int position) {
+  if (!open_file_bitmap[fd]) return 0;
+
+  int size = file_table[fd].inode->size;
+  int pos = position;
+  if (pos < 0) pos = 0;
+  if (pos > size) pos = size;
+  file_table[fd].current_offset = pos;
+
+  return pos;
+}
+
 int vfs_fwrite(int fd, char* buffer, int length) {
   if (!open_file_bitmap[fd]) return 0;
   file_t f = file_table[fd];

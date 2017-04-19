@@ -6,7 +6,7 @@
 #include "stdint.h"
 #include "string.h"
 #include "debug.h"
- 
+
 // https://fr.wikipedia.org/wiki/Virtual_File_System
 struct superblock_t;
 typedef struct superblock_t superblock_t;
@@ -98,6 +98,7 @@ void vfs_mount(superblock_t* sb, char* path);
 int vfs_fopen(char* path);
 int vfs_fclose(int fd);
 int vfs_fseek(int fd, int offset);
+int vfs_fmove(int fd, int position);
 int vfs_fwrite(int fd, char* buffer, int length);
 int vfs_fread(int fd, char* buffer, int length);
 vfs_dir_list_t* vfs_readdir(char* path);

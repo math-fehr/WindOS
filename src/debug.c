@@ -6,21 +6,21 @@
 /**
  * The number of sources
  */
-#define N_SOURCES 8
+#define N_SOURCES 9
 
 /**
  * The sources of log
  */
 const char sources[N_SOURCES][9]= { "KERNEL", "SERIAL", "WESH",
                                     "TIMER" , "IRQ"   , "VFS" ,
-                                    "EXT2"  , "GPIO"           };
+                                    "EXT2"  , "GPIO"  , "PROCESS"};
 
 /**
  * The value used to know when to output log
  */
 const int enable_source[N_SOURCES] = { 10,10,10,
                                        10,10,10,
-                                       10,10};
+                                       10,10,10};
 
 
 void kernel_printf(const char* fmt, ...) {

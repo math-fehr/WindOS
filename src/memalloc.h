@@ -1,5 +1,5 @@
-#ifndef PAGING_H
-#define PAGING_H
+#ifndef MEMALLOC_H
+#define MEMALLOC_H
 
 
 #include "stddef.h"
@@ -23,8 +23,12 @@ struct page_t{
 typedef struct page_list_t page_list_t;
 struct page_list_t {
   page_list_t* next;
-  int size; // in number of tiny pages.
-  int address; // tiny page-aligned (1->1024).
+  int size; // in number of pages.
+  int address; // page-aligned
 };
+
+void paging_init(int n_total_pages, int n_reserved_pages);
+page_list_t* paging_allocate(int n_pages);
+
 
 #endif

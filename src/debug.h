@@ -33,6 +33,7 @@
 #define D_VFS    5
 #define D_EXT2   6
 #define D_GPIO   7
+#define D_PROCESS   8
 
 /**
  * printf to serial
