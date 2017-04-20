@@ -6,19 +6,7 @@
 #include "stdint.h"
 
 #include "debug.h"
-
-//http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0198e/Babegida.html
-#define PAGE_SECTION 1024*1024
-#define PAGE_LARGE   64*1024
-#define PAGE_SMALL   4*1024
-#define PAGE_TINY    1*1024
-
-typedef struct page_t page_t;
-struct page_t{
-  int size;
-  int address;
-  page_t* next;
-};
+#include "mmu.h"
 
 typedef struct page_list_t page_list_t;
 struct page_list_t {
@@ -29,6 +17,6 @@ struct page_list_t {
 
 void paging_init(int n_total_pages, int n_reserved_pages);
 page_list_t* paging_allocate(int n_pages);
-
+int memalloc(uint32_t ttb_address, uintptr_t address, size_t size);
 
 #endif

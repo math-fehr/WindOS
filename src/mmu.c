@@ -81,11 +81,13 @@ void mmu_delete_small_page(uintptr_t coarse_table_address, uintptr_t address) {
 
 void mmu_add_tiny_page(uintptr_t fine_table_address, uintptr_t from,
                         uintptr_t to, uint32_t flags) {
-    uintptr_t address = (fine_table_address & 0xFFFFFC00) | ((from & 0xFF000) >> 10);
-    uint32_t value = (to & 0xFFFFF000) | (0x30) | flags | TINY_PAGE;
+    uintptr_t address = (fine_table_address & 0xFFFFF000) | ((from & 0xFFC00) >> 8);
+    uint32_t value = (to & 0xFFFFFC00) | (0x30) | flags | TINY_PAGE;
     *((uint32_t*)(address)) = value;
 }
 
 void mmu_delete_tiny_page(uintptr_t fine_table_address, uintptr_t address) {
     *(uint32_t*)(fine_table_address | ((address & 0xFFC00) >> 8)) = 0;
 }
+
+

@@ -8,6 +8,12 @@
 #define NB_PAGES_COARSE_TABLE 256
 #define NB_PAGES_FINE_TABLE 1024
 
+//Size of pages
+#define PAGE_SECTION 1024*1024
+#define PAGE_LARGE   64*1024
+#define PAGE_SMALL   4*1024
+#define PAGE_TINY    1*1024
+
 /**
  * Definition of 2 bits domain control for paging
  */
@@ -51,7 +57,7 @@ void mmu_setup_ttb(uintptr_t ttb_address);
 //ttb_address should be 16kb aligned
 void mmu_setup_ttb_kernel(uintptr_t ttb_address);
 
- 
+
 void mmu_setup_coarse_table(uintptr_t coarse_table_address, uintptr_t ttb_address,
                             uintptr_t from);
 

@@ -25,15 +25,16 @@
 /**
  * The sources of debug log
  */
-#define D_KERNEL 0
-#define D_SERIAL 1
-#define D_WESH   2
-#define D_TIMER  3
-#define D_IRQ    4
-#define D_VFS    5
-#define D_EXT2   6
-#define D_GPIO   7
-#define D_PROCESS   8
+#define D_KERNEL  0
+#define D_SERIAL  1
+#define D_WESH    2
+#define D_TIMER   3
+#define D_IRQ     4
+#define D_VFS     5
+#define D_EXT2    6
+#define D_GPIO    7
+#define D_PROCESS 8
+#define D_MEMORY  9
 
 /**
  * printf to serial
