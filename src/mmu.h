@@ -54,9 +54,6 @@
 //ttb_address should be 16kb aligned
 void mmu_setup_ttb(uintptr_t ttb_address);
 
-//ttb_address should be 16kb aligned
-void mmu_setup_ttb_kernel(uintptr_t ttb_address);
-
 
 void mmu_setup_coarse_table(uintptr_t coarse_table_address, uintptr_t ttb_address,
                             uintptr_t from);

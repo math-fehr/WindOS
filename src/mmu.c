@@ -1,28 +1,32 @@
 #include "mmu.h"
 #include "stdlib.h"
-
-
-void mmu_setup_ttb_kernel(uintptr_t ttb_address) {
-    for(uint32_t i=0, j=0; i<NB_SECTION_TTB; i++,j+=0x100000) {
-        mmu_add_section(ttb_address,j,j,ENABLE_CACHE | ENABLE_WRITE_BUFFER);
-    }
-
-    //We desactivate the cache for the peripherals
-    #ifdef RPI2
-    mmu_add_section(ttb_address,0x3F000000,0x3F000000,0x00000);
-    mmu_add_section(ttb_address,0x3F000000,0x3F200000,0x00000);
-    #else
-    mmu_add_section(ttb_address,0x20000000,0x20000000,0x00000);
-    mmu_add_section(ttb_address,0x20200000,0x20200000,0x00000);
-    #endif
-}
+#include "kernel.h"
 
 
 void mmu_setup_ttb(uintptr_t ttb_address) {
-    for(uint32_t i=0; i<NB_SECTION_TTB; i++) {
-        //No memory is mapped
-        //Trying to access to RAM will generate a data abort
-        *(uint32_t*)(ttb_address + (i << 2)) = 0;
+    uintptr_t i;
+    for(i=0; i<0x80000000; i+=0x100000) {
+        mmu_delete_section(ttb_address,i);
+    }
+
+    for(; i<0xbf000000; i+=0x100000) {
+        mmu_add_section(ttb_address,i,i-0x8000000,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
+    }
+
+    for(; i<0xc0000000; i+=0x100000) {
+        #ifdef RPI2
+        mmu_add_section(ttb_address,i,i-0x8000000,DC_CLIENT);
+        #else
+        mmu_add_section(ttb_address,i,i-0x9f00000,DC_CLIENT);
+        #endif
+    }
+
+    for(; i<0xf0000000; i+=0x100000) {
+        mmu_delete_section(ttb_address,i);
+    }
+
+    for(int j=0,k=0; j<0x100 && k<KERNEL_IMAGE_SIZE; j++,i+=0x100000,k+=0x100000) {
+        mmu_add_section(ttb_address,i,k,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
     }
 }
 
