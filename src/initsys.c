@@ -16,9 +16,9 @@ void init_map(uintptr_t from, uintptr_t to, uint32_t flags) {
 
 void init_setup_ttb() {
   uintptr_t i;
-  const int section_size = 0x00100000;
+  const uint32_t section_size = 0x00100000;
   for(i=0;i<0x80000000;i+=section_size) { // temporary linear mapping (deleted as soon as we enter real kernel mode)
-    init_map(i,i,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
+    init_map(i,i,DC_CLIENT);
   }
 
   for(;i<0xbf000000;i+=section_size) { // physical ram mapping for kernel.
@@ -32,24 +32,23 @@ void init_setup_ttb() {
     init_map(i,i-0x9f000000,DC_CLIENT);
     #endif
   }
-  for(i=0xf0000000;i<0xf0000001+(uintptr_t)&__kernel_phy_end;i+=section_size) { // kernel data & code mapping
+  for(i=0xf0000000;i<0xf0000000+(uintptr_t)&__kernel_phy_end;i+=section_size) { // kernel data & code mapping
     init_map(i,i-0xf0000000,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
   }
 }
 
-int init_get_ram() {
-  uint32_t* atags_ptr = (uint32_t*)0x100;
+uint32_t init_get_ram() {
+    uint32_t* atags_ptr = (uint32_t*)0x100;
 
-	#define ATAG_NONE 0
-	#define ATAG_CORE 0x54410001
-	#define ATAG_MEM  0x54410002
+    #define ATAG_NONE 0
+    #define ATAG_CORE 0x54410001
+    #define ATAG_MEM  0x54410002
 
 	while (*(atags_ptr+1) != ATAG_NONE) {
 		if (*(atags_ptr+1) == ATAG_MEM) {
-      return *(atags_ptr+2);
+            return *(atags_ptr+2);
 		}
 		atags_ptr += (*atags_ptr);
 	}
-  while(1){}
-  return 0;
+    return (uint32_t)512*(uint32_t)1026*(uint32_t)1024*(uint32_t)1024;
 }

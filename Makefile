@@ -28,6 +28,7 @@ CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 $(INCLUDE_C) -mno-unaligne
 HARDWARE_FLAGS = -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=soft \
 								 -mtune=cortex-a7
 RPI_FLAG = -D RPI2
+RPI_FLAG_S = --defsym RPI2=1
 
 SFLAGS = $(INCLUDE_C)
 
@@ -49,6 +50,7 @@ qemu: $(TARGET_QEMU)
 #rpi: sets the flag for the RPI1 build.
 rpi: RPI_FLAG = -D RPI
 rpi: HARDWARE_FLAGS = -mfpu=vfp -mfloat-abi=soft -march=armv6zk -mtune=arm1176jzf-s
+rpi: RPI_FLAG_S = --defsym RPI2=1
 rpi: all
 
 #rpi: sets the flag for the RPI2 build.
@@ -88,7 +90,8 @@ $(BUILD)output_qemu.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
 							 -o $(BUILD)output_qemu.elf -T $(LINKER_QEMU) -lg -lgcc
 
 $(BUILD)%.o: $(SOURCE)%.S
-	$(ARMGNU)-as -I $(SOURCE) $< -o $@ $(SFLAGS)
+	$(ARMGNU)-gcc $(CFLAGS) $(HARDWARE_FLAGS) -I $(SOURCE) -c $< -o $@ $(RPI_FLAG)
+#$(ARMGNU)-as -I $(SOURCE) $< -o $@ $(SFLAGS) $(RPI_FLAG)
 
 -include $(BUILD)$(OBJECTS_C:.o=.d)
 

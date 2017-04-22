@@ -45,6 +45,8 @@ _fast_interrupt_vector_h:           .word   _fast_interrupt_vector
    */
 
 _reset_:
+    //TEST
+
 	mov 		r0, #(CPSR_MODE_SVR | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT)
 	msr 		cpsr_c, r0
 
@@ -90,25 +92,45 @@ _reset_:
 	mov r1, #1
 	// starts the mmu.
 	mov r2,#0
-  mcr p15,0,r2,c7,c7,0  // invalidate caches
-  mcr p15,0,r2,c8,c7,0  // invalidate tlb
-  mcr p15,0,r2,c7,c10,4 // DSB ??
+
+    #ifdef RPI2
+  	  mcr p15,0,r2,c8,c7,0  // Invalidate tlb
+	  mcr p15,0,r2,c7,c5,6  // BPIALL - Invalidate entire branch predictor array
+    #else
+      mcr p15,0,r2,c7,c7,0  // invalidate caches
+      mcr p15,0,r2,c8,c7,0  // invalidate tlb
+	  mcr p15,0,r2,c7,c10,4 // DSB ??
+    #endif
 
 	mvn r2,#0
 	bic r2,#0xC
-	mcr p15,0,r2,c3,c0,0  // domain
+
+    mcr p15,0,r2,c3,c0,0  // domain
 
 	mcr p15,0,r0,c2,c0,0  // tlb base
-	mcr p15,0,r0,c2,c0,1  //tlb base
+	mcr p15,0,r0,c2,c0,1  // tlb base
 
 	mrc p15,0,r2,c1,c0,0
 	orr r2,r2,r1
 	mcr p15,0,r2,c1,c0,0
+
 	// hopefully the mmu is enabled.
 	add sp, sp, #0x80000000 // new sp pointing to virtual address
 
 	ldr r3, =kernel_main //We call kernel_main, the entry of the C kernel
 	blx r3
+
+
+test:
+  	ldr r0,=0x3f200000         // Load the GPIO address into r0.
+	mov r1,#1
+	lsl r1,#21
+	str r1,[r0,#16]
+	mov r1,#1
+	lsl r1,#15
+	str r1,[r0,#32]
+	loop:
+	b loop
 
 end: //If kernel_main returns, the code here traps the program counter
 	wfe
