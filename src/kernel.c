@@ -21,8 +21,6 @@
 
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
-// Arbitrarily high address so it doesn't conflict with something else.
-// = 8MB
 extern uint32_t __ramfs_start;
 extern void dmb();
 
@@ -31,13 +29,13 @@ int memory_read(uint32_t address, void* buffer, uint32_t size) {
 	memcpy(buffer, (void*) (address + base), size);
 	dmb();
 
-  kdebug(D_KERNEL, 1, "Disk read request at address 0x%#08x of size %d\n", address, size);
+  kdebug(D_KERNEL, 1, "Disk read  request at address %#08x of size %d\n", address, size);
   return 0;
 }
 
 int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	intptr_t base = (intptr_t)&__ramfs_start;
-  kdebug(D_KERNEL, 1, "Disk write request at address 0x%#08x of size %d\n", address, size);
+  kdebug(D_KERNEL, 1, "Disk write request at address %#08x of size %d\n", address, size);
 	dmb();
 	memcpy((void*) (address + base), buffer, size);
 	return 0;
@@ -57,6 +55,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r1;
 	(void) atags;
 
+	// Initialize BSS segment
 	for (char* val = (char*)&__kernel_bss_start; val < (char*)&__kernel_bss_end; val++) {
 		(*val)=0;
 	}
@@ -72,6 +71,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 			__ram_size = *(atags_ptr+2);
 		}
 		atags_ptr += (*atags_ptr);
+	}
+
+	// Remove linear mapping of the first 2GB
+	for (uint32_t i=0;i<0x80000000;i+=PAGE_SECTION) {
+		mmu_delete_section(0xf0004000, i);
 	}
 
 	paging_init(__ram_size >> 20, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));

@@ -9,13 +9,15 @@
 
 /**
  * base adress of the peripheral
- */
+
 #ifdef RPI2
 #define AUX_BASE 0x3f215000
 #else
 #define AUX_BASE 0x20215000
 #endif
+*/
 
+#define AUX_BASE (PERIPHERALS_BASE + 0x215000)
 
 /**
  * Structure of the peripheral

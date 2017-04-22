@@ -4,18 +4,19 @@
 #include "stdbool.h"
 #include "stddef.h"
 #include "stdint.h"
-
 #include "debug.h"
+#include "kernel.h"
 
 /**
  * The base adress of the GPIO
- */
-#ifdef RPI2
-#define GPIO_BASE 0x3F200000UL
-#else
-#define GPIO_BASE 0x20200000UL
-#endif
 
+#ifdef RPI2
+#define GPIO_BASE (0x3F200000UL + 0x80000000UL)
+#else
+#define GPIO_BASE (0x20200000UL + 0x80000000UL)
+#endif
+*/
+#define GPIO_BASE (PERIPHERALS_BASE + 0x200000)
 
 /**
  * The flags identifying the functions of the pins

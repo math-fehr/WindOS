@@ -4,16 +4,21 @@
 #include "stdbool.h"
 #include "stddef.h"
 #include "stdint.h"
+#include "kernel.h"
 
 // TIP: RPI clock speed is 250MHz
 // http://raspberrypi.stackexchange.com/questions/699/what-spi-frequencies-does-raspberry-pi-support
 
-// Base adress of the system timer
+/*// Base adress of the system timer
 #ifdef RPI2
 #define RPI_SYSTIMER_BASE 0x3F003000
 #else
 #define RPI_SYSTIMER_BASE 0x20003000
 #endif
+*/
+
+#define RPI_SYSTIMER_BASE (PERIPHERALS_BASE + 0x3000)
+
 
 /**
  * Structure of the system timer
@@ -40,11 +45,13 @@ void Timer_WaitMicroSeconds(uint32_t time);
 void Timer_WaitCycles(uint32_t count);
 
 // Base adress of the arm timer
+/*
 #ifdef RPI2
 #define RPI_ARMTIMER_BASE 0x3F00B400
 #else
 #define RPI_ARMTIMER_BASE 0x2000B400
-#endif
+#endif*/
+#define RPI_ARMTIMER_BASE (PERIPHERALS_BASE + 0xB400)
 
 /**
  * Scructure of the ARM timer
