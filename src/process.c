@@ -1,38 +1,36 @@
 #include "process.h"
-
+#include "malloc.h"
 extern unsigned int __ram_size;
 
-process process_load(char* path) {
+process* process_load(char* path) {
   int fd = vfs_fopen(path);
   elf_header_t header;
   vfs_fread(fd,(char*)&header,sizeof(header));
 
-  process processus;
-  processus.asid = 0;
 
   if (strncmp(header.magic_number,"\x7F""ELF",4) != 0) {
     kdebug(D_PROCESS, 2, "Can't load %s: no elf header detected.\n", path);
-    return processus;
+    return NULL;
   }
 
   if (header.abi != ELF_ABI_SYSTEMV) {
     kdebug(D_PROCESS, 2, "Can't load %s: wrong ABI.\n", path);
-    return processus;
+    return NULL;
   }
 
   if (header.type != ELF_TYPE_EXECUTABLE) {
     kdebug(D_PROCESS, 2, "Can't load %s: this is not an executable.\n", path);
-    return processus;
+    return NULL;
   }
 
   if (header.machine != ELF_MACHINE_ARM) {
-    kdebug(D_PROCESS, 2, "Can't load %s: this isn't build for ARM.\n", path);
-    return processus;
+    kdebug(D_PROCESS, 2, "Can't load %s: this isn't built for ARM.\n", path);
+    return NULL;
   }
 
   if (header.format != ELF_FORMAT_32BIT) {
     kdebug(D_PROCESS, 2, "Can't load %s: 64bit is not supported.\n", path);
-    return processus;
+    return NULL;
   }
 
   uintptr_t ttb_address;
@@ -42,7 +40,7 @@ process process_load(char* path) {
   page_list_t* res = paging_allocate(2);
   if (res == NULL) {
     kdebug(D_PROCESS, 2, "Can't load %s: page allocation failed.\n", path);
-    return processus;
+    return NULL;
   }
   int section_addr = res->address*PAGE_SECTION;
   int section_stack;
@@ -75,21 +73,32 @@ process process_load(char* path) {
       vfs_fread(fd, (char*)(section_addr+sh.addr), sh.size);
     }
   }
-  processus.asid = 1;
-  processus.cpsr = 0;
-  processus.dummy = 0;
-  processus.ttb_address = ttb_address;
-  for (int i=0;i<13;i++) {
-    processus.registers[i] = 0;
-  }
-  processus.status = status_active;
 
-  processus.registers[15] = header.entry_point; // PC
-  processus.registers[14] = header.entry_point; // LR: Exit point?
-  processus.registers[13] = __ram_size-8; // SP
-  processus.brk = PAGE_SECTION;
-  processus.brk_page = 0;
+  process* processus = malloc(sizeof(process));
+  processus->asid = 1;
+  processus->dummy = 0;
+  processus->ttb_address = ttb_address;
+  processus->status = status_active;
+  processus->sp = __ram_size-8;
+  // CPSR
+  // 15: PC
+  // 14: LR
+  // 12
+  // ...
+  // 0
+
+  //processus->registers[15] = header.entry_point; // PC
+  //processus->registers[14] = header.entry_point; // LR: Exit point?
+  //processus->registers[13] = __ram_size-8; // SP
+  processus->brk = PAGE_SECTION;
+  processus->brk_page = 0;
 
   vfs_fclose(fd);
   return processus;
+}
+
+void process_switchTo(process* p) {
+  // <- restaurer les registres
+  // <- setup mmu (r0, r1)
+  // <- setup cspr
 }

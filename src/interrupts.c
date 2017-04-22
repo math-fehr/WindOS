@@ -42,8 +42,8 @@ void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void) {
 }
 
 void __attribute__ ((interrupt("ABORT"))) data_abort_vector(void) {
-  kdebug(D_IRQ, 0, "DATA_ABORT.\n");
   while(1);
+  kdebug(D_IRQ, 0, "DATA_ABORT.\n");
 }
 
 static rpi_irq_controller_t* rpiIRQController =

@@ -23,12 +23,11 @@ extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
 // Arbitrarily high address so it doesn't conflict with something else.
 // = 8MB
-uint32_t __ramdisk = 0x0800000;
-extern uint32_t __start;
+extern uint32_t __ramfs_start;
 extern void dmb();
 
 int memory_read(uint32_t address, void* buffer, uint32_t size) {
-	intptr_t base = (intptr_t)&__start + __ramdisk; // The FS is concatenated with the kernel image.
+	intptr_t base = (intptr_t)&__ramfs_start; // The FS is concatenated with the kernel image.
 	memcpy(buffer, (void*) (address + base), size);
 	dmb();
 
@@ -37,7 +36,7 @@ int memory_read(uint32_t address, void* buffer, uint32_t size) {
 }
 
 int memory_write(uint32_t address, void* buffer, uint32_t size) {
-	intptr_t base = (intptr_t)&__start + __ramdisk;
+	intptr_t base = (intptr_t)&__ramfs_start;
   kdebug(D_KERNEL, 1, "Disk write request at address 0x%#08x of size %d\n", address, size);
 	dmb();
 	memcpy((void*) (address + base), buffer, size);
@@ -48,12 +47,20 @@ volatile unsigned int tim;
 
 volatile unsigned int __ram_size;
 
+extern char __kernel_bss_start;
+extern char __kernel_bss_end;
+
+extern int __kernel_phy_end;
+
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r0;
 	(void) r1;
 	(void) atags;
 
-	serial_init();
+	for (char* val = (char*)&__kernel_bss_start; val < (char*)&__kernel_bss_end; val++) {
+		(*val)=0;
+	}
+
 	uint32_t* atags_ptr = (uint32_t*)0x100;
 
 	#define ATAG_NONE 0
@@ -62,11 +69,14 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 
 	while (*(atags_ptr+1) != ATAG_NONE) {
 		if (*(atags_ptr+1) == ATAG_MEM) {
-			kernel_printf("Memory size: %#08x\n",*(atags_ptr+2));
+			__ram_size = *(atags_ptr+2);
 		}
-		__ram_size = *(atags_ptr+2);
 		atags_ptr += (*atags_ptr);
 	}
+
+	paging_init(__ram_size >> 20, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
+
+	serial_init();
 
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
 

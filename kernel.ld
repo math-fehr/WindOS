@@ -1,51 +1,43 @@
-/******************************************************************************
-*	kernel.ld
-*	 by Alex Chadwick
-*
-*	A linker script for generation of raspberry pi kernel images.
-******************************************************************************/
-
 SEARCH_DIR("=/usr/lib/arm-none-eabi/lib");
+
 SECTIONS {
-	/*
-	* INFO: 0x10000 for QEMU and 0x8000 for raspi2
-	*/
-	__start = 0x8000;
-	.init 0x8000 : {
-		*(.init)
+	/* Loader section that boots and setup the mmu before going into virtual
+	 * addressing
+	 */
+	 . = 0x8000;
+	 __start = .;
+	.init : {
+		build/loader.o(.text* .data* .bss* .rodata*)
+	}
+	.initsys : {
+		build/initsys.o(.text* .data* .bss* .rodata*)
 	}
 
-	__text_start = .;
-	.text :
-	{
-	KEEP(*(.text.boot))
-	*(.text)
-	}
-	. = ALIGN(4096);
-	__text_end = .;
 
-	__rodata_start = .;
-	.rodata :
-	{
-	*(.rodata)
+	__kernel_phy_start = ALIGN(4k);
+	.text (__kernel_phy_start + 0xf0000000) : AT(__kernel_phy_start) {
+		*(.text*)
 	}
-	. = ALIGN(4096);
-	__rodata_end = .;
+	. = ALIGN(4K);
+	.rodata : {
+		*(.rodata*)
+	}
+	. = ALIGN(4K);
+	.data : {
+		*(.data)
+	}
+	. = ALIGN(4K);
+	.bss : {
+		__kernel_bss_start = ABSOLUTE(.);
+		*(.bss)
+		*(COMMON)
+		__kernel_bss_end = ABSOLUTE(.);
+	}
+	. = ALIGN(4K);
+	__ramfs_start = .;
+	.fs : {
+		build/fs.img(.data*)
+	}
+	__kernel_phy_end = . - 0xf0000000;
 
-	__data_start = .;
-	.data :
-	{
-	*(.data)
-	}
-	. = ALIGN(4096);
-	__data_end = .;
-	__bss_start = .;
-	.bss :
-	{
-	bss = .;
-	*(.bss)
-	}
-	. = ALIGN(4096);
-	__bss_end = .;
-	__end = .;
 }

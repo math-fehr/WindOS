@@ -50,6 +50,7 @@
 #define SMALL_PAGE          0b01 //defines a 4kb page
 #define TINY_PAGE           0b11 //defines a 1kb page
 
+uintptr_t mmu_p2v(uintptr_t addr);
 
 //ttb_address should be 16kb aligned
 void mmu_setup_ttb(uintptr_t ttb_address);

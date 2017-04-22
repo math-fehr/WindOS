@@ -9,9 +9,6 @@ RAMFS = ramfs_content/
 TARGET = img/kernel.img
 TARGET_QEMU = img/kernel_qemu.img
 
-RAMIMG = img/ram.img
-RAMIMG_QEMU = img/ram_qemu.img
-
 IMGDIR = img/
 
 LINKER = kernel.ld
@@ -20,7 +17,7 @@ LINKER_QEMU = kernel_qemu.ld
 # recursive wildcard.
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
-OBJECTS 	=  $(patsubst $(SOURCE)%.S,$(BUILD)%.o,$(wildcard $(SOURCE)*.S))
+OBJECTS 	= $(BUILD)fs.img $(patsubst $(SOURCE)%.S,$(BUILD)%.o,$(wildcard $(SOURCE)*.S))
 OBJECTS_C = $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.c))
 RAMFS_OBJ = $(call rwildcard, $(RAMFS), *)
 
@@ -44,10 +41,10 @@ $(shell mkdir -p $(DEPDIR) >/dev/null)
 $(shell mkdir -p $(BUILD) >/dev/null)
 
 #all: builds the kernel image for the real hardware. RPI2 flag by default.
-all: $(RAMIMG)
+all: $(TARGET)
 
 #qemu: builds the kernel image for qemu emulation.
-qemu: $(RAMIMG_QEMU)
+qemu: $(TARGET_QEMU)
 
 #rpi: sets the flag for the RPI1 build.
 rpi: RPI_FLAG = -D RPI
@@ -58,28 +55,23 @@ rpi: all
 rpi2: RPI_FLAG = -D RPI2
 rpi2: all
 
+# Builds a 1MB filesystem
 $(BUILD)fs.img: $(RAMFS_OBJ)
-	genext2fs -b 4096 -d $(RAMFS) $(BUILD)fs.img
+	genext2fs -b 1024 -d $(RAMFS) $(BUILD)fs.tmp
+	$(ARMGNU)-ld -b binary -r -o $(BUILD)fs.ren $(BUILD)fs.tmp
+	$(ARMGNU)-objcopy --rename-section .data=.fs \
+										--set-section-flags .data=alloc,code,load \
+										$(BUILD)fs.ren $(BUILD)fs.img
 
-run: $(RAMIMG_QEMU)
-	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty
+run: $(TARGET_QEMU)
+	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty -serial pty
 
-runs: $(RAMIMG_QEMU)
-	$(QEMU) -kernel $(RAMIMG_QEMU) -m 256 -M raspi2 -serial pty -serial stdio
+runs: $(TARGET_QEMU)
+	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -serial pty -serial stdio
 
 
 minicom:
 	minicom -b 115200 -o -D /dev/pts/2
-
-$(RAMIMG): $(TARGET) $(BUILD)fs.img
-	qemu-img create $(RAMIMG) 20M
-	dd if=$(TARGET) of=$(RAMIMG) bs=2048 conv=notrunc
-	dd if=$(BUILD)fs.img of=$(RAMIMG) bs=2048 seek=8M oflag=seek_bytes
-
-$(RAMIMG_QEMU): $(TARGET_QEMU) $(BUILD)fs.img
-	qemu-img create $(RAMIMG_QEMU) 20M
-	dd if=$(TARGET_QEMU) of=$(RAMIMG_QEMU) bs=2048 conv=notrunc
-	dd if=$(BUILD)fs.img of=$(RAMIMG_QEMU) bs=2048 seek=8M oflag=seek_bytes
 
 $(TARGET) : $(BUILD)output.elf
 	$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET)
@@ -118,5 +110,3 @@ clean:
 	@rm -fr $(BUILD)*
 	@rm -f $(TARGET)
 	@rm -f $(TARGET_QEMU)
-	@rm -f $(RAMIMG)
-	@rm -f $(RAMIMG_QEMU)

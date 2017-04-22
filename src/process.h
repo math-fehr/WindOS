@@ -26,8 +26,7 @@ typedef enum {
 typedef struct {
     status_process status;
     int dummy; //Temp value for debug
-    uint32_t registers[16];
-    uint32_t cpsr; // Current Program Status Register
+    uint32_t sp;
     uintptr_t ttb_address;
     int asid; // Address Space ID
     int brk; // Program break.

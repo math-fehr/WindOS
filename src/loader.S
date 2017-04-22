@@ -1,6 +1,19 @@
 .section .init
 .globl _start
 
+// See ARM section A2.2 (Processor Modes)
+
+.equ    CPSR_MODE_USER,         0x10
+.equ    CPSR_MODE_FIQ,          0x11
+.equ    CPSR_MODE_IRQ,          0x12
+.equ    CPSR_MODE_SVR,          0x13
+.equ    CPSR_MODE_ABORT,        0x17
+.equ    CPSR_MODE_UNDEFINED,    0x1B
+.equ    CPSR_MODE_SYSTEM,       0x1F
+
+// See ARM section A2.5 (Program status registers)
+.equ    CPSR_IRQ_INHIBIT,       0x80
+.equ    CPSR_FIQ_INHIBIT,       0x40
   /**
    * redirect to functions that handle interrupts
    */
@@ -30,78 +43,73 @@ _fast_interrupt_vector_h:           .word   _fast_interrupt_vector
   /**
    * Theses functions call the C functions
    */
-_undefined_instruction_vector:
-	mov sp, #0x1000
-	b undefined_instruction_vector
-
-_software_interrupt_vector:
-	mov sp, #0x1000
-	b software_interrupt_vector
-
-_prefetch_abort_vector:
-	mov sp, #0x1000
-	b prefetch_abort_vector
-
-_data_abort_vector:
-	mov sp, #0x1000
-	b data_abort_vector
-
-_interrupt_vector:
-	mov sp, #0x1000
-	b interrupt_vector
-
-_fast_interrupt_vector:
-	mov sp, #0x1000
-	b fast_interrupt_vector
-
 
 _reset_:
-	//Setting up interrupt table at adress 0x0000
+	mov 		r0, #(CPSR_MODE_SVR | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT)
+	msr 		cpsr_c, r0
+
+	//Setting up interrupt table at physical address 0
 	ldr     r0, =_start
 	mov     r1, #0x0000
-	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9} // copy the IVT
+	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
 	stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
 	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
 	stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
 
-	ldr sp, =(64*1024*1024) // 64MB of stack
-	ldr r4, =__bss_start //	this value is set by gcc
-	ldr r9, =__bss_end   //	this value is set by gcc
-	mov r5, #0
-	mov r6, #0
-	mov r7, #0
-	mov r8, #0
-	b zero_loop_end
+	// change base address for interrupts
+	mov 		r0, #0xf0000000
+	mcr 		p15, 0, r0, c12, c0, 0
 
 
-zero_loop_beg: // We set the bss section to zero
-	stmia r4!, {r5-r8}
+
+	ldr sp, =_start // a temporary stack
+	ldr r3, =init_get_ram
+	blx r3
+	mov r3, r0
+	sub sp, r3, #0x8000 //put sp at the end of the ram
+
+	mov 		r0, #(CPSR_MODE_IRQ | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT)
+	msr 		cpsr_c, r0
+	sub 		sp, r3, #0x1000
+	add 		sp, sp, #0x80000000
+
+	mov 		r0, #(CPSR_MODE_ABORT | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT)
+ 	msr 		cpsr_c, r0
+	mov 		sp, r3
+	add 		sp, sp, #0x80000000
+
+	mov 		r0, #(CPSR_MODE_SVR | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT)
+	msr 		cpsr_c, r0
+
+	// builds a correct ttb at address 0x4000
+	ldr r3, =init_setup_ttb
+	blx r3
 
 
-zero_loop_end:
-	cmp r4, r9
-	blo zero_loop_beg
+	mov r0, #0x4000
+	mov r1, #1
+	// starts the mmu.
+	mov r2,#0
+  mcr p15,0,r2,c7,c7,0  // invalidate caches
+  mcr p15,0,r2,c8,c7,0  // invalidate tlb
+  mcr p15,0,r2,c7,c10,4 // DSB ??
+
+	mvn r2,#0
+	bic r2,#0xC
+	mcr p15,0,r2,c3,c0,0  // domain
+
+	mcr p15,0,r0,c2,c0,0  // tlb base
+	mcr p15,0,r0,c2,c0,1  //tlb base
+
+	mrc p15,0,r2,c1,c0,0
+	orr r2,r2,r1
+	mcr p15,0,r2,c1,c0,0
+	// hopefully the mmu is enabled.
+	add sp, sp, #0x80000000 // new sp pointing to virtual address
 
 	ldr r3, =kernel_main //We call kernel_main, the entry of the C kernel
 	blx r3
 
-
 end: //If kernel_main returns, the code here traps the program counter
 	wfe
 	b end
-
-
-
-//  From https://github.com/xinu-os/xinu/blob/master/system/arch/arm/memory_barrier.S
-// When accessing different peripherals, data can arrive out of order.
-// data-memory barrier ensure all data has been transferred before moving on
-/* From BCM 2835 manual page 7:
-You should place:
-•	A memory write barrier before the first write to a peripheral.
-•	A memory read barrier after the last read of a peripheral
-*/
-.globl dmb
-dmb:
-	mov	r12, #0
-	mcr	p15, 0, r12, c7, c10, 5
-	mov 	pc, lr

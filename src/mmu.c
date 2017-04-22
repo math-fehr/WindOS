@@ -1,7 +1,18 @@
 #include "mmu.h"
 #include "stdlib.h"
-#include "kernel.h"
 
+
+extern int __kernel_phy_start;
+extern int __kernel_phy_end;
+
+
+uintptr_t mmu_p2v(uintptr_t addr) {
+  if (addr < 0x80000000) {
+    return addr + 0x80000000;
+  } else {
+    while(1) {}
+  }
+}
 
 void mmu_setup_ttb(uintptr_t ttb_address) {
     uintptr_t i;
@@ -25,7 +36,9 @@ void mmu_setup_ttb(uintptr_t ttb_address) {
         mmu_delete_section(ttb_address,i);
     }
 
-    for(int j=0,k=0; j<0x100 && k<KERNEL_IMAGE_SIZE; j++,i+=0x100000,k+=0x100000) {
+    int kernel_image_size = &__kernel_phy_end - &__kernel_phy_start;
+
+    for(int j=0,k=0; j<0x100 && k<kernel_image_size; j++,i+=0x100000,k+=0x100000) {
         mmu_add_section(ttb_address,i,k,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
     }
 }
@@ -93,5 +106,3 @@ void mmu_add_tiny_page(uintptr_t fine_table_address, uintptr_t from,
 void mmu_delete_tiny_page(uintptr_t fine_table_address, uintptr_t address) {
     *(uint32_t*)(fine_table_address | ((address & 0xFFC00) >> 8)) = 0;
 }
-
-
