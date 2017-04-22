@@ -2,14 +2,14 @@
 #include "stddef.h"
 #include "mmu.h"
 
-#define KERNEL_TTB_ADDRESS 0x4000
+#define KERNEL_PHY_TTB_ADDRESS 0x4000
 
 extern int __kernel_phy_end;
 
 
 
 void init_map(uintptr_t from, uintptr_t to, uint32_t flags) {
-  uintptr_t address_section = (KERNEL_TTB_ADDRESS | (uintptr_t)((from & 0xFFF00000) >> 18));
+  uintptr_t address_section = (KERNEL_PHY_TTB_ADDRESS | (uintptr_t)((from & 0xFFF00000) >> 18));
   uint32_t value_section = (0xFFF00000 & to) | flags | SECTION;
   *((uint32_t*)(address_section)) = value_section;
 }

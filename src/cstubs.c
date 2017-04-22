@@ -10,7 +10,7 @@
 
 //#define HEAP_BASE 0xc0000000
 #define HEAP_BASE 0xc0000000
-#define KERNEL_TTB_ADDRESS 0x4000
+#define KERNEL_TTB_ADDRESS 0xf0004000
 
 extern int __kernel_phy_end;
 
@@ -24,7 +24,7 @@ uintptr_t _sbrk(int incr) {
 
     mmu_add_section(KERNEL_TTB_ADDRESS,
                     HEAP_BASE,
-                    (int)&__kernel_phy_end,
+                    (uintptr_t)&__kernel_phy_end + PAGE_SECTION - 1,
                     DC_CLIENT | ENABLE_CACHE | ENABLE_WRITE_BUFFER);
   }
 

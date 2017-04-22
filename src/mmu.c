@@ -6,13 +6,6 @@ extern int __kernel_phy_start;
 extern int __kernel_phy_end;
 
 
-uintptr_t mmu_p2v(uintptr_t addr) {
-  if (addr < 0x80000000) {
-    return addr + 0x80000000;
-  } else {
-    while(1) {}
-  }
-}
 
 void mmu_setup_ttb(uintptr_t ttb_address) {
     uintptr_t i;

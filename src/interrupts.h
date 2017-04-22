@@ -4,19 +4,22 @@
 #include "stdbool.h"
 #include "stddef.h"
 #include "stdint.h"
-
+#include "kernel.h"
 /**
  * Theses functions handle interrupts made by the processor
  */
 
 /**
  * The base adress of the interrupt controller
- */
+
 #ifdef RPI2
 #define RPI_INTERRUPT_CONTROLLER_BASE 0x3F00B200UL
 #else
 #define RPI_INTERRUPT_CONTROLLER_BASE 0x2000B200UL
 #endif
+*/
+
+#define RPI_INTERRUPT_CONTROLLER_BASE (PERIPHERALS_BASE + 0xB200UL)
 
 /**
  * The structure of the interrupt controller
