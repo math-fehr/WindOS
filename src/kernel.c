@@ -78,6 +78,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 		mmu_delete_section(0xf0004000, i);
 	}
 
+	// TTB1 is already set up on boot (-> 0x4000)
+	// TTB0 is set up on each context switch
+	mmu_setup_ttbcr(TTBCR_ALIGN_128);
+	//mmu_set_ttb_0(0x0000, TTBCR_ALIGN_128);
+	//mmu_invalidate_unified_tlb();
+	//mmu_invalidate_caches();
+
 	paging_init(__ram_size >> 20, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
 
 	serial_init();

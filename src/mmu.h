@@ -1,5 +1,5 @@
-#ifndef PAGING_H
-#define PAGING_H
+#ifndef MMU_H
+#define MMU_H
 
 #include "stdint.h"
 
@@ -22,6 +22,14 @@
 #define DC_RESERVED  0b10  //Read/Write for Priviledged, and Read for User
 #define DC_MANAGER   0b11  //Read/Write for User and Priviledged
 
+#define TTBCR_ALIGN_16K 0
+#define TTBCR_ALIGN_8K  1
+#define TTBCR_ALIGN_4K  2
+#define TTBCR_ALIGN_2K  3
+#define TTBCR_ALIGN_1K  4
+#define TTBCR_ALIGN_512 5
+#define TTBCR_ALIGN_256 6
+#define TTBCR_ALIGN_128 7
 /**
  * The domain bits are the 8:5 bits
  */
@@ -49,6 +57,16 @@
 #define LARGE_PAGE          0b10 //defines a 64kb page
 #define SMALL_PAGE          0b01 //defines a 4kb page
 #define TINY_PAGE           0b11 //defines a 1kb page
+
+
+void mmu_setup_ttbcr(uint32_t N);
+void mmu_set_ttb_1(uint32_t addr);
+void mmu_set_ttb_0(uint32_t addr, uint32_t N);
+void mmu_invalidate_unified_tlb();
+void mmu_invalidate_caches();
+
+void mmu_stop();
+void mmu_start();
 
 //ttb_address should be 16kb aligned
 void mmu_setup_ttb(uintptr_t ttb_address);
