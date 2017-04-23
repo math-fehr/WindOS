@@ -84,7 +84,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
 
-	GPIO_setOutputPin(GPIO_LED_PIN);
+    GPIO_setOutputPin(GPIO_LED_PIN);
 
 	Timer_Setup();
 

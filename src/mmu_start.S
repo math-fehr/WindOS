@@ -14,9 +14,15 @@
   .globl start_mmu
 start_mmu:
   mov r2,#0
-  mcr p15,0,r2,c7,c7,0  // invalidate caches
-  mcr p15,0,r2,c8,c7,0  // invalidate tlb
-  mcr p15,0,r2,c7,c10,4 // DSB ??
+
+  #ifdef RPI2
+    mcr p15,0,r2,c8,c7,0  // Invalidate tlb
+    mcr p15,0,r2,c7,c5,6  // BPIALL - Invalidate entire branch predictor array
+  #else
+    mcr p15,0,r2,c7,c7,0  // invalidate caches
+    mcr p15,0,r2,c8,c7,0  // invalidate tlb
+    mcr p15,0,r2,c7,c10,4 // DSB ??
+  #endif
 
   mvn r2,#0
   bic r2,#0xC
@@ -45,7 +51,7 @@ stop_mmu:
   bx lr
 
 /**
- * Invalidate tlbs. This is used to update the cache directly 
+ * Invalidate tlbs. This is used to update the cache directly
  */
   .globl invalidate_tlbs
 invalidate_tlbs:
