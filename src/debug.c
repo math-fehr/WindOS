@@ -20,7 +20,7 @@ const char sources[N_SOURCES][9]= { "KERNEL", "SERIAL", "WESH",
  */
 const int enable_source[N_SOURCES] = { 5,10,10,
                                        10,10,10,
-                                       0,10,10,0};
+                                       5,10,10,5};
 
 
 void kernel_printf(const char* fmt, ...) {

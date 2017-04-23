@@ -510,8 +510,8 @@ int ext2_get_free_block(superblock_t* fs) {
         }
       }
       free(bitmap);
-      kdebug(D_EXT2, 1, "ext2_get_free_block: here you go: %d\n", found + sb->blocks_per_group*i);
-      return found + sb->blocks_per_group*i;
+      kdebug(D_EXT2, 1, "ext2_get_free_block: here you go: %d\n", 1+found + sb->blocks_per_group*i);
+      return 1+found + sb->blocks_per_group*i;
     }
   }
   kdebug(D_EXT2, 2, "ext2_get_free_block: error. No available block.");
@@ -760,8 +760,8 @@ bool ext2_register_block(superblock_t* fs, int number) {
   storage_driver* disk = devices[fs->id].disk;
 
   int block_size = 1024 << sb->log_block_size;
-  int block_group = (number) / sb->blocks_per_group;
-  int offset = (number) % sb->blocks_per_group;
+  int block_group = (number-1) / sb->blocks_per_group;
+  int offset = (number-1) % sb->blocks_per_group;
 
   ext2_block_group_descriptor_t group_descriptor
                             = ext2_get_block_group_descriptor(fs, block_group);
