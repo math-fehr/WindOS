@@ -65,6 +65,7 @@ _reset_:
 	mov r3, r0
 	sub sp, r3, #0x8000 //put sp at the end of the ram
 
+
 	mov 		r0, #(CPSR_MODE_IRQ | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT)
 	msr 		cpsr_c, r0
 	sub 		sp, r3, #0x1000
@@ -88,14 +89,19 @@ _reset_:
 //	orr r1, r1, #0x0004
 	// starts the mmu.
 	mov r2,#0
+    mov r3,#0
 
     #ifdef RPI2
-  	  mcr p15,0,r2,c8,c7,0  // Invalidate tlb
-	  mcr p15,0,r2,c7,c5,6  // BPIALL - Invalidate entire branch predictor array
+      mrc p15,0,r2,c1,c0,1
+	  orr r2,#0b1000000
+	  mcr p15,0,r2,c1,c0,1  // Enables coherent requests to the processor
+      mcr p15,0,r3,c7,c6,1  // Invalidate data cache by MVA to PoC
+  	  mcr p15,0,r3,c8,c7,0  // Invalidate tlb
+	  mcr p15,0,r3,c7,c5,6  // BPIALL - Invalidate entire branch predictor array
     #else
-      mcr p15,0,r2,c7,c7,0  // invalidate caches
-      mcr p15,0,r2,c8,c7,0  // invalidate tlb
-	  mcr p15,0,r2,c7,c10,4 // DSB ??
+      mcr p15,0,r3,c7,c7,0  // invalidate caches
+      mcr p15,0,r3,c8,c7,0  // invalidate tlb
+	  mcr p15,0,r3,c7,c10,4 // DSB
     #endif
 
 
@@ -104,13 +110,28 @@ _reset_:
 	mcr p15,0,r2,c3,c0,0  // domain
 
 
-	mcr p15,0,r0,c2,c0,0  // tlb base
-	mcr p15,0,r0,c2,c0,1  // tlb base
+    orr r0,#0b1001010     // page table walk inner and outer write-back,
+                          // write-allocate, cacheable, shareable memory
+	mcr p15,0,r0,c2,c0,0  // ttb0 base
+	mcr p15,0,r0,c2,c0,1  // ttb1 base
+    mcr p15,0,r3,c2,c0,2  // always use ttb0
 
 
+    //Now we activate the mmu
+		#ifdef RPI2
+    isb
 	mrc p15,0,r2,c1,c0,0
-	orr r2,r2,r1
+    movw r3, #0x1803  //enable mmu, cache, and other options
+	orr r2,r2,r3
 	mcr p15,0,r2,c1,c0,0
+    isb
+		#else
+		mrc p15,0,r2,c1,c0,0
+	  mov r3, #0x1  //enable mmu only
+		orr r2,r2,r3
+		mcr p15,0,r2,c1,c0,0
+
+		#endif
 
 
 	// change base address for interrupts
@@ -133,8 +154,8 @@ test:
 	mov r1,#1
 	lsl r1,#15
 	str r1,[r0,#32]
-	loop:
-	b loop
+loop:
+  	b loop
 
 end: //If kernel_main returns, the code here traps the program counter
 	wfe
