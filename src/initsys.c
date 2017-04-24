@@ -22,7 +22,7 @@ void init_setup_ttb() {
   }
 
   for(;i<0xbf000000;i+=section_size) { // physical ram mapping for kernel.
-    init_map(i,i-0x80000000,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
+      init_map(i,i-0x80000000,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
   }
 
   for(;i<0xc0000000;i+=section_size) { // peripherals mapping
