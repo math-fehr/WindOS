@@ -68,6 +68,7 @@ void blink(int n) {
 	GPIO_setPinValue(GPIO_LED_PIN, true);
 }
 
+
 void kernel_main(uint32_t memory) {
 	// Initialize BSS segment
 	for (char* val = (char*)&__kernel_bss_start; val < (char*)&__kernel_bss_end; val++) {
