@@ -1,6 +1,6 @@
 #include "mmu.h"
 #include "stdlib.h"
-
+#include "debug.h"
 
 extern int __kernel_phy_start;
 extern int __kernel_phy_end;
@@ -12,48 +12,84 @@ extern int __kernel_phy_end;
 // N > 0 => use ttb 1 if (vaddr & (1110.....0))
 //                                 |||-> N
 void mmu_setup_ttbcr(uint32_t N) {
-  asm("mcr p15, 0, %0, c2, c0, 2\n"
-      :
-      : "r" (N)
-      : );
+    kdebug(D_MEMORY, 1, "TTBCR => (%d)\n", N);
+    asm("mcr p15, 0, %0, c2, c0, 2\n"
+        :
+        : "r" (N)
+        : );
 }
 
 void mmu_set_ttb_1(uint32_t addr) {
-  uint32_t reg;
-  if (addr & ((1 << 14) - 1)) {
-    // TTB address is not correctly aligned. (16kb)
-    return;
-  }
+    uint32_t reg;
+    if (addr & ((1 << 14) - 1)) {
+        kdebug(D_MEMORY, 10, "TTB1 address is not correctly aligned (%#010x)\n", addr);
+        // TTB address is not correctly aligned. (16kb)
+        return;
+    }
 
-  asm("mrc p15, 0, %0, c2, c0, 1\n"
-      : "=r" (reg)
-      :
-      :);
-  reg = reg & ((1 << 14) - 1); // mask previous address
-  reg = reg | addr;
-  asm("mcr p15, 0, %0, c2, c0, 1\n"
-      :
-      : "r" (reg)
-      :);
+    asm("mrc p15, 0, %0, c2, c0, 1\n"
+        : "=r" (reg)
+        :
+        :);
+    reg = reg & ((1 << 14) - 1); // mask previous address
+    reg = reg | addr;
+    asm("mcr p15, 0, %0, c2, c0, 1\n"
+        :
+        : "r" (reg)
+        :);
+
+    mmu_invalidate_unified_tlb();
+    mmu_invalidate_caches();
+
+    kdebug(D_MEMORY, 1, "TTB1 address updated (%#010x)\n", addr);
 }
 
 void mmu_set_ttb_0(uint32_t addr, uint32_t N) {
-  uint32_t reg;
-  if (addr & ((1 << (14-N)) - 1)) {
-    // TTB address is not correctly aligned. (16kb/2^N)
-    return;
-  }
+    uint32_t reg;
+    if (addr & ((1 << (14-N)) - 1)) {
+        kdebug(D_MEMORY, 10, "TTB0 address is not correctly aligned (%#010x %d)\n", addr, N);
+        // TTB address is not correctly aligned. (16kb/2^N)
+        return;
+    }
 
-  asm("mrc p15, 0, %0, c2, c0, 0\n"
-      : "=r" (reg)
-      :
-      :);
-  reg = reg & ((1 << (14-N)) - 1); // mask previous address
-  reg = reg | addr;
-  asm("mcr p15, 0, %0, c2, c0, 0\n"
-      :
-      : "r" (reg)
-      :);
+    asm("mrc p15, 0, %0, c2, c0, 0\n"
+        : "=r" (reg)
+        :
+        :);
+    reg = reg & ((1 << (14-N)) - 1); // mask previous address
+    reg = reg | addr;
+    asm("mcr p15, 0, %0, c2, c0, 0\n"
+        :
+        : "r" (reg)
+        :);
+
+    mmu_invalidate_unified_tlb();
+    mmu_invalidate_caches();
+
+    kdebug(D_MEMORY, 1, "TTB0 address updated (%#010x %d)\n", addr, N);
+}
+
+uintptr_t mmu_vir2phy(uintptr_t addr) {
+    uintptr_t ttb_phy;
+    if (addr & (((1 << TTBCR_ALIGN)-1) << (32 - TTBCR_ALIGN))) { // USE TTB1
+        asm("mrc p15, 0, %0, c2, c0, 1\n"
+            : "=r" (ttb_phy)
+            :
+            :);
+        ttb_phy &= ~((1 << 13) - 1);
+    } else {
+        asm("mrc p15, 0, %0, c2, c0, 0\n"
+            : "=r" (ttb_phy)
+            :
+            :);
+        ttb_phy &= ~((1 << (13 - TTBCR_ALIGN)) - 1);
+    }
+    kernel_printf("TTB_PHY: %#010x\n", ttb_phy);
+    uintptr_t* address_section = (uintptr_t*)(0x80000000 | ttb_phy | ((addr & 0xFFF00000) >> 18));
+    uintptr_t target_section = *address_section;
+    target_section &= 0xFFF00000;
+    kernel_printf("v2p %#010x => %#010x\n", addr, target_section | (addr & 0x000FFFFF));
+    return target_section | (addr & 0x000FFFFF);
 }
 
 inline void dsb() {
@@ -63,16 +99,6 @@ inline void dsb() {
       :);
 }
 
-void mmu_invalidate_caches() {
-  asm("mov r0, #0\n"
-      "mcr p15,0,r0,c7,c7,0");
-}
-void mmu_invalidate_unified_tlb() {
-  asm("mov r0, #0\n"
-      "mcr p15,0,r0,c8,c7,0\n");
-
-  dsb();
-}
 
 void mmu_stop() {
   asm("mrc p15,0,r2,c1,c0,0\n"

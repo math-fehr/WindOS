@@ -7,6 +7,8 @@
 #include "memalloc.h"
 #include "debug.h"
 #include "stdlib.h"
+#include "kernel.h"
+
 /**
  * Represent an active process
  */
@@ -93,5 +95,8 @@ typedef struct {
   uint32_t addralign;
   uint32_t ent_size;
 } sh_entry_t;
+
+process* process_load(char* path);
+void process_switchTo(process* p);
 
 #endif //PROCESS_H

@@ -9,7 +9,7 @@
 extern void dmb();
 
 void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector(void) {
-  kdebug(D_IRQ, 3, "UNDEFINED INSTRUCTION.\n");
+  kdebug(D_IRQ, 5, "UNDEFINED INSTRUCTION.\n");
   while(1);
 }
 
@@ -32,17 +32,17 @@ void __attribute__ ((interrupt("IRQ"))) interrupt_vector(void) {
 
 
 void __attribute__ ((interrupt("SWI"))) software_interrupt_vector(void) {
-  kdebug(D_IRQ, 0, "SWI.\n");
+  kdebug(D_IRQ, 5, "SWI.\n");
   while(1);
 }
 
 void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void) {
-  kdebug(D_IRQ, 0, "PREFETCH ABORT.\n");
+  kdebug(D_IRQ, 5, "PREFETCH ABORT.\n");
   while(1);
 }
 
-void __attribute__ ((interrupt("ABORT"))) data_abort_vector(void) {
-  kdebug(D_IRQ, 0, "DATA_ABORT.\n");
+void __attribute__ ((interrupt("ABORT"))) data_abort_vector(uint32_t addr) {
+  kdebug(D_IRQ, 5, "DATA_ABORT at instruction %#010x.\n", addr-8);
   while(1);
 }
 

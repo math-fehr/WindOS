@@ -1,6 +1,5 @@
 #include "wesh.h"
 
-
 void scheduler_handler() {
   char* token = strtok(NULL," ");
   if (token == NULL) {
@@ -189,6 +188,15 @@ void vfs_handler() {
   } else if(!strcmp("rm", token)) {
     char* name = strtok(NULL," ");
     vfs_rm(position, name);
+  } else if(!strcmp("exec", token)) {
+    char* name = strtok(NULL," ");
+    char obj[255];
+    strcpy(obj, position);
+    strcat(obj, name);
+    process* p = process_load(obj);
+    if (p != NULL) {
+      process_switchTo(p);
+    }
   } else {
     serial_write("[VFS] Unrecognized command\n");
   }

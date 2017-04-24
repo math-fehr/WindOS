@@ -50,8 +50,8 @@ page_list_t* paging_allocate(int n_pages) {
     pointer->address += mn;
 
     page_list_t *tmp = pointer->next;
-    previous->next = pointer->next;
     if (pointer->size == 0) {
+      previous->next = pointer->next;
       free(pointer);
       pointer = NULL;
     } else {

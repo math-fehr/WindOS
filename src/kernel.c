@@ -18,6 +18,8 @@
 #include "scheduler.h"
 #include "mmu.h"
 
+#include "malloc.h"
+
 
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
@@ -25,17 +27,18 @@ extern uint32_t __ramfs_start;
 extern void dmb();
 
 int memory_read(uint32_t address, void* buffer, uint32_t size) {
+    kdebug(D_KERNEL, 1, "Disk read  request at address %#08x of size %d\n", address, size);
+
+    dmb();
 	intptr_t base = (intptr_t)&__ramfs_start; // The FS is concatenated with the kernel image.
 	memcpy(buffer, (void*) (address + base), size);
-	dmb();
 
-  kdebug(D_KERNEL, 1, "Disk read  request at address %#08x of size %d\n", address, size);
-  return 0;
+    return 0;
 }
 
 int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	intptr_t base = (intptr_t)&__ramfs_start;
-  kdebug(D_KERNEL, 1, "Disk write request at address %#08x of size %d\n", address, size);
+    kdebug(D_KERNEL, 1, "Disk write request at address %#08x of size %d\n", address, size);
 	dmb();
 	memcpy((void*) (address + base), buffer, size);
 	return 0;
@@ -83,7 +86,12 @@ void kernel_main(uint32_t memory) {
 
 	// TTB1 is already set up on boot (-> 0x4000)
 	// TTB0 is set up on each context switch
-	mmu_setup_ttbcr(TTBCR_ALIGN_128);
+	mmu_setup_ttbcr(TTBCR_ALIGN);
+   /* uintptr_t ttb0 = memalign(16*1024,16*1024);
+    mmu_add_section(ttb0, 0, 0, 0);
+    mmu_add_section(ttb0, 0xf0000000, 0, 0);
+    mmu_add_section(ttb0, 0x80000000+memory-1, memory-1, 0);
+    mmu_set_ttb_1(ttb0);*/
 	//mmu_set_ttb_0(0x0000, TTBCR_ALIGN_128);
 	//mmu_invalidate_unified_tlb();
 	//mmu_invalidate_caches();

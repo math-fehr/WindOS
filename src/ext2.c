@@ -121,7 +121,7 @@ uintptr_t ext2_get_block_address(superblock_t* fs, ext2_inode_t inode, int block
     int block_1 = block - 12;
     // Address of the first block.
     uintptr_t s_ind_block =  (uintptr_t) inode.singly_indirect_block_ptr;
-    disk->read(s_ind_block + 4*block_1, &base_address, 4);
+    disk->read(s_ind_block*block_size + 4*block_1, &base_address, 4);
   } else if (block < 12+ind_size+ind_size*ind_size) {// doubly indirect block
     block = block - 12 - ind_size;
     int block_1 = block / ind_size;
@@ -129,8 +129,8 @@ uintptr_t ext2_get_block_address(superblock_t* fs, ext2_inode_t inode, int block
     // Address of the first block;
     uintptr_t d_ind_block = (uintptr_t) inode.doubly_indirect_block_ptr;
     uintptr_t s_ind_block = 0;
-    disk->read(d_ind_block + 4*block_1, &s_ind_block, 4);
-    disk->read(s_ind_block + 4*block_2, &base_address, 4);
+    disk->read(d_ind_block*block_size + 4*block_1, &s_ind_block, 4);
+    disk->read(s_ind_block*block_size + 4*block_2, &base_address, 4);
   } else { // triply indirect block
     block = block - 12 - ind_size - ind_size*ind_size;
     int block_1 = block / (ind_size*ind_size);
@@ -140,11 +140,11 @@ uintptr_t ext2_get_block_address(superblock_t* fs, ext2_inode_t inode, int block
     uintptr_t d_ind_block = 0;
     uintptr_t s_ind_block = 0;
     // From the first block, reads the address of the second block.
-    disk->read(t_ind_block + 4*block_1, &d_ind_block, 4);
+    disk->read(t_ind_block*block_size + 4*block_1, &d_ind_block, 4);
     // From the second block, reads the address of the third block.
-    disk->read(d_ind_block + 4*block_2, &s_ind_block, 4);
+    disk->read(d_ind_block*block_size + 4*block_2, &s_ind_block, 4);
     // From the third block, reads the address of the data block.
-    disk->read(s_ind_block + 4*block_3, &base_address, 4);
+    disk->read(s_ind_block*block_size + 4*block_3, &base_address, 4);
   }
   return base_address;
 }
@@ -184,13 +184,15 @@ int ext2_fread( inode_t vfs_inode, char* buffer, int size, int position) {
   int last_block = (position+size-1) / block_size;
 
   int offset = position % block_size;
-
+  kdebug(D_EXT2, 0, "Reading file: size %#010x position %#010x to buffer %#010x\n", size, position, buffer);
   if (offset+size <= block_size) { // data on single block
     ext2_inode_read_block(fs, info, buffer, first_block, offset, size);
   } else { // data on several blocks
+      kdebug(D_EXT2, 0, "From block %d to %d\n", first_block, last_block);
     ext2_inode_read_block(fs, info, buffer, first_block, offset, block_size-offset);
     int buffer_position = block_size - offset;
     for (int block=first_block+1; block < last_block; block++) {
+        kdebug(D_EXT2, 0, "B: %d\n", block);
       ext2_inode_read_block(fs, info, buffer+buffer_position, block, 0, block_size);
       buffer_position += block_size;
     }

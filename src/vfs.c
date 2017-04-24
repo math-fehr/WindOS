@@ -12,13 +12,13 @@ inode_t inode_table[VFS_MAX_OPEN_INODES];
 char open_inode_ref_cnt[VFS_MAX_OPEN_INODES];
 
 void vfs_setup() {
-  for (int i=0; i<VFS_MAX_OPEN_FILES;i++) {
-    open_file_bitmap[i] = false;
-  }
+    for (int i=0; i<VFS_MAX_OPEN_FILES;i++) {
+        open_file_bitmap[i] = false;
+    }
 
-  for (int i=0; i<VFS_MAX_OPEN_INODES;i++) {
-    open_inode_ref_cnt[i] = 0;
-  }
+    for (int i=0; i<VFS_MAX_OPEN_INODES;i++) {
+        open_inode_ref_cnt[i] = 0;
+    }
 }
 
 inode_t vfs_path_to_inode(char *path_) {
@@ -159,15 +159,15 @@ int vfs_fseek(int fd, int offset) {
 }
 
 int vfs_fmove(int fd, int position) {
-  if (!open_file_bitmap[fd]) return 0;
+    if (!open_file_bitmap[fd]) return 0;
 
-  int size = file_table[fd].inode->size;
-  int pos = position;
-  if (pos < 0) pos = 0;
-  if (pos > size) pos = size;
-  file_table[fd].current_offset = pos;
+    int size = file_table[fd].inode->size;
+    int pos = position;
+    if (pos < 0) pos = 0;
+    if (pos > size) pos = size;
+    file_table[fd].current_offset = pos;
 
-  return pos;
+    return pos;
 }
 
 int vfs_fwrite(int fd, char* buffer, int length) {
