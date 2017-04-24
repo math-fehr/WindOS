@@ -55,7 +55,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t atags) {
 	(void) r1;
 	(void) atags;
 
-	// Initialize BSS segment
+    // Initialize BSS segment
 	for (char* val = (char*)&__kernel_bss_start; val < (char*)&__kernel_bss_end; val++) {
 		(*val)=0;
 	}
