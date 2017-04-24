@@ -6,6 +6,87 @@ extern int __kernel_phy_start;
 extern int __kernel_phy_end;
 
 
+// Setups ttb control register in order to have two ttb
+// (one for the OS and one for the program)
+// N = 0 => use only ttb 0
+// N > 0 => use ttb 1 if (vaddr & (1110.....0))
+//                                 |||-> N
+void mmu_setup_ttbcr(uint32_t N) {
+  asm("mcr p15, 0, %0, c2, c0, 2\n"
+      :
+      : "r" (N)
+      : );
+}
+
+void mmu_set_ttb_1(uint32_t addr) {
+  uint32_t reg;
+  if (addr & ((1 << 14) - 1)) {
+    // TTB address is not correctly aligned. (16kb)
+    return;
+  }
+
+  asm("mrc p15, 0, %0, c2, c0, 1\n"
+      : "=r" (reg)
+      :
+      :);
+  reg = reg & ((1 << 14) - 1); // mask previous address
+  reg = reg | addr;
+  asm("mcr p15, 0, %0, c2, c0, 1\n"
+      :
+      : "r" (reg)
+      :);
+}
+
+void mmu_set_ttb_0(uint32_t addr, uint32_t N) {
+  uint32_t reg;
+  if (addr & ((1 << (14-N)) - 1)) {
+    // TTB address is not correctly aligned. (16kb/2^N)
+    return;
+  }
+
+  asm("mrc p15, 0, %0, c2, c0, 0\n"
+      : "=r" (reg)
+      :
+      :);
+  reg = reg & ((1 << (14-N)) - 1); // mask previous address
+  reg = reg | addr;
+  asm("mcr p15, 0, %0, c2, c0, 0\n"
+      :
+      : "r" (reg)
+      :);
+}
+
+inline void dsb() {
+  asm("mcr p15, 0, %0, c7,c10,4"
+      :
+      : "r" (0)
+      :);
+}
+
+void mmu_invalidate_caches() {
+  asm("mov r0, #0\n"
+      "mcr p15,0,r0,c7,c7,0");
+}
+void mmu_invalidate_unified_tlb() {
+  asm("mov r0, #0\n"
+      "mcr p15,0,r0,c8,c7,0\n");
+
+  dsb();
+}
+
+void mmu_stop() {
+  asm("mrc p15,0,r2,c1,c0,0\n"
+      "bic r2,#0x1000\n"
+      "bic r2,#0x0004\n"
+      "bic r2,#0x0001\n"
+      "mcr p15,0,r2,c1,c0,0\n");
+}
+
+void mmu_start() {
+  asm("mrc p15,0,r2,c1,c0,0\n"
+      "orr r2,r2,#1\n"
+      "mcr p15,0,r2,c1,c0,0\n");
+}
 
 void mmu_setup_ttb(uintptr_t ttb_address) {
     uintptr_t i;

@@ -45,8 +45,6 @@ _fast_interrupt_vector_h:           .word   _fast_interrupt_vector
    */
 
 _reset_:
-    //TEST
-
 	mov 		r0, #(CPSR_MODE_SVR | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT)
 	msr 		cpsr_c, r0
 
@@ -58,15 +56,12 @@ _reset_:
 	ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
 	stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
 
-	// change base address for interrupts
-	mov 		r0, #0xf0000000
-	mcr 		p15, 0, r0, c12, c0, 0
-
 
 
 	ldr sp, =_start // a temporary stack
-	ldr r3, =init_get_ram
-	blx r3
+	bl init_get_ram
+
+	mov r7, r0
 	mov r3, r0
 	sub sp, r3, #0x8000 //put sp at the end of the ram
 
@@ -85,18 +80,22 @@ _reset_:
 	msr 		cpsr_c, r0
 
 	// builds a correct ttb at address 0x4000
-	ldr r3, =init_setup_ttb
-	blx r3
+	bl init_setup_ttb
 
 
 	mov r0, #0x4000
+	mov r1, #1
+//	orr r1, r1, #0x1000
+//	orr r1, r1, #0x0004
+	// starts the mmu.
+	mov r2,#0
     mov r3,#0
 
     #ifdef RPI2
       mrc p15,0,r2,c1,c0,1
 	  orr r2,#0b1000000
 	  mcr p15,0,r2,c1,c0,1  // Enables coherent requests to the processor
-      mcr p15,0,r3,c7,c6,1  // Invalidate data cache by MVA to PoC  
+      mcr p15,0,r3,c7,c6,1  // Invalidate data cache by MVA to PoC
   	  mcr p15,0,r3,c8,c7,0  // Invalidate tlb
 	  mcr p15,0,r3,c7,c5,6  // BPIALL - Invalidate entire branch predictor array
     #else
@@ -105,10 +104,11 @@ _reset_:
 	  mcr p15,0,r3,c7,c10,4 // DSB
     #endif
 
-	mvn r2,#0
-	bic r2,#0xC
 
-    mcr p15,0,r2,c3,c0,0  // domain
+	mvn r2,#0
+  bic r2,#0xC
+	mcr p15,0,r2,c3,c0,0  // domain
+
 
     orr r0,#0b1001010     // page table walk inner and outer write-back,
                           // write-allocate, cacheable, shareable memory
@@ -118,18 +118,32 @@ _reset_:
 
 
     //Now we activate the mmu
+		#ifdef RPI2
     isb
 	mrc p15,0,r2,c1,c0,0
     movw r3, #0x1803  //enable mmu, cache, and other options
 	orr r2,r2,r3
 	mcr p15,0,r2,c1,c0,0
     isb
+		#else
+		mrc p15,0,r2,c1,c0,0
+	  mov r3, #0x1  //enable mmu only
+		orr r2,r2,r3
+		mcr p15,0,r2,c1,c0,0
+
+		#endif
+
+
+	// change base address for interrupts
+	mov 		r0, #0xf0000000
+	mcr 		p15, 0, r0, c12, c0, 0
 
 	// hopefully the mmu is enabled.
-	add sp, sp, #0x80000000 // new sp pointing to virtual address
 
-	ldr r3, =kernel_main //We call kernel_main, the entry of the C kernel
-	blx r3
+	mov r0, r7
+	add sp, sp, #0x80000000 // new sp pointing to virtual address
+ //We call kernel_main, the entry of the C kernel
+	bl kernel_main
 
 
 test:

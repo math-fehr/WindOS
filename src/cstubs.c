@@ -25,7 +25,7 @@ uintptr_t _sbrk(int incr) {
     mmu_add_section(KERNEL_TTB_ADDRESS,
                     HEAP_BASE,
                     (uintptr_t)&__kernel_phy_end + PAGE_SECTION - 1,
-                    DC_CLIENT | ENABLE_CACHE | ENABLE_WRITE_BUFFER);
+                    0);
   }
 
   prev_heap_end = heap_end;
@@ -40,7 +40,7 @@ uintptr_t _sbrk(int incr) {
           KERNEL_TTB_ADDRESS,
           HEAP_BASE + allocated_pages*PAGE_SECTION,
           (res->address + i)*PAGE_SECTION,
-          DC_CLIENT | ENABLE_CACHE | ENABLE_WRITE_BUFFER);
+          0);
         allocated_pages++;
       }
       res = res->next;
