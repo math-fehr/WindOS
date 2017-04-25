@@ -79,27 +79,21 @@ void kernel_main(uint32_t memory) {
 	__ram_size = memory;
 	GPIO_setOutputPin(GPIO_LED_PIN);
 
-
 	// Remove linear mapping of the first 2GB
 	for (uint32_t i=0;i<0x80000000;i+=PAGE_SECTION) {
 		mmu_delete_section(0xf0004000, i);
 	}
+    blink(5);
+
+
+	serial_init();
 
 	// TTB1 is already set up on boot (-> 0x4000)
 	// TTB0 is set up on each context switch
 	mmu_setup_ttbcr(TTBCR_ALIGN);
-   /* uintptr_t ttb0 = memalign(16*1024,16*1024);
-    mmu_add_section(ttb0, 0, 0, 0);
-    mmu_add_section(ttb0, 0xf0000000, 0, 0);
-    mmu_add_section(ttb0, 0x80000000+memory-1, memory-1, 0);
-    mmu_set_ttb_1(ttb0);*/
-	//mmu_set_ttb_0(0x0000, TTBCR_ALIGN_128);
-	//mmu_invalidate_unified_tlb();
-	//mmu_invalidate_caches();
 
 	paging_init(__ram_size >> 20, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
 
-	serial_init();
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
 
 	Timer_Setup();
