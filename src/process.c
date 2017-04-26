@@ -36,9 +36,9 @@ process* process_load(char* path) {
     }
 
     uintptr_t ttb_address;
-    // should give a new 16kb ttb that is (16kb >> TTBCR_ALIGN) aligned
-    uint32_t alignment = 16*1024 >> TTBCR_ALIGN;
-    ttb_address = (uintptr_t)memalign(alignment, 16*1024);
+
+    uint32_t table_size = 16*1024 >> TTBCR_ALIGN;
+    ttb_address = (uintptr_t)memalign(table_size, table_size);
 
     page_list_t* res = paging_allocate(2);
     if (res == NULL) {
@@ -54,6 +54,8 @@ process* process_load(char* path) {
     }
     // 1MB for the program and 1MB for the stack. TODO: Make this less brutal.
     mmu_add_section(ttb_address, 0, section_addr, 0);
+    kernel_printf("RS: %#010x - %#010x = %#010x => %#010x\n", __ram_size, PAGE_SECTION, __ram_size - PAGE_SECTION, section_stack);
+    kernel_printf("Alignment: %#010x\n", table_size);
     mmu_add_section(ttb_address, __ram_size-PAGE_SECTION, section_stack, 0);
     // Loads executable data into memory and allocates it.
     ph_entry_t ph;
@@ -83,7 +85,7 @@ process* process_load(char* path) {
     processus->dummy = 0;
     processus->ttb_address = ttb_address;
     processus->status = status_active;
-    processus->sp = section_stack+PAGE_SECTION-17*sizeof(uint32_t);
+    processus->sp = __ram_size-17*sizeof(uint32_t);
 
     uint32_t* phy_stack = (uint32_t*)(0x80000000+section_stack+PAGE_SECTION-17*sizeof(uint32_t));
     for (int i=0;i<17;i++) {
@@ -104,11 +106,16 @@ process* process_load(char* path) {
 void process_switchTo(process* p) {
     kernel_printf("TTB address: %#010x\n", p->ttb_address);
     mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
-    asm("mov sp, %0\n"
-        "pop {r0}\n"
-        "msr cpsr, r0\n"
-        "ldmfd sp, {r0-r14, pc}\n"
-        :
-        : "r" (p->sp + 0x80000000)
-        :);
+    asm volatile(   "push {r0-r12}\n"
+                    "mov r1, %0\n"
+                    "ldmfd r1!, {r0}\n"
+                    "msr cpsr, r0\n"
+                    "mov sp, r1\n"
+                    "ldmfd sp, {r0-r15}\n"
+                    :
+                    : "r" (p->sp)
+                    :);
+    asm volatile(   ".globl switchTo_end\n"
+                    "switchTo_end:\n"
+                    "pop {r0-r12}\n" : : :);
 }
