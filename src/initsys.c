@@ -75,7 +75,8 @@ void sys_init() {
     dsb();
     isb();
 
-    mcr(p15,0,c3,c0,0, ~0);
+    mcr(p15,0,c3,c0,0, ~0); // domain
+
     uint32_t mmu_ctrl = mrc(p15,0,c1,c0,0);
     mmu_ctrl |= (1 << 11) | (1 << 2) | (1 << 12) | (1 << 0) | (1 << 5);
 

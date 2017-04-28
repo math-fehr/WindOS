@@ -13,28 +13,52 @@
 .equ    CPSR_FIQ_INHIBIT,       0x40
 
 
-.globl _undefined_instruction_vector
+.globl _undefined_instruction_vector // TODO: put some stack for this handler
 _undefined_instruction_vector:
+    b _undefined_instruction_vector
 	ldr pc, =undefined_instruction_vector
 
-	.globl _software_interrupt_vector
+.globl _software_interrupt_vector
 _software_interrupt_vector:
-	ldr pc, =software_interrupt_vector
+    cmp     r7, #0x01 // exit interrupt code
+    beq     switchTo_end  
+    ldr     ip, =interrupt_reg
+    stmia   ip, {r0-r15}
+    mrs     r0, spsr
+    str     r0, [ip, #4]
+    ldr     pc, =software_interrupt_vector
 
-	.globl _prefetch_abort_vector
+
+.globl _prefetch_abort_vector
 _prefetch_abort_vector:
+    ldr     ip, =interrupt_reg
+    stmia   ip, {r0-r15}
+    mrs     r0, spsr
+    str     r0, [ip, #4]
 	ldr pc, =prefetch_abort_vector
 
-	.globl _data_abort_vector
+.globl _data_abort_vector
 _data_abort_vector:
-	ldr pc, =data_abort_vector
+    ldr     ip, =interrupt_reg
+    stmia   ip, {r0-r15}
+    mrs     r0, spsr
+    str     r0, [ip, #4]
+	ldr     pc, =data_abort_vector
 
-	.globl _interrupt_vector
+.globl _interrupt_vector
 _interrupt_vector:
+    ldr     ip, =interrupt_reg
+    stmia   ip, {r0-r15}
+    mrs     r0, spsr
+    str     r0, [ip, #4]
 	ldr pc, =interrupt_vector
 
 .globl _fast_interrupt_vector
 _fast_interrupt_vector:
+    ldr     ip, =interrupt_reg
+    stmia   ip!, {r0-r15}
+    mrs     r0, spsr
+    stmia   ip!, {r0}
 	ldr pc, =fast_interrupt_vector
 
 
