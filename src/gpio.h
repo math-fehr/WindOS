@@ -86,4 +86,32 @@ void GPIO_setOutputPin(int pin);
  */
 void GPIO_setPinValue(int pin, bool value);
 
+
+/**
+ * Pull Up the resistor on pin
+ */
+void GPIO_setPullUp(int pin);
+
+
+/**
+ * Pull Down the resistor on pin
+ */
+void GPIO_setPullDown(int pin);
+
+
+/**
+ * Reset the pull of the resistor on pin
+ */
+void GPIO_resetPull(int pin);
+
+/**
+ * A high level on the pin set a bit in GPED
+ */
+void GPIO_enableHighDetect(int pin);
+
+/**
+ * A high level on the pin do not set a bit in GPED anymore
+ */
+void GPIO_disableHighDetect(int pin);
+
 #endif
