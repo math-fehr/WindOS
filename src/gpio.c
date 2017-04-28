@@ -91,3 +91,19 @@ void GPIO_setPullDown(int pin) {
 void GPIO_resetPull(int pin) {
     GPIO_setPull(pin,NO_PULL);
 }
+
+void GPIO_enableHighDetect(int pin) {
+    dmb();
+    int n = pin < 32 ? 0 : 1;
+    pin = pin < 32 ? pin : (32-pin);
+    getGPIOController()->GPHEN[n] |= (uint32_t)(1) << (uint32_t)(pin);
+    dmb();
+}
+
+void GPIO_disableHighDetect(int pin) {
+    dmb();
+    int n = pin < 32 ? 0 : 1;
+    pin = pin < 32 ? pin : (32-pin);
+    getGPIOController()->GPHEN[n] &= ~((uint32_t)(1) << (uint32_t)(pin));
+    dmb();
+}

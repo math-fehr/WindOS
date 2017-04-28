@@ -104,4 +104,14 @@ void GPIO_setPullDown(int pin);
  */
 void GPIO_resetPull(int pin);
 
+/**
+ * A high level on the pin set a bit in GPED
+ */
+void GPIO_enableHighDetect(int pin);
+
+/**
+ * A high level on the pin do not set a bit in GPED anymore
+ */
+void GPIO_disableHighDetect(int pin);
+
 #endif
