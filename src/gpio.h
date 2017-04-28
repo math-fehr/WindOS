@@ -86,4 +86,22 @@ void GPIO_setOutputPin(int pin);
  */
 void GPIO_setPinValue(int pin, bool value);
 
+
+/**
+ * Pull Up the resistor on pin
+ */
+void GPIO_setPullUp(int pin);
+
+
+/**
+ * Pull Down the resistor on pin
+ */
+void GPIO_setPullDown(int pin);
+
+
+/**
+ * Reset the pull of the resistor on pin
+ */
+void GPIO_resetPull(int pin);
+
 #endif

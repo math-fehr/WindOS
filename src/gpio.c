@@ -1,4 +1,14 @@
 #include "gpio.h"
+#include "timer.h"
+
+
+/**
+ * Flags for pins pull
+ */
+#define NO_PULL 0b00
+#define PULL_DOWN 0b01
+#define PULL_UP 0b10
+
 
 extern void dmb();
 
@@ -44,4 +54,40 @@ void GPIO_setPinValue(int pin, bool value) {
       getGPIOController()->GPCLR[set] |= (1 << pin);
   }
   dmb(); //this too
+}
+
+static void GPIO_setPull(int pin, int pull) {
+    dmb();
+    getGPIOController()->GPPUD = pull;
+    Timer_WaitCycles(150);
+    if(pin < 32) {
+        getGPIOController()->GPPUDCLK0 |= ((uint32_t)1 << (uint32_t)pin);
+        dmb();
+        Timer_WaitCycles(150);
+        getGPIOController()->GPPUD = 0b11;
+        dmb();
+        getGPIOController()->GPPUDCLK0 &= ~((uint32_t)1 << (uint32_t)pin);
+        dmb();
+    }
+    else {
+        getGPIOController()->GPPUDCLK1 |= ((uint32_t)1 << (uint32_t)(pin-32));
+        dmb();
+        Timer_WaitCycles(150);
+        getGPIOController()->GPPUD = 0b11;
+        dmb();
+        getGPIOController()->GPPUDCLK1 &= ~((uint32_t)1 << (uint32_t)(pin-32));
+        dmb();
+    }
+}
+
+void GPIO_setPullUp(int pin) {
+    GPIO_setPull(pin,PULL_UP);
+}
+
+void GPIO_setPullDown(int pin) {
+    GPIO_setPull(pin,PULL_DOWN);
+}
+
+void GPIO_resetPull(int pin) {
+    GPIO_setPull(pin,NO_PULL);
 }
