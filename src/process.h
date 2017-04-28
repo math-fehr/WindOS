@@ -13,6 +13,13 @@
  * Represent an active process
  */
 
+#define MAX_OPEN_FILES 64
+
+typedef struct {
+    inode_t* inode;
+    int position;
+} fd_t;
+
 /**
  * status of a process
  */
@@ -28,11 +35,12 @@ typedef enum {
 typedef struct {
     status_process status;
     int dummy; //Temp value for debug
-    uint32_t sp;
+    uint32_t sp; // current stack pointer.
     uintptr_t ttb_address;
     int asid; // Address Space ID
     int brk; // Program break.
     int brk_page; // Number of pages allocated for program break
+    fd_t fd[MAX_OPEN_FILES];
 } process;
 
 #define ELF_ABI_SYSTEMV 0

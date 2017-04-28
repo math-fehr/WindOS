@@ -45,16 +45,34 @@ superblock_t* ext2fs_initialize(storage_driver* disk) {
 
   superblock_t* result = (superblock_t*) malloc(sizeof(superblock_t));
   result->id = i;
-  result->root.number = 2;
-  result->root.sb = result;
-  result->root.op = &ext2_inode_operations;
-  result->root.size = ext2_get_inode_descriptor(result, 2).size;
-  result->root.attr = EXT2_INODE_DIRECTORY;
+
+  ext2_inode_t desc = ext2_get_inode_descriptor(result, 2);
+
+  result->root = malloc(sizeof(inode_t));
+  result->root->st = ext2_inode_to_stat(result, desc, 2);
+  result->root->sb = result;
+  result->root->op = &ext2_inode_operations;
   i++;
   return result;
 }
 
-
+struct stat ext2_inode_to_stat(superblock_t* sb, ext2_inode_t data, int number) {
+    struct stat res;
+    res.st_atime        = data.last_access_time;
+    res.st_blksize      = 1024 << devices[sb->id].sb->log_block_size;
+    res.st_blocks       = (data.size+511) / 512;
+    res.st_ctime        = data.creation_time;
+    res.st_dev          = sb->id;
+    res.st_gid          = data.group_id;
+    res.st_ino          = number;
+    res.st_mode         = data.type_permissions;
+    res.st_mtime        = data.last_modification_time;
+    res.st_nlink        = data.hard_links;
+    res.st_rdev         = 0;
+    res.st_size         = data.size;
+    res.st_uid          = data.user_id;
+    return res;
+}
 
 ext2_block_group_descriptor_t ext2_get_block_group_descriptor(superblock_t* fs, int bg) {
   ext2_superblock_t* sb = devices[fs->id].sb;
@@ -161,10 +179,10 @@ void ext2_inode_read_block(superblock_t* fs, ext2_inode_t inode, char* buffer, i
 }
 
 
-
-int ext2_fread( inode_t vfs_inode, char* buffer, int size, int position) {
-  superblock_t* fs = vfs_inode.sb;
-  int inode = vfs_inode.number;
+// TODO: update last access time
+int ext2_fread(inode_t* vfs_inode, char* buffer, int size, int position) {
+  superblock_t* fs = vfs_inode->sb;
+  int inode = vfs_inode->st.st_ino;
 
   //kernel_printf("[INFO][EXT2] Reading file inode %d\n", inode);
   ext2_superblock_t* sb = devices[fs->id].sb;
@@ -204,6 +222,7 @@ int ext2_fread( inode_t vfs_inode, char* buffer, int size, int position) {
 
 
  // |inode(4)|size(2)|length(1)|type(1)|name(N)
+ // TODO: update last modification time
 void ext2_add_dir_entry(superblock_t* fs, int dir, int dest, char* name) {
   ext2_superblock_t* sb = devices[fs->id].sb;
   int block_size = 1024 << sb->log_block_size;
@@ -261,9 +280,9 @@ void ext2_add_dir_entry(superblock_t* fs, int dir, int dest, char* name) {
   free(entry);
 }
 
-int ext2_mkdir (inode_t inode, char* name, int perm) {
-  int new_dir = ext2_get_free_inode(inode.sb);
-  ext2_register_inode(inode.sb, new_dir);
+int ext2_mkdir (inode_t* inode, char* name, int perm) {
+  int new_dir = ext2_get_free_inode(inode->sb);
+  ext2_register_inode(inode->sb, new_dir);
   ext2_inode_t data;
   data.creation_time = timer_get_posix_time();
   data.last_access_time = timer_get_posix_time();
@@ -277,18 +296,18 @@ int ext2_mkdir (inode_t inode, char* name, int perm) {
   data.singly_indirect_block_ptr = 0;
   data.doubly_indirect_block_ptr = 0;
   data.triply_indirect_block_ptr = 0;
-  ext2_update_inode_data(inode.sb, new_dir, data);
+  ext2_update_inode_data(inode->sb, new_dir, data);
 
-  ext2_add_dir_entry(inode.sb, new_dir, new_dir, ".");
-  ext2_add_dir_entry(inode.sb, new_dir, inode.number, "..");
+  ext2_add_dir_entry(inode->sb, new_dir, new_dir, ".");
+  ext2_add_dir_entry(inode->sb, new_dir, inode->st.st_ino, "..");
 
-  ext2_add_dir_entry(inode.sb, inode.number, new_dir, name);
+  ext2_add_dir_entry(inode->sb, inode->st.st_ino, new_dir, name);
   return 1;
 }
 
 
-int ext2_rm (inode_t inode, char* name) {
-  superblock_t* fs = inode.sb;
+int ext2_rm (inode_t* inode, char* name) {
+  superblock_t* fs = inode->sb;
   ext2_superblock_t* sb = devices[fs->id].sb;
   storage_driver* disk = devices[fs->id].disk;
   int block_size = 1024 << sb->log_block_size;
@@ -299,7 +318,7 @@ int ext2_rm (inode_t inode, char* name) {
 
   int n = strlen(name);
 
-  ext2_inode_t container_desc = ext2_get_inode_descriptor(fs, inode.number);
+  ext2_inode_t container_desc = ext2_get_inode_descriptor(fs, inode->st.st_ino);
   char* data = malloc(block_size);
 
   bool found = false;
@@ -319,9 +338,9 @@ int ext2_rm (inode_t inode, char* name) {
         bool ok_to_delete = true;
         if (desc.type_permissions & EXT2_INODE_DIRECTORY) {
           inode_t t;
-          t.number = deleted_inode;
+          t.st.st_ino = deleted_inode;
           t.sb = fs;
-          vfs_dir_list_t* lst = ext2_lsdir(t);
+          vfs_dir_list_t* lst = ext2_lsdir(&t);
           int cnt = 0;
           while (lst != NULL) {
             if(strcmp(".",lst->name) != 0 && strcmp("..",lst->name) != 0) {
@@ -374,26 +393,26 @@ ext2_inode_t ext2_create_inode(int perm) {
   return data;
 }
 
-int ext2_mkfile (inode_t inode, char* name, int perm) {
-  int new_file = ext2_get_free_inode(inode.sb);
-  ext2_register_inode(inode.sb, new_file);
+int ext2_mkfile (inode_t* inode, char* name, int perm) {
+  int new_file = ext2_get_free_inode(inode->sb);
+  ext2_register_inode(inode->sb, new_file);
   ext2_inode_t data = ext2_create_inode(perm);
-  ext2_update_inode_data(inode.sb, new_file, data);
+  ext2_update_inode_data(inode->sb, new_file, data);
 
-  ext2_add_dir_entry(inode.sb, inode.number, new_file, name);
+  ext2_add_dir_entry(inode->sb, inode->st.st_ino, new_file, name);
   return 0;
 }
 
 /*
  * List the child elements of an inode.
  */
-vfs_dir_list_t* ext2_lsdir(inode_t inode_p) {
-  superblock_t* fs = inode_p.sb;
+vfs_dir_list_t* ext2_lsdir(inode_t* inode_p) {
+  superblock_t* fs = inode_p->sb;
   ext2_superblock_t* sb = devices[fs->id].sb;
   //ext2_extended_superblock_t* esb = devices[fs->id].esb;
   storage_driver* disk = devices[fs->id].disk;
 
-  int inode = inode_p.number;
+  int inode = inode_p->st.st_ino;
 
   vfs_dir_list_t* dir_list = 0;
   ext2_inode_t result = ext2_get_inode_descriptor(fs, inode);
@@ -429,12 +448,11 @@ vfs_dir_list_t* ext2_lsdir(inode_t inode_p) {
           vfs_dir_list_t* entry = malloc(sizeof(vfs_dir_list_t));
           entry->next = dir_list;
           entry->name = name;
-          entry->inode.sb = fs;
-          entry->inode.number = l_inode;
-          entry->inode.op = &ext2_inode_operations;
+          entry->inode = malloc(sizeof(inode_t));
+          entry->inode->sb = fs;
+          entry->inode->op = &ext2_inode_operations;
           ext2_inode_t r = ext2_get_inode_descriptor(fs, l_inode);
-          entry->inode.attr = r.type_permissions;
-          entry->inode.size = r.size;
+          entry->inode->st = ext2_inode_to_stat(fs, r, l_inode);
 
 
           dir_list = entry;
@@ -583,16 +601,16 @@ void ext2_set_inode_block_address(superblock_t* fs, int inode, int b, int b_addr
 }
 
 
-int ext2_fwrite(inode_t inode, char* buf, int len, int ofs) {
-  superblock_t* fs = inode.sb;
+int ext2_fwrite(inode_t* inode, char* buf, int len, int ofs) {
+  superblock_t* fs = inode->sb;
 
-  ext2_inode_t data = ext2_get_inode_descriptor(fs, inode.number);
+  ext2_inode_t data = ext2_get_inode_descriptor(fs, inode->st.st_ino);
 
   int to_append = max(len+ofs - data.size, 0);
   int to_replace = len - to_append;
 
-  ext2_replace_file(fs, inode.number, buf, to_replace, ofs);
-  ext2_append_file(fs, inode.number, buf+to_replace, to_append);
+  ext2_replace_file(fs, inode->st.st_ino, buf, to_replace, ofs);
+  ext2_append_file(fs, inode->st.st_ino, buf+to_replace, to_append);
   return len;
 }
 

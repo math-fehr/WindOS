@@ -5,9 +5,13 @@
 extern unsigned int __ram_size;
 
 process* process_load(char* path) {
-    int fd = vfs_fopen(path);
+    inode_t* fd = vfs_path_to_inode(path);
+    if (fd == 0) {
+        kdebug(D_PROCESS, 5, "Could not load %s\n", path);
+        return 0;
+    }
     elf_header_t header;
-    vfs_fread(fd,(char*)&header,sizeof(header));
+    vfs_fread(fd,(char*)&header,sizeof(header),0);
 
 
     if (strncmp(header.magic_number,"\x7F""ELF",4) != 0) {
@@ -61,11 +65,9 @@ process* process_load(char* path) {
     ph_entry_t ph;
     for (int i=0; i<header.ph_num;i++) {
         int cur_pos = header.program_header_pos+i*header.ph_entry_size;
-        vfs_fmove(fd, cur_pos);
-        vfs_fread(fd, (char*)&ph, sizeof(ph_entry_t));
+        vfs_fread(fd, (char*)&ph, sizeof(ph_entry_t), cur_pos);
         if (ph.type == 1) {
-            vfs_fmove(fd, ph.offset);
-            vfs_fread(fd, (char*)(uintptr_t)(0x80000000+section_addr+ph.virtual_address), ph.file_size);
+            vfs_fread(fd, (char*)(uintptr_t)(0x80000000+section_addr+ph.virtual_address), ph.file_size, ph.offset);
         }
     }
     /*  sh_entry_t sh;
@@ -99,12 +101,18 @@ process* process_load(char* path) {
     processus->brk = PAGE_SECTION;
     processus->brk_page = 0;
 
-    vfs_fclose(fd);
+    for (int i=0;i<MAX_OPEN_FILES;i++) {
+        processus->fd[i].position = -1;
+    }
+
     return processus;
 }
 
+uint32_t current_process_id;
+
 void process_switchTo(process* p) {
     kernel_printf("TTB address: %#010x\n", p->ttb_address);
+    current_process_id = p->asid;
     mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
     asm volatile(   "push {r0-r12}\n"
                     "mov r1, %0\n"

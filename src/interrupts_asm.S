@@ -20,13 +20,13 @@ _undefined_instruction_vector:
 
 .globl _software_interrupt_vector
 _software_interrupt_vector:
-    cmp     r7, #0x01 // exit interrupt code
-    beq     switchTo_end  
+    stmfd   sp!, {r1-r12, lr} // save user registers
     ldr     ip, =interrupt_reg
     stmia   ip, {r0-r15}
     mrs     r0, spsr
-    str     r0, [ip, #4]
-    ldr     pc, =software_interrupt_vector
+    str     r0, [ip, #16*4]
+    bl      software_interrupt_vector // returns in r0
+    ldmfd   sp!, {r1-r12, pc}^
 
 
 .globl _prefetch_abort_vector
@@ -34,15 +34,15 @@ _prefetch_abort_vector:
     ldr     ip, =interrupt_reg
     stmia   ip, {r0-r15}
     mrs     r0, spsr
-    str     r0, [ip, #4]
-	ldr pc, =prefetch_abort_vector
+    str     r0, [ip, #16*4]
+	ldr     pc, =prefetch_abort_vector
 
 .globl _data_abort_vector
 _data_abort_vector:
     ldr     ip, =interrupt_reg
     stmia   ip, {r0-r15}
     mrs     r0, spsr
-    str     r0, [ip, #4]
+    str     r0, [ip, #16*4]
 	ldr     pc, =data_abort_vector
 
 .globl _interrupt_vector
@@ -50,7 +50,7 @@ _interrupt_vector:
     ldr     ip, =interrupt_reg
     stmia   ip, {r0-r15}
     mrs     r0, spsr
-    str     r0, [ip, #4]
+    str     r0, [ip, #16*4]
 	ldr pc, =interrupt_vector
 
 .globl _fast_interrupt_vector
@@ -58,7 +58,7 @@ _fast_interrupt_vector:
     ldr     ip, =interrupt_reg
     stmia   ip!, {r0-r15}
     mrs     r0, spsr
-    stmia   ip!, {r0}
+    str     r0, [ip, #16*4]
 	ldr pc, =fast_interrupt_vector
 
 

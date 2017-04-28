@@ -6,8 +6,8 @@
 #include "stdint.h"
 #include "stdlib.h"
 #include "string.h"
-#include "stdio.h" 
-
+#include "stdio.h"
+ 
 #include "serial.h"
 #include "timer.h"
 #include "interrupts.h"

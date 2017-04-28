@@ -16,6 +16,13 @@
  */
 void setup_scheduler();
 
+
+/*
+ * Add a process in the table
+ * Returns the id of the process on sucess, -1 on error
+ */
+int sheduler_add_process(process* p);
+
 /**
  * Gets the ID of the next process to analyse
  * Returns -1 if there is no active process
@@ -43,7 +50,7 @@ int get_number_active_processes();
 /**
  * Get the list of processes
  */
-process* get_process_list();
+process** get_process_list();
 
 /**
  * Get the number of active processes

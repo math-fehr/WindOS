@@ -9,10 +9,10 @@
 #define NB_PAGES_FINE_TABLE 1024
 
 //Size of pages
-#define PAGE_SECTION 1024*1024
-#define PAGE_LARGE   64*1024
-#define PAGE_SMALL   4*1024
-#define PAGE_TINY    1*1024
+#define PAGE_SECTION (1024*1024)
+#define PAGE_LARGE   (64*1024)
+#define PAGE_SMALL   (4*1024)
+#define PAGE_TINY    (1*1024)
 
 /**
  * Definition of 2 bits domain control for paging
