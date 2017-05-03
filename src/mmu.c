@@ -69,6 +69,13 @@ void mmu_set_ttb_0(uint32_t addr, uint32_t N) {
     kdebug(D_MEMORY, 1, "TTB0 address updated (%#010x %d)\n", addr, N);
 }
 
+uintptr_t mmu_vir2phy_ttb(uintptr_t addr, uintptr_t ttb_phy) {
+	uintptr_t* address_section = (uintptr_t*)(0x80000000 | ttb_phy | ((addr & 0xFFF00000) >> 18));
+    uintptr_t target_section = *address_section;
+    target_section &= 0xFFF00000;
+    return target_section | (addr & 0x000FFFFF);
+}
+
 uintptr_t mmu_vir2phy(uintptr_t addr) {
     uintptr_t ttb_phy;
     if (addr & (((1 << TTBCR_ALIGN)-1) << (32 - TTBCR_ALIGN))) { // USE TTB1
@@ -84,11 +91,10 @@ uintptr_t mmu_vir2phy(uintptr_t addr) {
             :);
         ttb_phy &= ~((1 << (13 - TTBCR_ALIGN)) - 1);
     }
-    kernel_printf("TTB_PHY: %#010x\n", ttb_phy);
-    uintptr_t* address_section = (uintptr_t*)(0x80000000 | ttb_phy | ((addr & 0xFFF00000) >> 18));
+
+	uintptr_t* address_section = (uintptr_t*)(0x80000000 | ttb_phy | ((addr & 0xFFF00000) >> 18));
     uintptr_t target_section = *address_section;
     target_section &= 0xFFF00000;
-    kernel_printf("v2p %#010x => %#010x\n", addr, target_section | (addr & 0x000FFFFF));
     return target_section | (addr & 0x000FFFFF);
 }
 

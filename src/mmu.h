@@ -63,6 +63,7 @@ void mmu_setup_ttbcr(uint32_t N);
 void mmu_set_ttb_1(uint32_t addr);
 void mmu_set_ttb_0(uint32_t addr, uint32_t N);
 
+uintptr_t mmu_vir2phy_ttb(uintptr_t addr, uintptr_t ttb_phy);
 uintptr_t mmu_vir2phy(uintptr_t reg); // performs a table walk to get the physical address.
 
 static inline void mmu_invalidate_caches() {

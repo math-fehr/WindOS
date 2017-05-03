@@ -46,20 +46,21 @@ process* process_load(char* path) {
 
     page_list_t* res = paging_allocate(2);
     if (res == NULL) {
-        kdebug(D_PROCESS, 2, "Can't load %s: page allocation failed.\n", path);
+        kdebug(D_PROCESS, 10, "Can't load %s: page allocation failed.\n", path);
         return NULL;
     }
     int section_addr = res->address*PAGE_SECTION;
     int section_stack;
     if (res->size == 1) {
         section_stack = res->next->address*PAGE_SECTION;
+		free(res->next);
+		free(res);
     } else {
         section_stack = (res->address+1)*PAGE_SECTION;
+		free(res);
     }
-    // 1MB for the program and 1MB for the stack. TODO: Make this less brutal.
+    // 1MB for the program. TODO: Make this less brutal. (not hardcoded as i could read the symbol table)
     mmu_add_section(ttb_address, 0, section_addr, 0);
-    kernel_printf("RS: %#010x - %#010x = %#010x => %#010x\n", __ram_size, PAGE_SECTION, __ram_size - PAGE_SECTION, section_stack);
-    kernel_printf("Alignment: %#010x\n", table_size);
     mmu_add_section(ttb_address, __ram_size-PAGE_SECTION, section_stack, 0);
     // Loads executable data into memory and allocates it.
     ph_entry_t ph;
@@ -70,17 +71,21 @@ process* process_load(char* path) {
             vfs_fread(fd, (char*)(uintptr_t)(0x80000000+section_addr+ph.virtual_address), ph.file_size, ph.offset);
         }
     }
-    /*  sh_entry_t sh;
+	// TODO: Dynamic linking?
+    sh_entry_t sh;
     for (int i=0; i<header.sh_num;i++) {
-    vfs_fmove(fd, header.section_header_pos+header.sh_entry_size);
-    kernel_printf("f\n");
-    vfs_fread(fd, (char*)&sh, sizeof(sh_entry_t));
-    kernel_printf("g\n");
-    if ((sh.type == 1 || sh.type == 8) && (sh.flags & 2)) {
-      vfs_fmove(fd, sh.offset);
-      vfs_fread(fd, (char*)(uintptr_t)(0x80000000+section_addr+sh.addr), sh.size);
+	    vfs_fread(fd, (char*)&sh, sizeof(sh_entry_t), header.section_header_pos+i*header.sh_entry_size);
+
+	  /* if ((sh.type == 1 || sh.type == 8) && (sh.flags & 2)) {
+	      vfs_fmove(fd, sh.offset);
+	      vfs_fread(fd, (char*)(uintptr_t)(0x80000000+section_addr+sh.addr), sh.size);
+	  }*/
+	  	if (sh.type == 2) { // Symbol table
+			//kernel_printf("SYMTABLE\n");
+		} else if (sh.type == 3) { // String table
+		//	kernel_printf("STRTABLE\n");
+		}
     }
-    }*/
 
     process* processus = malloc(sizeof(process));
     processus->asid = 1;
@@ -111,9 +116,9 @@ process* process_load(char* path) {
 uint32_t current_process_id;
 
 void process_switchTo(process* p) {
-    kernel_printf("TTB address: %#010x\n", p->ttb_address);
     current_process_id = p->asid;
     mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+
     asm volatile(   "push {r0-r12}\n"
                     "mov r1, %0\n"
                     "ldmfd r1!, {r0}\n"

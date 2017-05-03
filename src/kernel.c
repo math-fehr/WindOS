@@ -103,15 +103,7 @@ void kernel_main(uint32_t memory) {
 	Timer_Setup();
 	enable_interrupts();
 	Timer_SetLoad(1000000);
-	Timer_Enable();
-	Timer_Enable_Interrupts();
 
-
-	int n = 5;
-	setup_scheduler();
-	for(int i = 0; i<n; i++) {
-			create_process();
-	}
 
 	storage_driver memorydisk;
 	memorydisk.read    = memory_read;
@@ -125,5 +117,21 @@ void kernel_main(uint32_t memory) {
     vfs_mkdir("/","dev",0x1FF);
     vfs_mount(devroot,"/dev");
 
-    wesh();
+
+	setup_scheduler();
+	process* p = process_load("/loop"); // init program
+	p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
+	p->fd[0].position   = 0;
+	p->fd[1].inode      = vfs_path_to_inode("/dev/serial");
+	p->fd[1].position   = 0;
+
+	if (p != NULL) {
+		sheduler_add_process(p);
+		Timer_Enable();
+		Timer_Enable_Interrupts();
+		process_switchTo(p);
+	} else {
+		kdebug(D_KERNEL, 10, "[ERROR] Could not load init");
+		while(1) {}
+	}
 }

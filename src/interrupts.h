@@ -7,6 +7,9 @@
 #include "kernel.h"
 #include "errno.h"
 #include "mmu.h"
+#include "debug.h"
+#include "scheduler.h"
+#include "syscalls.h"
 
 /**
  * Theses functions handle interrupts made by the processor
