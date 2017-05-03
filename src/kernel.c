@@ -102,7 +102,7 @@ void kernel_main(uint32_t memory) {
 
 	Timer_Setup();
 	enable_interrupts();
-	Timer_SetLoad(1000000);
+	Timer_SetLoad(10000);
 
 
 	storage_driver memorydisk;
@@ -119,7 +119,7 @@ void kernel_main(uint32_t memory) {
 
 
 	setup_scheduler();
-	process* p = process_load("/loop"); // init program
+	process* p = process_load("/bin/wesh"); // init program
 	p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
 	p->fd[0].position   = 0;
 	p->fd[1].inode      = vfs_path_to_inode("/dev/serial");
