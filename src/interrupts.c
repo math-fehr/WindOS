@@ -8,6 +8,13 @@
  */
 extern void dmb();
 
+static rpi_irq_controller_t* rpiIRQController =
+  (rpi_irq_controller_t*) RPI_INTERRUPT_CONTROLLER_BASE;
+
+rpi_irq_controller_t* RPI_GetIRQController(void) {
+  return rpiIRQController;
+}
+
 // In UNDEF mode
 void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector(void) {
   kdebug(D_IRQ, 5, "UNDEFINED INSTRUCTION.\n");
@@ -24,12 +31,17 @@ static bool status;
 
 // In IRQ mode
 void __attribute__ ((interrupt("IRQ"))) interrupt_vector(void) {
-  kdebug(D_IRQ, 0, "IRQ.\n");
-  dmb();
-  Timer_ClearInterrupt();
-  GPIO_setPinValue(GPIO_LED_PIN, status);
-  status = !status;
-  dmb();
+	if (RPI_GetIRQController()->IRQ_basic_pending == RPI_BASIC_ARM_TIMER_IRQ) {
+		kdebug(D_IRQ, 0, "Timer\n");
+		dmb();
+		Timer_ClearInterrupt();
+		GPIO_setPinValue(GPIO_LED_PIN, status);
+		status = !status;
+		dmb();
+	} else {
+		kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ!\n");
+		while(1) {}
+	}
 }
 
 uint32_t interrupt_reg[17];
@@ -89,6 +101,10 @@ uint32_t software_interrupt_vector(void) {
             p->brk = p->brk + r[0];
             kdebug(D_IRQ, 2, "SBRK => %#010x\n", old_brk);
             return old_brk;
+		case SVC_FORK:
+			///process* p = get_process_list()[current_process_id];
+
+			return 0;
         case SVC_WRITE:
             kdebug(D_IRQ, 2, "WRITE %d %#010x %#010x\n", r[0], r[1], r[2]);
             //int fd = r[0];
@@ -99,10 +115,11 @@ uint32_t software_interrupt_vector(void) {
                 return -1;
             }
 
-            fd_t fd = get_process_list()[current_process_id]->fd[r[0]];
-            if (fd.position >= 0) {
-                int n = vfs_fwrite(fd.inode, buf, cnt, 0);
+            fd_t* fd = &get_process_list()[current_process_id]->fd[r[0]];
+            if (fd->position >= 0) {
+                int n = vfs_fwrite(fd->inode, buf, cnt, 0);
                 kdebug(D_IRQ, 2, "WRITE => %d\n",n);
+				//fd->position += n;
                 return n;
             } else {
                 return -1;
@@ -129,8 +146,23 @@ uint32_t software_interrupt_vector(void) {
             kdebug(D_IRQ, 10, "LSEEK %d\n", r[0]);
             while(1) {}
         case SVC_READ:
-            kdebug(D_IRQ, 10, "READ %d\n", r[0]);
-            while(1) {}
+            kdebug(D_IRQ, 2, "READ %d %#010x %d\n", r[0], r[1], r[2]);
+            char* w_buf = (char*)(intptr_t)r[1];
+            size_t w_cnt = r[2];
+
+			if (r[0] >= MAX_OPEN_FILES) {
+                return -1;
+            }
+
+			fd_t* w_fd = &get_process_list()[current_process_id]->fd[r[0]];
+			if (w_fd->position >= 0) {
+				int n = vfs_fread(w_fd->inode, w_buf, w_cnt, w_fd->position);
+				//w_fd->position += n;
+				kdebug(D_IRQ, 2, "READ => %d\n",n);
+				return n;
+			} else {
+				return -1;
+			}
         default:
         kdebug(D_IRQ, 10, "Undefined SWI.\n");
     }
@@ -153,12 +185,6 @@ void __attribute__ ((interrupt("ABORT"))) data_abort_vector(void) {
     while(1);
 }
 
-static rpi_irq_controller_t* rpiIRQController =
-  (rpi_irq_controller_t*) RPI_INTERRUPT_CONTROLLER_BASE;
-
-rpi_irq_controller_t* RPI_GetIRQController(void) {
-  return rpiIRQController;
-}
 
 void enable_interrupts(void) {
     kdebug(D_IRQ, 1, "Enabling interrupts.\n");

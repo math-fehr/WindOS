@@ -87,8 +87,8 @@ int dev_fread(inode_t* from, char* buf, int size, int pos) {
             //TODO: RNG
             return size;
         case DEV_SERIAL:
-            //TODO: Serial read (non blocking)
-            return 0;
+
+            return serial_readline(buf, size);
         default:
             //TODO: Throw error
             return 0;

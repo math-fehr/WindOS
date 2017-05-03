@@ -17,6 +17,7 @@
  */
 
 #define     SVC_EXIT        0x01
+#define     SVC_FORK        0x02
 #define     SVC_SBRK        0x2d
 #define     SVC_WRITE       0x04
 #define     SVC_CLOSE       0x06

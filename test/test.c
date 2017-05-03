@@ -5,6 +5,10 @@
 
 int main() {
   volatile unsigned int i;
-  printf("Coucou!\n");
+  int test=42;
+  printf("%#010x\n",(unsigned int)&test);
+  scanf("%d",&test);
+  for (i=0;i<25000000;i++) {}
+  printf("Coucou! %d\n", test);
   return 0;
 }

@@ -20,13 +20,14 @@ _undefined_instruction_vector:
 
 .globl _software_interrupt_vector
 _software_interrupt_vector:
-    stmfd   sp!, {r1-r12, lr} // save user registers
+    stmfd   sp!, {r2-r12, lr} // save user registers
     ldr     ip, =interrupt_reg
     stmia   ip, {r0-r15}
     mrs     r0, spsr
     str     r0, [ip, #16*4]
     bl      software_interrupt_vector // returns in r0
-    ldmfd   sp!, {r1-r12, pc}^
+	mov 	r1, r0 // a non documented feature places cpsr in r0 while going back to user mode, whatever let's use r1
+	ldmfd 	sp!, {r2-r12, pc}^
 
 
 .globl _prefetch_abort_vector

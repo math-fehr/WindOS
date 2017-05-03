@@ -3,12 +3,23 @@
 #include "sys/types.h"
 #include "sys/stat.h"
 #include "unistd.h"
+#include "stdio.h"
 
 // 0x01:
 void _exit(int error_code) {
     asm volatile(   "mov r7, #0x01\n"
                     "svc #0");
     while(1){}
+}
+
+pid_t fork(void) {
+	pid_t res;
+	asm volatile(	"mov r7, #0x02\n"
+					"svc #0\n"
+					"mov %0, r0"
+				: 	"=r" (res)
+				: :);
+	return res;
 }
 
 // 0x2d:
@@ -55,13 +66,13 @@ int _close(int fd) {
 // 0x1c
 int _fstat(int fd, struct stat* buf) {
     int res;
-    asm volatile(   "mov r0, %1\n"
-                    "mov r1, %2\n"
+    asm volatile(   "ldr r0, %1\n"
+                    "ldr r1, %2\n"
                     "mov r7, #0x1c\n"
                     "svc #0\n"
                     "mov %0, r0"
                 :   "=r" (res)
-                :   "r" (fd), "r" (buf)
+                :   "m" (fd), "m" (buf)
                 :);
     return res;
 }
@@ -88,14 +99,15 @@ off_t _lseek(int fd, off_t offset, int whence) {
 // 0x03
 ssize_t _read(int fd, void* buf, size_t count) {
     ssize_t res;
-    asm volatile(   "mov r0, %1\n"
-                    "mov r1, %2\n"
-                    "mov r2, %3\n"
+    asm volatile(   "ldr r0, %1\n"
+                    "ldr r1, %2\n"
+                    "ldr r2, %3\n"
                     "mov r7, #0x03\n"
                     "svc #0\n"
-                    "mov %0, r0"
+                    "mov %0, r1\n"
                 :   "=r" (res)
-                :   "r" (fd), "r" (buf), "r" (count)
+                :   "m" (fd), "m" (buf), "m" (count)
                 :);
+
     return res;
 }
