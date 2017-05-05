@@ -31,8 +31,10 @@ uintptr_t _sbrk(int incr) {
   prev_heap_end = heap_end;
   heap_end += incr;
   uint32_t n_sections = (heap_end - HEAP_BASE + 1024*1024 - 1) >> 20;
+
   if (n_sections > allocated_pages) {
     // TODO: Proper error handling
+    while(1) {}
     page_list_t* res = paging_allocate(n_sections - allocated_pages);
     while (res != NULL) {
       for (int i=0;i<res->size;i++) {

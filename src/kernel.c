@@ -17,6 +17,7 @@
 #include "process.h"
 #include "scheduler.h"
 #include "mmu.h"
+#include "dev.h"
 
 #include "malloc.h"
 
@@ -25,6 +26,8 @@ extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
 extern uint32_t __ramfs_start;
 extern void dmb();
+
+extern uint32_t current_process_id;
 
 int memory_read(uint32_t address, void* buffer, uint32_t size) {
     kdebug(D_KERNEL, 1, "Disk read  request at address %#08x of size %d\n", address, size);
@@ -75,6 +78,7 @@ void kernel_main(uint32_t memory) {
 		(*val)=0;
 	}
 
+    current_process_id = -1;
 
 	__ram_size = memory;
 	GPIO_setOutputPin(GPIO_LED_PIN);
@@ -98,25 +102,36 @@ void kernel_main(uint32_t memory) {
 
 	Timer_Setup();
 	enable_interrupts();
-	Timer_SetLoad(1000000);
-	Timer_Enable();
-	Timer_Enable_Interrupts();
+	Timer_SetLoad(10000);
 
-
-	int n = 5;
-	setup_scheduler();
-	for(int i = 0; i<n; i++) {
-			create_process();
-	}
 
 	storage_driver memorydisk;
-	memorydisk.read = memory_read;
-	memorydisk.write = memory_write;
+	memorydisk.read    = memory_read;
+	memorydisk.write   = memory_write;
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
+    superblock_t* devroot = dev_initialize(10);
 
 	vfs_setup();
 	vfs_mount(fsroot,"/");
+    vfs_mkdir("/","dev",0x1FF);
+    vfs_mount(devroot,"/dev");
 
-  wesh();
+
+	setup_scheduler();
+	process* p = process_load("/bin/wesh"); // init program
+	p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
+	p->fd[0].position   = 0;
+	p->fd[1].inode      = vfs_path_to_inode("/dev/serial");
+	p->fd[1].position   = 0;
+
+	if (p != NULL) {
+		sheduler_add_process(p);
+		Timer_Enable();
+		Timer_Enable_Interrupts();
+		process_switchTo(p);
+	} else {
+		kdebug(D_KERNEL, 10, "[ERROR] Could not load init");
+		while(1) {}
+	}
 }

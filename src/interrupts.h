@@ -5,19 +5,28 @@
 #include "stddef.h"
 #include "stdint.h"
 #include "kernel.h"
+#include "errno.h"
+#include "mmu.h"
+#include "debug.h"
+#include "scheduler.h"
+#include "syscalls.h"
+
 /**
  * Theses functions handle interrupts made by the processor
  */
 
 /**
  * The base adress of the interrupt controller
+ */
 
-#ifdef RPI2
-#define RPI_INTERRUPT_CONTROLLER_BASE 0x3F00B200UL
-#else
-#define RPI_INTERRUPT_CONTROLLER_BASE 0x2000B200UL
-#endif
-*/
+#define     SVC_EXIT        0x01
+#define     SVC_FORK        0x02
+#define     SVC_SBRK        0x2d
+#define     SVC_WRITE       0x04
+#define     SVC_CLOSE       0x06
+#define     SVC_FSTAT       0x1c
+#define     SVC_LSEEK       0x13
+#define     SVC_READ        0x03
 
 #define RPI_INTERRUPT_CONTROLLER_BASE (PERIPHERALS_BASE + 0xB200UL)
 

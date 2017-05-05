@@ -14,12 +14,17 @@ IMGDIR = img/
 LINKER = kernel.ld
 LINKER_QEMU = kernel_qemu.ld
 
+USR_SRC 	= usr/
+USR_LIB		= libc/cstubs.c
+USR_BINDIR 	= $(RAMFS)bin/
+
 # recursive wildcard.
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
 OBJECTS 	= $(BUILD)fs.img $(patsubst $(SOURCE)%.S,$(BUILD)%.o,$(wildcard $(SOURCE)*.S))
-OBJECTS_C = $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.c))
-RAMFS_OBJ = $(call rwildcard, $(RAMFS), *)
+OBJECTS_C 	= $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(call rwildcard, $(SOURCE), *.c))
+RAMFS_OBJ 	= $(call rwildcard, $(RAMFS), *)
+USR_BIN	  	= $(patsubst $(USR_SRC)%,$(USR_BINDIR)%, $(wildcard $(USR_SRC)*))
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
@@ -40,12 +45,16 @@ SD_LORTEX = /media/lucas/460D-5801/
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
 $(shell mkdir -p $(BUILD) >/dev/null)
+$(shell mkdir -p $(RAMFS) >/dev/null)
+$(shell mkdir -p $(USR_BINDIR) >/dev/null)
+
+print-%  : ; @echo $* = $($*)
 
 #all: builds the kernel image for the real hardware. RPI2 flag by default.
-all: $(TARGET)
+all: $(TARGET) $(USR_BIN)
 
 #qemu: builds the kernel image for qemu emulation.
-qemu: $(TARGET_QEMU)
+qemu: $(TARGET_QEMU) $(USR_BIN)
 
 #rpi: sets the flag for the RPI1 build.
 rpi: RPI_FLAG = -D RPI
@@ -65,10 +74,10 @@ $(BUILD)fs.img: $(RAMFS_OBJ)
 										--set-section-flags .data=alloc,code,load \
 										$(BUILD)fs.ren $(BUILD)fs.img
 
-run: $(TARGET_QEMU)
+run: $(TARGET_QEMU) $(USR_BIN)
 	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty -serial pty
 
-runs: $(TARGET_QEMU)
+runs: $(TARGET_QEMU) $(USR_BIN)
 	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -serial pty -serial stdio
 
 
@@ -103,6 +112,12 @@ $(BUILD)%.o: $(SOURCE)%.c
 	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILD)$*.d.tmp | fmt -1 | \
 	  sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILD)$*.d
 	@rm -f $(BUILD)$*.d.tmp
+
+
+# Userspace environment build.
+$(USR_BINDIR)%:
+	$(ARMGNU)-gcc $(USR_SRC)$*/* $(USR_LIB) -static -o $@
+
 
 copy_nappy: all
 	cp $(IMGDIR)* $(SD_NAPPY)
