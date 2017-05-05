@@ -81,6 +81,11 @@ void GPIO_setPinFunction(int pin, int function) ;
 void GPIO_setOutputPin(int pin);
 
 /**
+ * Set a pin in input mode
+ */
+void GPIO_setInputPin(int pin);
+
+/**
  * Set a value to a pin
  * true for activee and false for inactive
  */
@@ -104,14 +109,31 @@ void GPIO_setPullDown(int pin);
  */
 void GPIO_resetPull(int pin);
 
+
 /**
  * A high level on the pin set a bit in GPED
  */
 void GPIO_enableHighDetect(int pin);
 
+
 /**
  * A high level on the pin do not set a bit in GPED anymore
  */
 void GPIO_disableHighDetect(int pin);
+
+
+/**
+ * Return the actual value of the pin
+ * true is for high, false is for low
+ */
+bool GPIO_getPinValue(int pin);
+
+
+/**
+ * Return true if an edge has been detected in the pin
+ * Note that the value has to be reset
+ */
+bool GPIO_hasDetectedEvent(int pin);
+
 
 #endif

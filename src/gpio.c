@@ -39,6 +39,10 @@ void GPIO_setOutputPin(int pin) {
   GPIO_setPinFunction(pin, PIN_OUTPUT);
 }
 
+void GPIO_setInputPin(int pin) {
+    GPIO_setPinFunction(pin, PIN_INPUT);
+}
+
 
 void GPIO_setPinValue(int pin, bool value) {
   kdebug(D_GPIO, 1, "Set pin %d to value %d\n", pin, value);
@@ -59,11 +63,11 @@ void GPIO_setPinValue(int pin, bool value) {
 static void GPIO_setPull(int pin, int pull) {
     dmb();
     getGPIOController()->GPPUD = pull;
-    Timer_WaitCycles(150);
+    Timer_WaitCycles(300);
     if(pin < 32) {
         getGPIOController()->GPPUDCLK0 |= ((uint32_t)1 << (uint32_t)pin);
         dmb();
-        Timer_WaitCycles(150);
+        Timer_WaitCycles(300);
         getGPIOController()->GPPUD = 0b11;
         dmb();
         getGPIOController()->GPPUDCLK0 &= ~((uint32_t)1 << (uint32_t)pin);
@@ -72,7 +76,7 @@ static void GPIO_setPull(int pin, int pull) {
     else {
         getGPIOController()->GPPUDCLK1 |= ((uint32_t)1 << (uint32_t)(pin-32));
         dmb();
-        Timer_WaitCycles(150);
+        Timer_WaitCycles(300);
         getGPIOController()->GPPUD = 0b11;
         dmb();
         getGPIOController()->GPPUDCLK1 &= ~((uint32_t)1 << (uint32_t)(pin-32));
@@ -106,4 +110,22 @@ void GPIO_disableHighDetect(int pin) {
     pin = pin < 32 ? pin : (32-pin);
     getGPIOController()->GPHEN[n] &= ~((uint32_t)(1) << (uint32_t)(pin));
     dmb();
+}
+
+bool GPIO_getPinValue(int pin) {
+    dmb();
+    int n = pin < 32 ? 0 : 1;
+    pin = pin < 32 ? pin : (32-pin);
+    uint32_t value = getGPIOController()->GPLEV[n] & (uint32_t)(1) << (uint32_t)(pin);
+    return value != (uint32_t)0;
+}
+
+bool GPIO_hasDetectedEvent(int pin) {
+    dmb();
+    int n = pin < 32 ? 0 : 1;
+    pin = pin < 32 ? pin : (32-pin);
+    uint32_t value = getGPIOController()->GPEDS[n] & (uint32_t)(1) << (uint32_t)(pin);
+    getGPIOController()->GPEDS[n] |= (uint32_t)(1) << (uint32_t)(pin);
+    dmb();
+    return value != (uint32_t)0;
 }
