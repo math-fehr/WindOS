@@ -27,18 +27,27 @@ _software_interrupt_vector:
 	stmfd 	sp!, {ip}
     ldr     ip, =interrupt_reg
 
-	msr 	cpsr_c, #0x9F
+	msr 	cpsr_c, #0xDF
 	stmia 	ip, {r0-r15}
-	msr 	cpsr_c, #0x93
+	msr 	cpsr_c, #0xD3
 
 	ldmfd  	sp!, {r0}
 	ldmfd 	sp!, {r1}
 	str 	r0, [ip, #16*4]
 	str 	lr, [ip, #15*4]
 	str 	r1, [ip, #12*4]
+	push  	{r7}
     bl      software_interrupt_vector // returns in r0
+	pop 	{r7}
+	cmp 	r7, #0x0b // execve
+	beq 	_swi_switch
+
 	mov 	r1, r0 // a non documented feature places cpsr in r0 while going back to user mode, whatever let's use r1
 	ldmfd 	sp!, {r2-r12, pc}^
+
+_swi_switch: // we don't have to switch to the caller, let's switch to PID in r0
+	add 	sp, sp, #12*4 // clear the stack.
+	b		process_switchTo_id
 
 
 .globl _prefetch_abort_vector
@@ -51,8 +60,11 @@ _prefetch_abort_vector:
 
 .globl _data_abort_vector
 _data_abort_vector:
+	push 	{ip}
     ldr     ip, =interrupt_reg
-    stmia   ip, {r0-r15}
+    stmia   ip, {r0-r15}^
+	pop 	{r0}
+	str 	r0, [ip, #12*4]
     mrs     r0, spsr
     str     r0, [ip, #16*4]
 	ldr     pc, =data_abort_vector
@@ -60,14 +72,15 @@ _data_abort_vector:
 .globl _interrupt_vector
 _interrupt_vector:
 	sub 	lr, lr, #4
-	msr 	cpsr_c, #0x9F // Switching to SYS mode to save SP and LR
+	msr 	cpsr_c, #0xDF // Switching to SYS mode to save SP and LR
 	stmfd 	sp,	{r0-r15}
 	mov 	r0, sp
-	msr 	cpsr_c, #0x92 // Back to IRQ mode
-	mrs 	r1, spsr // Get program cpsr
+	msr 	cpsr_c, #0xD2 // Back to IRQ mode
+	mrs 	r1, spsr_all // Get program cpsr
 	str 	lr, [r0, #-4] // Save program PC
 	sub 	r0, r0, #4*16
 	stmfd 	r0!, {r1} // Save program cpsr
+
 	ldr pc, =interrupt_vector
 
 .globl _fast_interrupt_vector

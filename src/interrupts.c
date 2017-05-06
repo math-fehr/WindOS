@@ -27,8 +27,18 @@ static bool status;
 uint32_t interrupt_reg[17];
 extern uint32_t current_process_id;
 
+int counter;
 // In IRQ mode - r0 => SP
-void __attribute__ ((__naked__)) interrupt_vector(uint32_t sp) {
+void interrupt_vector(uint32_t sp) {
+	process* p = get_process_list()[current_process_id];
+
+	uint32_t* phy_stack = (uint32_t*)(sp);
+	for (int i=0;i<17;i++) {
+		kdebug(D_IRQ,3,"<=%d|%d: %p\n",current_process_id,i,phy_stack[i]);
+	}
+
+
+
 	if (RPI_GetIRQController()->IRQ_basic_pending == RPI_BASIC_ARM_TIMER_IRQ) {
 		dmb();
 		Timer_ClearInterrupt();
@@ -36,12 +46,17 @@ void __attribute__ ((__naked__)) interrupt_vector(uint32_t sp) {
 		status = !status;
 		dmb();
 
-		process* p = get_process_list()[current_process_id];
 		p->sp = sp;
-		kdebug(D_IRQ,2,"SP at %#010x\n",sp);
+
+		kdebug(D_IRQ,3,"%dSP at %#010x\n",current_process_id,sp);
+
 		current_process_id = get_next_process();
-		kdebug(D_IRQ, 5, "Switching to process %d\n", current_process_id);
+		kdebug(D_IRQ, 2	, "Switching to process %d\n", current_process_id);
+
 		p = get_process_list()[current_process_id];
+		kdebug(D_IRQ,3,"%dSP at %#010x\n",current_process_id,p->sp);
+
+
 		process_switchTo(p);
 
 		while(1) {}
@@ -65,8 +80,8 @@ void print_registers(int level) {
 // In SVC mode
 // returns were we should branch to next
 uint32_t software_interrupt_vector(void) {
-    kdebug(D_IRQ, 2, "SWI.\n");
-    print_registers(1);
+    kdebug(D_IRQ, 1, "SWI.\n");
+	print_registers(1);
     uint32_t* r = interrupt_reg;
     switch(r[7]) {
         case SVC_EXIT:
@@ -86,8 +101,12 @@ uint32_t software_interrupt_vector(void) {
             while(1) {}
         case SVC_READ:
             return svc_read(r[0],(char*)r[1],r[2]);
+		case SVC_TIME:
+			return svc_time((time_t*)r[0]);
+		case SVC_EXECVE:
+			return svc_execve((char*)r[0],(char**)r[1],(char**)r[2]);
         default:
-        kdebug(D_IRQ, 10, "Undefined SWI.\n");
+        kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", r[7]);
     }
     while(1);
 }
@@ -95,7 +114,7 @@ uint32_t software_interrupt_vector(void) {
 // In ABORT mode
 void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void) {
     uint32_t* r = interrupt_reg;
-    kdebug(D_IRQ, 5, "PREFECTH_ABORT at instruction %#010x. Registers:\n", r[14]-8);
+    kdebug(D_IRQ, 10, "PREFECTH_ABORT at instruction %#010x. Registers:\n", r[14]-8);
     print_registers(10);
     while(1);
 }

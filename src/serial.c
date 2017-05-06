@@ -98,25 +98,27 @@ void serial_newline() {
 int serial_readline(char* buffer, int buffer_size) {
 	int i = 0;
 	char c;
+
 	while ((i < buffer_size) && ((c = serial_readc()) != '\r')){
 		if (c == 0x7F) {
-			if (i > 0) {
-				buffer[--i] = 0;
-				serial_write("\033[D");
-				serial_putc(' ');
-				serial_write("\033[D");
-			}
+			serial_write("\033[D");
+			serial_putc(' ');
+			serial_write("\033[D");
+			buffer[i--] = 0;	
 		} else if (c == 0x1B) {
 			serial_readc();
 			serial_readc();
 		} else {
+			serial_putc(c);
+
 			buffer[i] = c;
 			i++;
-			serial_putc(c);
 		}
+
 	}
 	if (i < buffer_size) {
-		buffer[i] = 0;
+		buffer[i] = '\n';
+		i++;
 		serial_newline();
 	}
   	return i;

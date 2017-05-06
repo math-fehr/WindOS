@@ -4,7 +4,7 @@
 
 extern unsigned int __ram_size;
 
-process* process_load(char* path) {
+process* process_load(char* path, const char* argv[], const char* envp[]) {
     inode_t* fd = vfs_path_to_inode(path);
     if (fd == 0) {
         kdebug(D_PROCESS, 5, "Could not load %s\n", path);
@@ -87,6 +87,37 @@ process* process_load(char* path) {
 		}
     }
 
+    uint32_t* phy_base = (uint32_t*)(0x80000000+section_addr);
+	int position = 0;
+	int argc = 0;
+	if (argv != NULL) {
+		while (argv[argc] != 0) {
+			argc++;
+		}
+
+		position += 4*(argc + 1);
+
+		for (int i=0;i<argc;i++) {
+			phy_base[i] = position;
+			strcpy((char*)(position+0x80000000+section_addr), argv[i]);
+			position += strlen(argv[i]) + 1;
+		}
+	}
+
+	int ofs =(position+3)/4;
+	position = 4*ofs;
+	if (envp != NULL) {
+		int envc = strlen((char*) envp);
+
+		position += 4*(envc + 1);
+
+		for (int i=0;i<envc;i++) {
+			phy_base[ofs+i] = position;
+			strcpy((char*)(position+0x80000000+section_addr), envp[i]);
+			position += strlen(envp[i]);
+		}
+	}
+
     process* processus = malloc(sizeof(process));
     processus->asid = 1;
     processus->dummy = 0;
@@ -96,12 +127,12 @@ process* process_load(char* path) {
 
     uint32_t* phy_stack = (uint32_t*)(0x80000000+section_stack+PAGE_SECTION-17*sizeof(uint32_t));
     for (int i=0;i<17;i++) {
-        phy_stack[i] = 42;
+        phy_stack[i] = i;
     }
-    phy_stack[16] =  header.entry_point;
+    phy_stack[16] = header.entry_point;
     phy_stack[15] = 0xf0000000;
     phy_stack[14] = __ram_size;
-    phy_stack[0] = 0x10; // CPSR user mode
+    phy_stack[0] = 0x110; // CPSR user mode
 
     processus->brk = PAGE_SECTION;
     processus->brk_page = 0;
@@ -115,20 +146,29 @@ process* process_load(char* path) {
 
 uint32_t current_process_id;
 
+void process_switchTo_id(int p) {
+	process** lst = get_process_list();
+	process_switchTo(lst[p]);
+}
+
 void process_switchTo(process* p) {
     current_process_id = p->asid;
     mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
 
-    asm volatile(   "push {r0-r12}\n"
-                    "mov r1, %0\n"
-                    "ldmfd r1!, {r0}\n"
-                    "msr cpsr, r0\n"
-                    "mov sp, r1\n"
-                    "ldmfd sp, {r0-r15}\n"
+
+	uint32_t* phy_stack = (uint32_t*)(p->sp);
+	for (int i=0;i<17;i++) {
+		kdebug(D_IRQ,3,"=>%d|%d: %p\n",current_process_id,i,phy_stack[i]);
+	}
+
+
+    asm volatile(   "mov 	lr, %0\n"
+                    "ldmfd 	lr!, {r0}\n"
+                    "msr 	spsr_all, r0\n"
+                    "ldmfd 	lr, {r0-r13}^\n" // write usermode registers
+					"add 	lr, lr, #4*14\n"
+					"ldmfd 	lr, {lr, pc}^\n" // the big jump
                     :
                     : "r" (p->sp)
                     :);
-    asm volatile(   ".globl switchTo_end\n"
-                    "switchTo_end:\n"
-                    "pop {r0-r12}\n" : : :);
 }

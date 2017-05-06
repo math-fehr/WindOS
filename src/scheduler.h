@@ -1,15 +1,11 @@
-#include "process.h"
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
+#include "process.h"
 /**
  * Scheduler of the processes
  */
 
-/**
- * Maximum number of processes that can be handled
- */
-#define MAX_PROCESSES 42
 
 /**
  * Setup the scheduler

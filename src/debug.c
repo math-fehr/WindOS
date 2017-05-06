@@ -14,15 +14,14 @@
 const char sources[N_SOURCES][9]= { "KERNEL", "SERIAL", "WESH",
                                     "TIMER" , "IRQ"   , "VFS" ,
                                     "EXT2"  , "GPIO"  , "PROCESS",
-                                    "MEMORY", "SDCARD"};
+                                    "MEMORY", "SDCARD", "SYSCALL"};
 
 /**
  * The value used to know when to output log
  */
-const int enable_source[N_SOURCES] = { 10,10,10,
+const int enable_source[N_SOURCES] = { 5,10,10,
                                        10,5,5,
-                                       3,10,0,
-                                       0,10};
+									   0,10,5};
 
 
 void kernel_printf(const char* fmt, ...) {

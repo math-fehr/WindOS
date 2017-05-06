@@ -129,8 +129,8 @@ $(LIB_USPI_CFG):
 	echo "PREFIX = arm-none-eabi-" >> $@ ;\
 
 # Userspace environment build.
-$(USR_BINDIR)%:
-	$(ARMGNU)-gcc $(USR_SRC)$*/* $(USR_LIB) -static -o $@
+$(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
+	$(ARMGNU)-gcc $(USR_SRC)$*/* $(USR_LIB) -std=gnu99 -static -o $@
 
 
 copy_nappy: all

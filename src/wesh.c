@@ -23,7 +23,7 @@ void scheduler_handler() {
       bool error = false;
       while(i < number && !error) {
           int temp = create_process();
-          if(temp == -1) { 
+          if(temp == -1) {
               error = true;
           }
           i++;
@@ -205,7 +205,7 @@ void vfs_handler() {
         char obj[255];
         strcpy(obj, position);
         strcat(obj, name);
-        process* p = process_load(obj);
+        process* p = process_load(obj, NULL, NULL);
         p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
         p->fd[0].position   = 0;
         p->fd[1].inode      = vfs_path_to_inode("/dev/serial");
