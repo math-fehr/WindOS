@@ -9,14 +9,6 @@
 // TIP: RPI clock speed is 250MHz
 // http://raspberrypi.stackexchange.com/questions/699/what-spi-frequencies-does-raspberry-pi-support
 
-/*// Base adress of the system timer
-#ifdef RPI2
-#define RPI_SYSTIMER_BASE 0x3F003000
-#else
-#define RPI_SYSTIMER_BASE 0x20003000
-#endif
-*/
-
 #define RPI_SYSTIMER_BASE (PERIPHERALS_BASE + 0x3000)
 
 
