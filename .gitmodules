@@ -10,3 +10,6 @@
 [submodule "newlib"]
 	path = newlib-cygwin
 	url = git://sourceware.org/git/newlib-cygwin.git
+[submodule "uspi"]
+	path = uspi
+	url = https://github.com/rsta2/uspi.git
