@@ -5,6 +5,8 @@
 
 page_list_t* free_list;
 
+int tot_pages;
+int used_pages;
 
 // sort by decreasing order of size.
 page_list_t* insertion(page_list_t* elem, page_list_t* list) {
@@ -25,16 +27,20 @@ page_list_t* insertion(page_list_t* elem, page_list_t* list) {
 }
 
 void paging_init(int n_total_pages, int n_reserved_pages) {
-  free_list = malloc(sizeof(page_list_t));
-  free_list->next = NULL;
-  free_list->size = n_total_pages-n_reserved_pages;
-  free_list->address = n_reserved_pages;
+	tot_pages = n_total_pages;
+	used_pages = n_reserved_pages;
+	free_list = malloc(sizeof(page_list_t));
+	free_list->next = NULL;
+	free_list->size = n_total_pages-n_reserved_pages;
+	free_list->address = n_reserved_pages;
 }
 
 page_list_t* paging_allocate(int n_pages) {
   page_list_t* result = NULL;
   page_list_t* pointer = free_list;
   page_list_t* previous = NULL;
+
+  used_pages += n_pages;
 
   while (n_pages > 0 && pointer != NULL) {
     int mn = min(pointer->size, n_pages);
@@ -60,13 +66,15 @@ page_list_t* paging_allocate(int n_pages) {
     pointer = tmp;
   }
 
-  if (pointer != NULL) {
-    free_list = insertion(pointer, free_list);
-  }
+	if (pointer != NULL) {
+		free_list = insertion(pointer, free_list);
+	}
 
-  if (n_pages > 0) {
-    kdebug(D_KERNEL, 6, "Out of memory error.\n");
-  }
+	if (n_pages > 0) {
+    	kdebug(D_KERNEL, 6, "Out of memory error.\n");
+	} else {
+		kdebug(D_KERNEL, 1, "%d/%d pages in use.\n", used_pages, tot_pages);
+	}
 
   return result;
 }
@@ -77,6 +85,8 @@ void paging_free(int n_pages, int address) {
   elem->size = n_pages;
   elem->address = address;
   elem->next = NULL;
+
+  used_pages -= n_pages;
 
   free_list = insertion(elem, free_list);
 }

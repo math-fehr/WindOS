@@ -30,7 +30,7 @@ extern void dmb();
 extern uint32_t current_process_id;
 
 int memory_read(uint32_t address, void* buffer, uint32_t size) {
-    kdebug(D_KERNEL, 1, "Disk read  request at address %#08x of size %d\n", address, size);
+    kdebug(D_KERNEL, 0, "Disk read  request at address %#08x of size %d\n", address, size);
 
     dmb();
 	intptr_t base = (intptr_t)&__ramfs_start; // The FS is concatenated with the kernel image.
@@ -41,7 +41,7 @@ int memory_read(uint32_t address, void* buffer, uint32_t size) {
 
 int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	intptr_t base = (intptr_t)&__ramfs_start;
-    kdebug(D_KERNEL, 1, "Disk write request at address %#08x of size %d\n", address, size);
+    kdebug(D_KERNEL, 0, "Disk write request at address %#08x of size %d\n", address, size);
 	dmb();
 	memcpy((void*) (address + base), buffer, size);
 	return 0;
@@ -102,7 +102,7 @@ void kernel_main(uint32_t memory) {
 
 	Timer_Setup();
 	enable_interrupts();
-	Timer_SetLoad(10000);
+	Timer_SetLoad(30000);
 
 
 	storage_driver memorydisk;
@@ -119,7 +119,9 @@ void kernel_main(uint32_t memory) {
 
 
 	setup_scheduler();
-	process* p = process_load("/bin/wesh"); // init program
+	const char* param[] = {"Bonjour", "Au revoir", 0};
+
+	process* p = process_load("/bin/wesh", param, NULL); // init program
 	p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
 	p->fd[0].position   = 0;
 	p->fd[1].inode      = vfs_path_to_inode("/dev/serial");

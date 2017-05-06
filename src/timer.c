@@ -86,4 +86,6 @@ void Timer_WaitCycles(uint32_t count) {
 }
 
 //TODO implement the function
-uint32_t timer_get_posix_time() {return 42;}
+uint32_t timer_get_posix_time() {
+	42;
+}

@@ -35,6 +35,7 @@
 #define D_GPIO    7
 #define D_PROCESS 8
 #define D_MEMORY  9
+#define D_SYSCALL 10
 
 /**
  * printf to serial

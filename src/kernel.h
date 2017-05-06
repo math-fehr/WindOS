@@ -7,4 +7,9 @@
 
 #define TTBCR_ALIGN TTBCR_ALIGN_4K
 
+/**
+ * Maximum number of processes that can be handled
+ */
+#define MAX_PROCESSES 500
+
 #endif

@@ -66,6 +66,8 @@ vfs_dir_list_t* dev_lsdir(inode_t* from) {
         r->st.st_ino = DEV_SERIAL;
         r->st.st_mode = S_IFCHR | S_IRWXU | S_IRWXO | S_IRWXG;
         r->st.st_size = 0;
+		r->st.st_blksize = 1024;
+		r->st.st_nlink = 1;
         r->sb = from->sb;
         r->op = &dev_inode_operations;
         res = dev_append_elem(r, "serial", res);
