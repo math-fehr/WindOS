@@ -28,7 +28,14 @@ USR_BIN	  	= $(patsubst $(USR_SRC)%,$(USR_BINDIR)%, $(wildcard $(USR_SRC)*))
 
 LIBGCC = $(shell dirname `$(ARMGNU)-gcc -print-libgcc-file-name`)
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 $(INCLUDE_C) -mno-unaligned-access
+LIB_USPI          = uspi/lib/libuspi.a
+LIB_USPI_CFG      = uspi/Config.mk
+LIB_USPI_DIR      = uspi/lib/
+USPI_INCLUDE_DIR  = uspi/include
+
+CLIBS = -L$(LIB_USPI_DIR) -luspi
+
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 $(INCLUDE_C) -mno-unaligned-access $(CLIBS) -I $(USPI_INCLUDE_DIR)
 
 HARDWARE_FLAGS = -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=soft \
 								 -mtune=cortex-a7
@@ -51,10 +58,10 @@ $(shell mkdir -p $(USR_BINDIR) >/dev/null)
 print-%  : ; @echo $* = $($*)
 
 #all: builds the kernel image for the real hardware. RPI2 flag by default.
-all: $(TARGET) $(USR_BIN)
+all: $(LIB_USPI) $(TARGET) $(USR_BIN)
 
 #qemu: builds the kernel image for qemu emulation.
-qemu: $(TARGET_QEMU) $(USR_BIN)
+qemu: $(LIB_USPI) $(TARGET_QEMU) $(USR_BIN)
 
 #rpi: sets the flag for the RPI1 build.
 rpi: RPI_FLAG = -D RPI
@@ -90,11 +97,11 @@ $(TARGET) : $(BUILD)output.elf
 $(TARGET_QEMU) : $(BUILD)output_qemu.elf
 	$(ARMGNU)-objcopy $(BUILD)output_qemu.elf -O binary $(TARGET_QEMU)
 
-$(BUILD)output.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
+$(BUILD)output.elf : $(LIB_USPI) $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) \
 							 -o $(BUILD)output.elf -T $(LINKER) -lg -lgcc
 
-$(BUILD)output_qemu.elf : $(OBJECTS) $(OBJECTS_C) $(LINKER)
+$(BUILD)output_qemu.elf : $(LIB_USPI) $(OBJECTS) $(OBJECTS_C) $(LINKER)
 	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) \
 							 -o $(BUILD)output_qemu.elf -T $(LINKER_QEMU) -lg -lgcc
 
@@ -114,6 +121,13 @@ $(BUILD)%.o: $(SOURCE)%.c
 	@rm -f $(BUILD)$*.d.tmp
 
 
+$(LIB_USPI): $(LIB_USPI_CFG)
+	make -C $(LIB_USPI_DIR)
+
+$(LIB_USPI_CFG):
+	echo "RASPPI = 1" > $@ ; \
+	echo "PREFIX = arm-none-eabi-" >> $@ ;\
+
 # Userspace environment build.
 $(USR_BINDIR)%:
 	$(ARMGNU)-gcc $(USR_SRC)$*/* $(USR_LIB) -static -o $@
@@ -128,3 +142,5 @@ clean:
 	@rm -fr $(BUILD)*
 	@rm -f $(TARGET)
 	@rm -f $(TARGET_QEMU)
+	make -C $(LIB_USPI_DIR) clean
+	rm -f $(LIB_USPI_CFG)
