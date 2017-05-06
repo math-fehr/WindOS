@@ -6,13 +6,14 @@ extern uint32_t current_process_id;
 extern uint32_t interrupt_reg[17];
 extern unsigned int __ram_size;
 
-void svc_exit() {
+uint32_t svc_exit() {
 	kdebug(D_SYSCALL, 10, "Program %d wants to quit (switch him to zombie state)\n", current_process_id);
 	get_process_list()[current_process_id]->status = status_zombie;
-	return;
+	current_process_id = get_next_process();
+	return current_process_id;
 }
 
-uint32_t svc_execve(char* path, char** argv, char** envp) {
+uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 	process* p 			= get_process_list()[current_process_id];
 
 	// Free program break.
@@ -121,18 +122,10 @@ uint32_t svc_fork() {
 	copy->brk_page 	= p->brk_page;
 	for (int i=0;i<64;i++)
 		copy->fd[i] = p->fd[i];
-	copy->sp 		= interrupt_reg[13] - 17*4;
+
+	copy->ctx 		= p->ctx;
+	copy->ctx.r[0] 	= 0;
 	copy->status 	= p->status;
-
-	uint32_t* phy_stack = (uint32_t*)(0x80000000 + mmu_vir2phy_ttb(copy->sp, copy->ttb_address));
-	for (int i=1;i<17;i++) {
-		phy_stack[i] = interrupt_reg[i-1];
-	}
-	phy_stack[1] = 0;
-	phy_stack[0] = interrupt_reg[16];
-
-	kernel_printf("%p %p\n",copy->ttb_address,p->ttb_address);
-	kernel_printf("%p %p\n",copy->sp,p->sp);
 
 	int pid 		= sheduler_add_process(copy);
 	if (pid == -1) {

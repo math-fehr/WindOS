@@ -101,8 +101,7 @@ void kernel_main(uint32_t memory) {
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
 
 	Timer_Setup();
-	enable_interrupts();
-	Timer_SetLoad(30000);
+	Timer_SetLoad(500);
 
 
 	storage_driver memorydisk;
@@ -131,7 +130,26 @@ void kernel_main(uint32_t memory) {
 		sheduler_add_process(p);
 		Timer_Enable();
 		Timer_Enable_Interrupts();
-		process_switchTo(p);
+
+	    current_process_id = p->asid;
+	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+/*
+ldmfd 	sp!, {r1, lr}
+msr 	spsr, r1
+ldmfd  	sp, {r0-r14}^ // Restore registers
+add 	sp, sp, #15*4
+movs 	pc, lr // Context switch
+*/
+		asm volatile(
+			"mov 	r0, %0\n"
+			"ldmfd 	r0!, {r1, lr}\n"
+			"msr 	spsr, r1\n"
+			"ldmfd 	r0, {r0-r14}^\n"
+			"movs 	pc, lr\n"
+			:
+			: "r" (&p->ctx)
+			:);
+
 	} else {
 		kdebug(D_KERNEL, 10, "[ERROR] Could not load init");
 		while(1) {}

@@ -212,7 +212,7 @@ void vfs_handler() {
         p->fd[1].position   = 0;
         sheduler_add_process(p);
         if (p != NULL) {
-            process_switchTo(p);
+        //    process_switchTo(p);
         }
     } else {
         serial_write("[VFS] Unrecognized command\n");

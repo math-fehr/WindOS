@@ -8,6 +8,13 @@
 #include "debug.h"
 #include "stdlib.h"
 #include "kernel.h"
+
+typedef struct {
+	uint32_t cpsr;
+	uint32_t pc;
+	uint32_t r[15];
+} user_context_t;
+
 /**
  * Represent an active process
  */
@@ -34,12 +41,12 @@ typedef enum {
 typedef struct {
     status_process status;
     int dummy; //Temp value for debug
-    uint32_t sp; // current stack pointer.
     uintptr_t ttb_address;
     int asid; // Address Space ID
     int brk; // Program break.
     int brk_page; // Number of pages allocated for program break
     fd_t fd[MAX_OPEN_FILES];
+	user_context_t ctx;
 } process;
 
 #define ELF_ABI_SYSTEMV 0

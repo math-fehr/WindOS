@@ -17,7 +17,7 @@ int main() {
 	int r4 = _fork();
 	while(1) {
 		printf("%d %d %d %d\n",r1,r2,r3,r4);
-		for(int i=0;i<1500000;i++) {}
+		for(int i=0;i<1500;i++) {}
 	}
 	printf("Let's leave\n");
   	return 0;
