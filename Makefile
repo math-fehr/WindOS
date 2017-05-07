@@ -35,7 +35,7 @@ USPI_INCLUDE_DIR  = uspi/include
 
 CLIBS = -L$(LIB_USPI_DIR) -luspi
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu99 $(INCLUDE_C) -mno-unaligned-access $(CLIBS) -I $(USPI_INCLUDE_DIR)
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu11 $(INCLUDE_C) -mno-unaligned-access $(CLIBS) -I $(USPI_INCLUDE_DIR)
 
 HARDWARE_FLAGS = -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=soft \
 								 -mtune=cortex-a7
@@ -130,7 +130,7 @@ $(LIB_USPI_CFG):
 
 # Userspace environment build.
 $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
-	$(ARMGNU)-gcc $(USR_SRC)$*/* $(USR_LIB) -std=gnu99 -static -o $@
+	$(ARMGNU)-gcc $(USR_SRC)$*/* $(USR_LIB) -std=gnu11 -static -o $@
 
 
 copy_nappy: all
