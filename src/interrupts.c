@@ -24,20 +24,15 @@ void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
 }
 
 static bool status;
-uint32_t interrupt_reg[17];
-extern uint32_t current_process_id;
+extern uint32_t current_process;
 
-int counter;
 // In IRQ mode - r0 => SP
-void interrupt_vector(uint32_t sp) {
-	process* p = get_process_list()[current_process_id];
+void interrupt_vector(void* user_context) {
+	process* p = get_process_list()[current_process];
+	p->ctx = *(user_context_t*)user_context; // Save current program context.
 
-	uint32_t* phy_stack = (uint32_t*)(sp);
-	for (int i=0;i<17;i++) {
-		kdebug(D_IRQ,3,"<=%d|%d: %p\n",current_process_id,i,phy_stack[i]);
-	}
-
-
+    kdebug(D_IRQ, 2, "=> %d.\n", current_process);
+	print_context(2, user_context);
 
 	if (RPI_GetIRQController()->IRQ_basic_pending == RPI_BASIC_ARM_TIMER_IRQ) {
 		dmb();
@@ -46,84 +41,103 @@ void interrupt_vector(uint32_t sp) {
 		status = !status;
 		dmb();
 
-		p->sp = sp;
-
-		kdebug(D_IRQ,3,"%dSP at %#010x\n",current_process_id,sp);
-
-		current_process_id = get_next_process();
-		kdebug(D_IRQ, 2	, "Switching to process %d\n", current_process_id);
-
-		p = get_process_list()[current_process_id];
-		kdebug(D_IRQ,3,"%dSP at %#010x\n",current_process_id,p->sp);
-
-
-		process_switchTo(p);
-
-		while(1) {}
+		current_process = get_next_process();
+		p = get_process_list()[current_process];
+	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+		*(user_context_t*)user_context = p->ctx;
 	} else {
 		kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ!\n");
 		while(1) {}
 	}
+    kdebug(D_IRQ, 2, "<= %d.\n", current_process);
+	print_context(2, user_context);
 }
 
 
-void print_registers(int level) {
-    uint32_t* r = interrupt_reg;
-
-    kdebug(D_IRQ, level, "r0 :%#010x r1:%#010x r2 :%#010x r3 :%#010x\n", r[0], r[1], r[2], r[3]);
-    kdebug(D_IRQ, level, "r4 :%#010x r5:%#010x r6 :%#010x r7 :%#010x\n", r[4], r[5], r[6], r[7]);
-    kdebug(D_IRQ, level, "r8 :%#010x r9:%#010x r10:%#010x r11:%#010x\n", r[8], r[9], r[10], r[11]);
-    kdebug(D_IRQ, level, "r12:%#010x sp:%#010x lr :%#010x pc :%#010x\n", r[12], r[13], r[14], r[15]);
-    kdebug(D_IRQ, level, "CPSR: %#010x\n", r[16]);
+void print_context(int level, user_context_t* ctx) {
+    kdebug(D_IRQ, level, "r0 :%#010x r1:%#010x r2 :%#010x r3 :%#010x\n", ctx->r[0], ctx->r[1], ctx->r[2], ctx->r[3]);
+    kdebug(D_IRQ, level, "r4 :%#010x r5:%#010x r6 :%#010x r7 :%#010x\n", ctx->r[4], ctx->r[5], ctx->r[6], ctx->r[7]);
+    kdebug(D_IRQ, level, "r8 :%#010x r9:%#010x r10:%#010x r11:%#010x\n", ctx->r[8], ctx->r[9], ctx->r[10], ctx->r[11]);
+    kdebug(D_IRQ, level, "fp :%#010x sp:%#010x lr :%#010x pc :%#010x\n", ctx->r[12], ctx->r[13], ctx->r[14], ctx->pc);
+    kdebug(D_IRQ, level, "CPSR: %#010x\n", ctx->cpsr);
 }
 
 // In SVC mode
-// returns were we should branch to next
-uint32_t software_interrupt_vector(void) {
-    kdebug(D_IRQ, 1, "SWI.\n");
-	print_registers(1);
-    uint32_t* r = interrupt_reg;
-    switch(r[7]) {
+uint32_t software_interrupt_vector(void* user_context) {
+    kdebug(D_IRQ, 1, "ENTREESWI.\n");
+	user_context_t* ctx = (user_context_t*) user_context;
+	print_context(1, ctx);
+	process* p = get_process_list()[current_process];
+	p->ctx = *ctx;
+	int res;
+
+    switch(ctx->r[7]) {
         case SVC_EXIT:
-			svc_exit();
+			res = svc_exit();
+			break;
         case SVC_SBRK:
-			return svc_sbrk(r[0]);
+			res = svc_sbrk(ctx->r[0]);
+			break;
 		case SVC_FORK:
-			return svc_fork();
+			res = svc_fork();
+			break;
         case SVC_WRITE:
-            return svc_write(r[0],(char*)r[1],r[2]);
+            res = svc_write(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
+			break;
         case SVC_CLOSE:
-            return svc_close(r[0]);
+            res = svc_close(ctx->r[0]);
+			break;
+		case SVC_WAITPID:
+			res = svc_waitpid(ctx->r[0],(int*) ctx->r[1], ctx->r[2]);
+			break;
         case SVC_FSTAT:
-            return svc_fstat(r[0],(struct stat*)r[1]);
+            res = svc_fstat(ctx->r[0],(struct stat*)ctx->r[1]);
+			break;
         case SVC_LSEEK:
-            kdebug(D_IRQ, 10, "LSEEK %d\n", r[0]);
-            while(1) {}
+            kdebug(D_IRQ, 10, "LSEEK %d %d %d \n", ctx->r[0], ctx->r[1], ctx->r[2]);
+			res = 0;
+            break;
         case SVC_READ:
-            return svc_read(r[0],(char*)r[1],r[2]);
+            res = svc_read(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
+			break;
 		case SVC_TIME:
-			return svc_time((time_t*)r[0]);
+			res = svc_time((time_t*)ctx->r[0]);
+			break;
 		case SVC_EXECVE:
-			return svc_execve((char*)r[0],(char**)r[1],(char**)r[2]);
+			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
+			break;
         default:
-        kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", r[7]);
+        kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", ctx->r[7]);
+		while(1) {}
     }
+
+	if ((ctx->r[7] == SVC_EXIT)
+	|| 	(ctx->r[7] == SVC_EXECVE)
+	||	(ctx->r[7] == SVC_WAITPID && res == -1)) {
+		p = get_process_list()[current_process];
+	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+		*ctx = p->ctx; // Copy next process ctx
+	} else {
+		ctx->r[0] = res; // let's return the result in r0
+	}
+
+	print_context(1, ctx);
+	return 0;
+}
+
+// In ABORT mode
+void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
+	user_context_t* ctx = (user_context_t*) data;
+	kdebug(D_IRQ, 10, "PREFETCH ABORT at instruction %#010x.\n", ctx->pc-8);
+	print_context(10, ctx);
     while(1);
 }
 
 // In ABORT mode
-void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void) {
-    uint32_t* r = interrupt_reg;
-    kdebug(D_IRQ, 10, "PREFECTH_ABORT at instruction %#010x. Registers:\n", r[14]-8);
-    print_registers(10);
-    while(1);
-}
-
-// In ABORT mode
-void __attribute__ ((interrupt("ABORT"))) data_abort_vector(void) {
-    uint32_t* r = interrupt_reg;
-    kdebug(D_IRQ, 10, "DATA_ABORT at instruction %#010x. Registers:\n", r[14]-8);
-    print_registers(10);
+void __attribute__ ((interrupt("ABORT"))) data_abort_vector(void* data) {
+	user_context_t* ctx = (user_context_t*) data;
+	kdebug(D_IRQ, 10, "DATA ABORT at instruction %#010x.\n", ctx->pc-8);
+	print_context(10, ctx);
     while(1);
 }
 

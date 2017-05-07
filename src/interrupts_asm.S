@@ -20,75 +20,59 @@ _undefined_instruction_vector:
 
 .globl _software_interrupt_vector
 _software_interrupt_vector:
-    stmfd   sp!, {r2-r12, lr} // save user registers
-	stmfd	sp!, {ip}
-	mrs     ip, spsr
+	stmfd	sp, {r0-r14}^ // Save caller registers.
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr  // Get caller CPSR
+	stmfd 	sp!, {r1, lr} // Save CPSR and LR.
 
-	stmfd 	sp!, {ip}
-    ldr     ip, =interrupt_reg
+	mov 	r0, sp
+	ldr 	r1, =software_interrupt_vector
+	blx		r1
 
-	msr 	cpsr_c, #0xDF
-	stmia 	ip, {r0-r15}
-	msr 	cpsr_c, #0xD3
-
-	ldmfd  	sp!, {r0}
-	ldmfd 	sp!, {r1}
-	str 	r0, [ip, #16*4]
-	str 	lr, [ip, #15*4]
-	str 	r1, [ip, #12*4]
-	push  	{r7}
-    bl      software_interrupt_vector // returns in r0
-	pop 	{r7}
-	cmp 	r7, #0x0b // execve
-	beq 	_swi_switch
-
-	mov 	r1, r0 // a non documented feature places cpsr in r0 while going back to user mode, whatever let's use r1
-	ldmfd 	sp!, {r2-r12, pc}^
-
-_swi_switch: // we don't have to switch to the caller, let's switch to PID in r0
-	add 	sp, sp, #12*4 // clear the stack.
-	b		process_switchTo_id
-
+	ldmfd 	sp!, {r1, lr}
+	msr 	spsr, r1
+	ldmfd  	sp, {r0-r14}^ // Restore registers
+	add 	sp, sp, #15*4
+	movs 	pc, lr // Context switch
 
 .globl _prefetch_abort_vector
 _prefetch_abort_vector:
-    ldr     ip, =interrupt_reg
-    stmia   ip, {r0-r15}
-    mrs     r0, spsr
-    str     r0, [ip, #16*4]
+	stmfd	sp, {r0-r14}^
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr
+	stmfd 	sp!, {r1, lr}
+	mov 	r0, sp
 	ldr     pc, =prefetch_abort_vector
 
 .globl _data_abort_vector
 _data_abort_vector:
-	push 	{ip}
-    ldr     ip, =interrupt_reg
-    stmia   ip, {r0-r15}^
-	pop 	{r0}
-	str 	r0, [ip, #12*4]
-    mrs     r0, spsr
-    str     r0, [ip, #16*4]
+	stmfd	sp, {r0-r14}^
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr
+	stmfd 	sp!, {r1, lr}
+	mov 	r0, sp
 	ldr     pc, =data_abort_vector
 
 .globl _interrupt_vector
 _interrupt_vector:
-	sub 	lr, lr, #4
-	msr 	cpsr_c, #0xDF // Switching to SYS mode to save SP and LR
-	stmfd 	sp,	{r0-r15}
+	stmfd	sp, {r0-r14}^ // Save caller registers.
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr_all  // Get caller CPSR
+	subs 	lr, lr, #4
+	stmfd 	sp!, {r1, lr} // Save CPSR and LR.
 	mov 	r0, sp
-	msr 	cpsr_c, #0xD2 // Back to IRQ mode
-	mrs 	r1, spsr_all // Get program cpsr
-	str 	lr, [r0, #-4] // Save program PC
-	sub 	r0, r0, #4*16
-	stmfd 	r0!, {r1} // Save program cpsr
 
-	ldr pc, =interrupt_vector
+	ldr 	r1, =interrupt_vector
+
+	blx		r1
+	ldmfd 	sp!, {r1, lr}
+	msr 	spsr_all, r1
+	ldmfd  	sp, {r0-r14}^ // Restore registers
+	add 	sp, sp, #15*4
+	movs 	pc, lr // Context switch
 
 .globl _fast_interrupt_vector
 _fast_interrupt_vector:
-    ldr     ip, =interrupt_reg
-    stmia   ip!, {r0-r15}
-    mrs     r0, spsr
-    str     r0, [ip, #16*4]
 	ldr pc, =fast_interrupt_vector
 
 

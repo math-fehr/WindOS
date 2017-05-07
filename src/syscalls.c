@@ -2,18 +2,19 @@
 
 
 
-extern uint32_t current_process_id;
-extern uint32_t interrupt_reg[17];
+extern int current_process;
 extern unsigned int __ram_size;
 
-void svc_exit() {
-	kdebug(D_SYSCALL, 10, "Program %d wants to quit (switch him to zombie state)\n", current_process_id);
-	get_process_list()[current_process_id]->status = status_zombie;
-	return;
+uint32_t svc_exit() {
+	kdebug(D_SYSCALL, 2, "Program %d wants to quit (switch him to zombie state)\n", current_process);
+	kill_process(current_process, 0);
+	current_process = get_next_process();
+	kdebug(D_SYSCALL, 2, "Next process: %d\n", current_process);
+	return current_process;
 }
 
-uint32_t svc_execve(char* path, char** argv, char** envp) {
-	process* p 			= get_process_list()[current_process_id];
+uint32_t svc_execve(char* path, const char** argv, const char** envp) {
+	process* p 			= get_process_list()[current_process];
 
 	// Free program break.
 	int n_allocated_pages = p->brk_page;
@@ -29,7 +30,8 @@ uint32_t svc_execve(char* path, char** argv, char** envp) {
 	process* new_p = process_load(path,argv,envp);
 
 
-	new_p->asid = p->asid;
+	new_p->asid 			= p->asid;
+	new_p->parent_id 		= p->parent_id;
 	new_p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
 	new_p->fd[0].position   = 0;
 	new_p->fd[1].inode      = vfs_path_to_inode("/dev/serial");
@@ -45,7 +47,7 @@ uint32_t svc_execve(char* path, char** argv, char** envp) {
 
 uint32_t svc_sbrk(uint32_t ofs) {
 	kdebug(D_SYSCALL, 2, "SBRK %d\n", ofs);
-	process* p = get_process_list()[current_process_id];
+	process* p = get_process_list()[current_process];
 	// TODO: check that the program doesn't fuck it up
 	int old_brk         = p->brk;
 	int current_brk     = old_brk+ofs;
@@ -79,7 +81,7 @@ uint32_t svc_sbrk(uint32_t ofs) {
 }
 
 uint32_t svc_fork() {
-	process* p 			= get_process_list()[current_process_id];
+	process* p 			= get_process_list()[current_process];
 	process* copy 		= malloc(sizeof(process));
 
 	kdebug(D_SYSCALL, 2, "FORK\n");
@@ -121,26 +123,28 @@ uint32_t svc_fork() {
 	copy->brk_page 	= p->brk_page;
 	for (int i=0;i<64;i++)
 		copy->fd[i] = p->fd[i];
-	copy->sp 		= interrupt_reg[13] - 17*4;
+
+	copy->ctx 		= p->ctx;
+	copy->ctx.r[0] 	= 0;
 	copy->status 	= p->status;
 
-	uint32_t* phy_stack = (uint32_t*)(0x80000000 + mmu_vir2phy_ttb(copy->sp, copy->ttb_address));
-	for (int i=1;i<17;i++) {
-		phy_stack[i] = interrupt_reg[i-1];
-	}
-	phy_stack[1] = 0;
-	phy_stack[0] = interrupt_reg[16];
-
-	kernel_printf("%p %p\n",copy->ttb_address,p->ttb_address);
-	kernel_printf("%p %p\n",copy->sp,p->sp);
-
 	int pid 		= sheduler_add_process(copy);
+	copy->parent_id = p->asid;
 	if (pid == -1) {
 		kdebug(D_SYSCALL, 5, "FORK FAILED, out of process\n");
 	} else {
 		kdebug(D_SYSCALL, 4, "FORK => %d\n", pid);
 	}
 	return pid;
+}
+
+pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
+	process* p = get_process_list()[current_process];
+	int res = wait_process(current_process, pid, wstatus);
+	if (res == -1) {
+		current_process = get_next_process();
+	}
+	return res;
 }
 
 uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
@@ -150,7 +154,7 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 		return -1;
 	}
 
-	fd_t* fd_ = &get_process_list()[current_process_id]->fd[fd];
+	fd_t* fd_ = &get_process_list()[current_process]->fd[fd];
 	if (fd_->position >= 0) {
 		int n = vfs_fwrite(fd_->inode, buf, cnt, 0);
 		kdebug(D_SYSCALL, 2, "WRITE => %d\n",n);
@@ -171,7 +175,7 @@ uint32_t svc_fstat(uint32_t fd, struct stat* dest) {
 	if (fd >= MAX_OPEN_FILES) {
 		return -1;
 	}
-	fd_t req_fd = get_process_list()[current_process_id]->fd[fd];
+	fd_t req_fd = get_process_list()[current_process]->fd[fd];
 	if (req_fd.position >= 0) {
 		memcpy(dest,&req_fd.inode->st,sizeof(struct stat));
 		kdebug(D_SYSCALL, 2, "FSTAT OK\n");
@@ -191,7 +195,7 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 		return -1;
 	}
 
-	fd_t* w_fd = &get_process_list()[current_process_id]->fd[fd];
+	fd_t* w_fd = &get_process_list()[current_process]->fd[fd];
 	if (w_fd->position >= 0) {
 		int n = vfs_fread(w_fd->inode, w_buf, w_cnt, w_fd->position);
 		//w_fd->position += n;

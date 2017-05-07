@@ -28,7 +28,7 @@ extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 extern uint32_t __ramfs_start;
 extern void dmb();
 
-extern uint32_t current_process_id;
+extern int current_process;
 
 int memory_read(uint32_t address, void* buffer, uint32_t size) {
     kdebug(D_KERNEL, 0, "Disk read  request at address %#08x of size %d\n", address, size);
@@ -79,8 +79,6 @@ void kernel_main(uint32_t memory) {
 		(*val)=0;
 	}
 
-    current_process_id = -1;
-
 	__ram_size = memory;
 	GPIO_setOutputPin(GPIO_LED_PIN);
 
@@ -105,8 +103,7 @@ void kernel_main(uint32_t memory) {
     while(1) ;
     
 	Timer_Setup();
-	enable_interrupts();
-	Timer_SetLoad(30000);
+	Timer_SetLoad(500);
 
 
 	storage_driver memorydisk;
@@ -123,9 +120,9 @@ void kernel_main(uint32_t memory) {
 
 
 	setup_scheduler();
-	const char* param[] = {"Bonjour", "Au revoir", 0};
+	const char* param[] = {"/bin/init", "Enchanté", 0};
 
-	process* p = process_load("/bin/wesh", param, NULL); // init program
+	process* p = process_load("/bin/init", param, NULL); // init program
 	p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
 	p->fd[0].position   = 0;
 	p->fd[1].inode      = vfs_path_to_inode("/dev/serial");
@@ -135,7 +132,21 @@ void kernel_main(uint32_t memory) {
 		sheduler_add_process(p);
 		Timer_Enable();
 		Timer_Enable_Interrupts();
-		process_switchTo(p);
+
+	    current_process = p->asid;
+		p->parent_id 	= p->asid; // (Badass process)
+	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+
+		asm volatile(
+			"mov 	r0, %0\n"
+			"ldmfd 	r0!, {r1, lr}\n"
+			"msr 	spsr, r1\n"
+			"ldmfd 	r0, {r0-r14}^\n"
+			"movs 	pc, lr\n"
+			:
+			: "r" (&p->ctx)
+			:);
+
 	} else {
 		kdebug(D_KERNEL, 10, "[ERROR] Could not load init");
 		while(1) {}
