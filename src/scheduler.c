@@ -77,8 +77,10 @@ int kill_process(int const process_id, int wstatus) {
 		// parent was waiting for his death, free the process and notify parent.
 		parent->status 		= status_active;
 		parent->ctx.r[0] 	= process_id;
-		int* phy_addr = 0x80000000+mmu_vir2phy_ttb((intptr_t)parent->wait.wstatus, parent->ttb_address);
-		*phy_addr = wstatus;
+		if (parent->wait.wstatus != NULL) {
+			int* phy_addr = 0x80000000+mmu_vir2phy_ttb((intptr_t)parent->wait.wstatus, parent->ttb_address);
+			*phy_addr = wstatus;
+		}
 
 		active_processes[number_active_processes] = child->parent_id;
 		number_active_processes++;
@@ -123,9 +125,8 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 				free_processes[number_free_processes] = child_pid;
 				number_free_processes++;
 				process_list[child_pid] = 0;
-
-
-				*phy_addr = child->wait.wstatus;
+				if (wstatus != NULL)
+					*phy_addr = child->wait.wstatus;
 				free_process_data(child);
 				return child_pid;
 			}
@@ -142,8 +143,8 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 			number_free_processes++;
 			process_list[target_pid] = 0;
 
-
-			*phy_addr = child->wait.wstatus;
+			if (wstatus != NULL)
+				*phy_addr = child->wait.wstatus;
 			free_process_data(child);
 			return target_pid;
 		}

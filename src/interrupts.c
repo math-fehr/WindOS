@@ -94,7 +94,7 @@ uint32_t software_interrupt_vector(void* user_context) {
             res = svc_fstat(ctx->r[0],(struct stat*)ctx->r[1]);
 			break;
         case SVC_LSEEK:
-            kdebug(D_IRQ, 10, "LSEEK %d %d %d \n", ctx->r[0], ctx->r[1], ctx->r[2]);
+            kdebug(D_IRQ, 2, "LSEEK %d %d %d \n", ctx->r[0], ctx->r[1], ctx->r[2]);
 			res = 0;
             break;
         case SVC_READ:
@@ -106,6 +106,11 @@ uint32_t software_interrupt_vector(void* user_context) {
 		case SVC_EXECVE:
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
 			break;
+		case SVC_GETCWD:
+			res = svc_getcwd((char*)ctx->r[0],ctx->r[1]);
+			break;
+		case SVC_CHDIR:
+			res = svc_chdir((char*)ctx->r[0]);
         default:
         kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", ctx->r[7]);
 		while(1) {}

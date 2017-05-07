@@ -27,21 +27,33 @@ void vfs_mount(superblock_t* sb, char* path) {
 }
 
 inode_t* vfs_path_to_inode(char *path_) {
-  char* path = malloc(strlen(path_)+1);
-  strcpy(path, path_);
+  	char* path = malloc(strlen(path_)+1);
+  	strcpy(path, path_);
+	inode_t* base = 0;
 
-  if (path[0] != '/') {
-    free(path);
-    errno = ENOENT;
-    return 0;
-  }
+	if (path[0] != '/' && base == NULL) {
+		free(path);
+		kdebug(D_VFS, 5, "Relative path but no base inode.\n");
+		errno = ENOENT;
+		return 0;
+	}
 
-  kdebug(D_VFS, 1, "Resolving path %s\n", path);
+	kdebug(D_VFS, 1, "Resolving path %s\n", path);
 
-  inode_t* position = root_inode;
-  char* pch = path+1;
-  char* old_pch = path+1;
-  while ((pch = strchr(pch, '/')) != NULL) {
+	inode_t* position = root_inode;
+	if (path[0] != '/') // working on a relative path.
+		position = base;
+
+	/*char* token = strtok(path, '/');
+	do {
+		vfs_dir_list_t* result = position->op->read_dir(position);
+
+	} while ((token = strtok(NULL, '/')) != NULL);
+*/
+	char* pch = path+1;
+	char* old_pch = path+1;
+	while ((pch = strchr(pch, '/')) != NULL) {
+
     pch[0] = 0;
     vfs_dir_list_t* result = position->op->read_dir(position);
     bool found = false;

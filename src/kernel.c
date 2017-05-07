@@ -122,7 +122,7 @@ void kernel_main(uint32_t memory) {
 	setup_scheduler();
 	const char* param[] = {"/bin/init", "Enchanté", 0};
 
-	process* p = process_load("/bin/init", param, NULL); // init program
+	process* p = process_load("/bin/init", vfs_path_to_inode("/"), param, NULL); // init program
 	p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
 	p->fd[0].position   = 0;
 	p->fd[1].inode      = vfs_path_to_inode("/dev/serial");

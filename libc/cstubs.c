@@ -5,10 +5,11 @@
 #include "unistd.h"
 #include "stdio.h"
 #include "string.h"
+#include "stdlib.h"
 
 int argc;
 char **argv;
-char **envp;
+char **environ;
 
 void software_init_hook() {
 	argv = 0;
@@ -16,12 +17,11 @@ void software_init_hook() {
 	while (argv[argc] != 0) {
 		argc++;
 	}
-	envp = (char**)((((uint32_t)argv[argc-1]+strlen(argv[argc-1])+2+3)/4)*4);
+	environ = (char**)((((uint32_t)(intptr_t)argv[argc-1]+strlen(argv[argc-1])+2+3)/4)*4);
 }
 
 // 0x01:
 void _exit(int error_code) {
-	while(1) {}
     asm volatile(   "push {r7}\n"
 					"mov r7, #0x01\n"
                     "svc #0\n"
@@ -71,8 +71,45 @@ int _execve(const char *filename, char *const argv[],
 		:
 		: "m" (filename), "m" (argv), "m" (envp)
 		:);
+	return -1;
 }
 
+
+int execvp(const char *filename, char *const argv[]) {
+	char* path = getenv("PATH");
+	if (path == NULL || (strchr(filename,'/') != 0) ) { // no PATH or absolute/relative path.
+		return execve(filename, argv, environ); // will execute in cwd
+	} else { // let's search in path
+		char* tok = strtok(path, ":");
+		do {
+			char* dest_buf = malloc(strlen(filename)+2+strlen(tok));
+			strcpy(dest_buf, tok);
+			strcat(dest_buf, "/");
+			strcat(dest_buf, filename);
+			execve(dest_buf, argv, environ);
+			free(dest_buf);
+		} while ((tok = strtok(NULL, ":")) != NULL);
+	}
+	return -1;
+}
+
+// 0xb7
+char* getcwd(char* buf, size_t size) {
+	char* res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"mov 	r7, #0xb7\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (buf), "m" (size)
+					:
+	);
+	return res;
+}
 
 
 // 0x04:
@@ -126,29 +163,47 @@ int _fstat(int fd, struct stat* buf) {
     return res;
 }
 
+// 0x07
+pid_t _waitpid(pid_t pid, int *wstatus, int options) {
+	pid_t res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"ldr 	r2, %3\n"
+					"mov 	r7, #0x07\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+				:	"=r" (res)
+				: 	"m" (pid), "m" (wstatus), "m" (options) :);
+	return res;
+}
+
 // TODO: Coder ça
 int _isatty(int fd) {
   return 1;
 }
 
-int gettimeofday(struct timeval* tv, struct timezone *tz) {
-
+pid_t _wait(int *wstatus) {
+	return _waitpid(-1, wstatus, 0);
 }
+
 
 // 0x13
 off_t _lseek(int fd, off_t offset, int whence) {
     off_t res;
     asm volatile(
 					"push {r7}\n"
-					"mov r0, %1\n"
-                    "mov r1, %2\n"
-                    "mov r2, %3\n"
+					"ldr r0, %1\n"
+                    "ldr r1, %2\n"
+                    "ldr r2, %3\n"
                     "mov r7, #0x13\n"
                     "svc #0\n"
 					"pop {r7}\n"
                     "mov %0, r0"
                 :   "=r" (res)
-                :   "r" (fd), "r" (offset), "r" (whence)
+                :   "m" (fd), "m" (offset), "m" (whence)
                 :);
     return res;
 }
@@ -164,7 +219,7 @@ ssize_t _read(int fd, void* buf, size_t count) {
                     "mov r7, #0x03\n"
                     "svc #0\n"
 					"pop {r7}\n"
-                    "mov %0, r1\n"
+                    "mov %0, r0\n"
                 :   "=r" (res)
                 :   "m" (fd), "m" (buf), "m" (count)
                 :);
