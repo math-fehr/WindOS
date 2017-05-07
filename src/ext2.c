@@ -454,7 +454,6 @@ vfs_dir_list_t* ext2_lsdir(inode_t* inode_p) {
           ext2_inode_t r = ext2_get_inode_descriptor(fs, l_inode);
           entry->inode->st = ext2_inode_to_stat(fs, r, l_inode);
 
-
           dir_list = entry;
 
           explorer += entry_size;

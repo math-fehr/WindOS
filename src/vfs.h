@@ -70,7 +70,8 @@ typedef struct {
 } perm_str_t;
 
 void vfs_setup();
-inode_t* vfs_path_to_inode(char *path);
+inode_t* vfs_path_to_inode(inode_t* root, char *path);
+char* vfs_inode_to_path(inode_t* inode, char* buf, size_t cnt);
 void vfs_mount(superblock_t* sb, char* path);
 
 int vfs_fwrite(inode_t* fd, char* buffer, int size, int position);
