@@ -26,6 +26,7 @@
 #define     SVC_READ        0x03
 #define     SVC_WRITE       0x04
 #define     SVC_CLOSE       0x06
+#define 	SVC_WAITPID		0x07
 #define 	SVC_EXECVE 		0x0b
 #define 	SVC_TIME 		0x0d
 #define     SVC_LSEEK       0x13

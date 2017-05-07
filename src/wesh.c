@@ -22,11 +22,11 @@ void scheduler_handler() {
       int i = 0;
       bool error = false;
       while(i < number && !error) {
-          int temp = create_process();
+        /*  int temp = create_process();
           if(temp == -1) {
               error = true;
           }
-          i++;
+          i++;*/
       }
       if(error) {
           serial_write("[SHED] Limit of processes reached");
@@ -35,7 +35,7 @@ void scheduler_handler() {
   }
   else if(!strcmp("kill",token)) {
       int number = atoi(strtok(NULL," "));
-      int temp= kill_process(number);
+      int temp= kill_process(number,0);
       if(temp == -1) {
           serial_write("[SHED] Can't kill that process");
           serial_newline();

@@ -30,13 +30,12 @@ int get_next_process();
  * Return 0 is the attempt is successfull
  * Return -1 if the process does not exist
  */
-int kill_process(int const process_id);
+int kill_process(int const process_id, int wstatus);
 
 /**
- * Create a process
- * The function return -1 if there is no free_process available
+ * process_id waits for target_pid to go into zombie state
  */
-int create_process();
+int wait_process(int const process_id, int target_pid, int* wstatus);
 
 /**
  * Get number of active processes

@@ -37,10 +37,20 @@ _software_interrupt_vector:
 
 .globl _prefetch_abort_vector
 _prefetch_abort_vector:
+	stmfd	sp, {r0-r14}^
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr
+	stmfd 	sp!, {r1, lr}
+	mov 	r0, sp
 	ldr     pc, =prefetch_abort_vector
 
 .globl _data_abort_vector
 _data_abort_vector:
+	stmfd	sp, {r0-r14}^
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr
+	stmfd 	sp!, {r1, lr}
+	mov 	r0, sp
 	ldr     pc, =data_abort_vector
 
 .globl _interrupt_vector

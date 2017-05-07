@@ -138,32 +138,3 @@ process* process_load(char* path, const char* argv[], const char* envp[]) {
 
     return processus;
 }
-
-uint32_t current_process_id;
-/*
-void process_switchTo_id(int p) {
-	process** lst = get_process_list();
-	process_switchTo(lst[p]);
-}
-
-void process_switchTo(process* p) {
-    current_process_id = p->asid;
-    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
-
-
-	uint32_t* phy_stack = (uint32_t*)(p->sp);
-	for (int i=0;i<17;i++) {
-		kdebug(D_IRQ,3,"=>%d|%d: %p\n",current_process_id,i,phy_stack[i]);
-	}
-
-
-    asm volatile(   "mov 	lr, %0\n"
-                    "ldmfd 	lr!, {r0}\n"
-                    "msr 	spsr_all, r0\n"
-                    "ldmfd 	lr, {r0-r13}^\n" // write usermode registers
-					"add 	lr, lr, #4*14\n"
-					"ldmfd 	lr, {lr, pc}^\n" // the big jump
-                    :
-                    : "r" (p->sp)
-                    :);
-}*/

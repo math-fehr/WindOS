@@ -31,9 +31,15 @@ typedef struct {
  */
 typedef enum {
     status_active,
-    status_free,
+    status_wait,
     status_zombie
 } status_process;
+
+
+typedef struct {
+	pid_t 	pid;
+	int*  	wstatus;
+} wait_parameters_t;
 
 /**
  * A process (running or not)
@@ -42,11 +48,13 @@ typedef struct {
     status_process status;
     int dummy; //Temp value for debug
     uintptr_t ttb_address;
-    int asid; // Address Space ID
+    pid_t asid; // Address Space ID
+	pid_t parent_id;
     int brk; // Program break.
     int brk_page; // Number of pages allocated for program break
     fd_t fd[MAX_OPEN_FILES];
 	user_context_t ctx;
+	wait_parameters_t wait; // coherent values only in wait status.
 } process;
 
 #define ELF_ABI_SYSTEMV 0
