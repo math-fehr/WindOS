@@ -27,8 +27,11 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 	paging_free(mmu_vir2phy(0)/PAGE_SECTION,1);
 	paging_free(mmu_vir2phy(__ram_size-PAGE_SECTION)/PAGE_SECTION,1);
 
-	process* new_p = process_load(path,argv,envp);
-
+	process* new_p = process_load(path, p->cwd, argv, envp);
+	if (new_p == 0) {
+		p->ctx.r[0] = -1;
+		return p->asid;
+	}
 
 	new_p->asid 			= p->asid;
 	new_p->parent_id 		= p->parent_id;
@@ -43,6 +46,16 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 	free(p);
 
 	return new_p->asid;
+}
+
+char* svc_getcwd(char* buf, size_t cnt) {
+	process* p = get_process_list()[current_process];
+
+}
+
+uint32_t svc_chdir(char* path) {
+	process* p = get_process_list()[current_process];
+
 }
 
 uint32_t svc_sbrk(uint32_t ofs) {
@@ -127,6 +140,7 @@ uint32_t svc_fork() {
 	copy->ctx 		= p->ctx;
 	copy->ctx.r[0] 	= 0;
 	copy->status 	= p->status;
+	copy->cwd 		= p->cwd; 
 
 	int pid 		= sheduler_add_process(copy);
 	copy->parent_id = p->asid;
@@ -166,7 +180,7 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 }
 
 uint32_t svc_close(uint32_t fd) {
-	kdebug(D_SYSCALL, 10, "CLOSE %d\n", fd);
+	kdebug(D_SYSCALL, 2, "CLOSE %d\n", fd);
 	return 0;
 }
 

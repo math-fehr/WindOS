@@ -205,7 +205,7 @@ void vfs_handler() {
         char obj[255];
         strcpy(obj, position);
         strcat(obj, name);
-        process* p = process_load(obj, NULL, NULL);
+        /*process* p = process_load(obj, NULL, NULL);
         p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
         p->fd[0].position   = 0;
         p->fd[1].inode      = vfs_path_to_inode("/dev/serial");
@@ -213,7 +213,7 @@ void vfs_handler() {
         sheduler_add_process(p);
         if (p != NULL) {
         //    process_switchTo(p);
-        }
+	}*/
     } else {
         serial_write("[VFS] Unrecognized command\n");
     }

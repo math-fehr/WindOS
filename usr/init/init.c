@@ -20,7 +20,8 @@ int main () {
 			printf("[INIT] Process %d exited with status %d.\n", res, status);
 		}
 	} else {
-		char* argv[] = {"/bin/wesh", NULL};
-		execve("/bin/wesh", argv, NULL);
+		char* argv_wesh[] = {"/bin/wesh", NULL};
+		char* envp_wesh[] = {"PATH=/bin", NULL};
+		execve("/bin/wesh", argv_wesh, envp_wesh);
 	}
 }

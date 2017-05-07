@@ -1,13 +1,15 @@
 
 #include "process.h"
 #include "malloc.h"
+#include "errno.h"
 
 extern unsigned int __ram_size;
 
-process* process_load(char* path, const char* argv[], const char* envp[]) {
+process* process_load(char* path, inode_t* cwd, const char* argv[], const char* envp[]) {
     inode_t* fd = vfs_path_to_inode(path);
     if (fd == 0) {
         kdebug(D_PROCESS, 5, "Could not load %s\n", path);
+		errno = ENOENT;
         return 0;
     }
     elf_header_t header;
@@ -47,6 +49,7 @@ process* process_load(char* path, const char* argv[], const char* envp[]) {
     page_list_t* res = paging_allocate(2);
     if (res == NULL) {
         kdebug(D_PROCESS, 10, "Can't load %s: page allocation failed.\n", path);
+		errno = ENOMEM;
         return NULL;
     }
     int section_addr = res->address*PAGE_SECTION;
@@ -102,20 +105,25 @@ process* process_load(char* path, const char* argv[], const char* envp[]) {
 			strcpy((char*)(intptr_t)(position+0x80000000+section_addr), argv[i]);
 			position += strlen(argv[i]) + 1;
 		}
+		phy_base[argc] = 0;
 	}
 
 	int ofs =(position+3)/4;
 	position = 4*ofs;
 	if (envp != NULL) {
-		int envc = strlen((char*) envp);
+		int envc = 0;
+		while(envp[envc]) {
+			envc++;
+		}
 
 		position += 4*(envc + 1);
 
 		for (int i=0;i<envc;i++) {
 			phy_base[ofs+i] = position;
 			strcpy((char*)(intptr_t)(position+0x80000000+section_addr), envp[i]);
-			position += strlen(envp[i]);
+			position += strlen(envp[i]) + 1;
 		}
+		phy_base[ofs+envc]=0;
 	}
 
     process* processus = malloc(sizeof(process));
@@ -131,6 +139,7 @@ process* process_load(char* path, const char* argv[], const char* envp[]) {
 
     processus->brk = PAGE_SECTION;
     processus->brk_page = 0;
+	processus->cwd = cwd;
 
     for (int i=0;i<MAX_OPEN_FILES;i++) {
         processus->fd[i].position = -1;

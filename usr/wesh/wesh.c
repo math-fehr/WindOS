@@ -4,21 +4,35 @@
 #include "stdint.h"
 #include "errno.h"
 #include "time.h"
+#include "unistd.h"
+#include "sys/wait.h"
+#include "string.h"
 
 extern int argc;
 extern char** argv;
-extern char** envp;
+extern char** environ;
+
+int exec_blocking(char* command) {
+	int r = fork();
+	if (r == 0) {
+		char* params[] = {command, NULL};
+		execvp(command, params);
+		perror("execvp");
+		exit(1);
+	} else {
+		return wait(NULL);
+	}
+}
 
 int main() {
-	int compteur = 0;
 	while(1) {
 		char buf[1500];
-		printf("$");
+		exec_blocking("pwd");
+		printf("$ ");
 		scanf("%s",buf);
 		if(strcmp(buf,"exit") == 0) {
 			break;
 		}
 	}
-	printf("Let's leave\n");
   	return 0;
 }
