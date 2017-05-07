@@ -18,6 +18,7 @@
 #include "scheduler.h"
 #include "mmu.h"
 #include "dev.h"
+#include "mailbox.h"
 
 #include "malloc.h"
 
@@ -99,7 +100,10 @@ void kernel_main(uint32_t memory) {
 	paging_init(__ram_size >> 20, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
 
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
+    kernel_printf("Mac address : %lld\n", mailbox_getMacAddress());
 
+    while(1) ;
+    
 	Timer_Setup();
 	enable_interrupts();
 	Timer_SetLoad(30000);
