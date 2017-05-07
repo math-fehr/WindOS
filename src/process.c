@@ -5,9 +5,9 @@
 
 extern unsigned int __ram_size;
 
-process* process_load(char* path, inode_t* cwd, const char* argv[], const char* envp[]) {
-    inode_t* fd = vfs_path_to_inode(NULL, path);
-    if (fd == 0) {
+process* process_load(char* path, inode_t cwd, const char* argv[], const char* envp[]) {
+    inode_t fd = vfs_path_to_inode(NULL, path);
+    if (errno > 0) {
         kdebug(D_PROCESS, 5, "Could not load %s\n", path);
 		errno = ENOENT;
         return 0;

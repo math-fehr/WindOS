@@ -35,9 +35,11 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 
 	new_p->asid 			= p->asid;
 	new_p->parent_id 		= p->parent_id;
-	new_p->fd[0].inode      = vfs_path_to_inode(NULL, "/dev/serial");
+	new_p->fd[0].inode		= malloc(sizeof(inode_t));
+	*new_p->fd[0].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	new_p->fd[0].position   = 0;
-	new_p->fd[1].inode      = vfs_path_to_inode(NULL, "/dev/serial");
+	new_p->fd[1].inode 		= malloc(sizeof(inode_t));
+	*new_p->fd[1].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	new_p->fd[1].position   = 0;
 
 	get_process_list()[new_p->asid] = new_p;
@@ -55,11 +57,11 @@ char* svc_getcwd(char* buf, size_t cnt) {
 
 uint32_t svc_chdir(char* path) {
 	process* p = get_process_list()[current_process];
-	inode_t* res = vfs_path_to_inode(p->cwd, path);
-	if (res == NULL) {
+	inode_t res = vfs_path_to_inode(&p->cwd, path);
+
+	if (errno > 0) {
 		return -1;
 	} else {
-		free(p->cwd);
 		p->cwd = res;
 	}
 	return 0;
@@ -176,7 +178,7 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 
 	fd_t* fd_ = &get_process_list()[current_process]->fd[fd];
 	if (fd_->position >= 0) {
-		int n = vfs_fwrite(fd_->inode, buf, cnt, 0);
+		int n = vfs_fwrite(*fd_->inode, buf, cnt, 0);
 		kdebug(D_SYSCALL, 2, "WRITE => %d\n",n);
 		//fd->position += n;
 		return n;
@@ -217,7 +219,7 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 
 	fd_t* w_fd = &get_process_list()[current_process]->fd[fd];
 	if (w_fd->position >= 0) {
-		int n = vfs_fread(w_fd->inode, w_buf, w_cnt, w_fd->position);
+		int n = vfs_fread(*w_fd->inode, w_buf, w_cnt, w_fd->position);
 		//w_fd->position += n;
 		kdebug(D_SYSCALL, 2, "READ => %d\n",n);
 		return n;

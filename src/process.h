@@ -55,7 +55,7 @@ typedef struct {
     fd_t fd[MAX_OPEN_FILES];
 	user_context_t ctx;
 	wait_parameters_t wait; // coherent values only in wait status.
-	inode_t* cwd;
+	inode_t cwd;
 } process;
 
 #define ELF_ABI_SYSTEMV 0
@@ -119,6 +119,6 @@ typedef struct {
   uint32_t ent_size;
 } sh_entry_t;
 
-process* process_load(char* path, inode_t* cwd, const char* argv[], const char *envp[]);
+process* process_load(char* path, inode_t cwd, const char* argv[], const char *envp[]);
 
 #endif //PROCESS_H

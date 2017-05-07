@@ -11,7 +11,7 @@
 #include "debug.h"
 #include "scheduler.h"
 #include "mmu.h"
-#include "malloc.h" 
+#include "malloc.h"
 
 uint32_t svc_exit();
 uint32_t svc_sbrk(uint32_t ofs);
