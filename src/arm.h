@@ -66,11 +66,11 @@ inline void isb() {
 #endif
 }
 
-uint32_t get_cache_level_id() {
+inline uint32_t get_cache_level_id() {
     return mrc(p15, 1, c0, c0, 1);
 }
 
-uint32_t read_cache_size(uint32_t level, uint32_t type) {
+inline uint32_t read_cache_size(uint32_t level, uint32_t type) {
     uint32_t sel = level << 1 | type;
     mcr(p15, 2, c0, c0, 0, sel); // select which cache we're working on
     return mrc(p15, 1, c0, c0, 0);
@@ -100,7 +100,7 @@ static inline uint32_t log_2_n_round_up(uint32_t n)
 #define CCSIDR_NUM_SETS_OFFSET           13
 #define CCSIDR_NUM_SETS_MASK             (0x7FFF << 13)
 
-void flush_cache_level(uint32_t level, bool clean) {
+inline void flush_cache_level(uint32_t level, bool clean) {
     uint32_t ccsidr = read_cache_size(level, 0);
     int way, set, setway;
     uint32_t log2_line_len = ((ccsidr & CCSIDR_LINE_SIZE_MASK) >>
@@ -152,7 +152,7 @@ void flush_cache_level(uint32_t level, bool clean) {
 #define CACHE_LEVEL_INSTRUCTION_DATA    3
 #define CACHE_LEVEL_UNIFIED             4
 
-void flush_data_cache(bool clean) {
+inline void flush_data_cache(bool clean) {
     uint32_t levelId = get_cache_level_id();
     uint32_t cacheType, startBit = 0;
 
@@ -169,7 +169,7 @@ void flush_data_cache(bool clean) {
     }
 }
 
-void flush_instruction_cache() {
+inline void flush_instruction_cache() {
     dsb();
     mcr(p15, 0, c7, c5, 0, 0);
     flush_branch_prediction();
