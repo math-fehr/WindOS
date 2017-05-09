@@ -93,10 +93,10 @@ void kernel_main(uint32_t memory) {
 	// TTB0 is set up on each context switch
 	mmu_setup_ttbcr(TTBCR_ALIGN);
 
-	paging_init(__ram_size >> 20, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
+	paging_init((__ram_size >> 20) - 1, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
 
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
-    kernel_printf("Mac address : %lld\n", mailbox_getMacAddress());
+  //  kernel_printf("Mac address : %lld\n", mailbox_getMacAddress());
 
 	Timer_Setup();
 	Timer_SetLoad(500);
@@ -118,7 +118,7 @@ void kernel_main(uint32_t memory) {
 	setup_scheduler();
 	const char* param[] = {"/bin/init", "Enchanté", 0};
 
-	process* p = process_load("/bin/init", vfs_path_to_inode(NULL, "/test/hello"), param, NULL); // init program
+	process* p = process_load("/bin/init", vfs_path_to_inode(NULL, "/"), param, NULL); // init program
 	p->fd[0].inode      = malloc(sizeof(inode_t));
 	*p->fd[0].inode 	= vfs_path_to_inode(NULL, "/dev/serial");
 	p->fd[0].position   = 0;

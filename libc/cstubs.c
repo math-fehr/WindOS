@@ -6,6 +6,9 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include "errno.h"
+
+#include "../include/dirent.h"
 
 int argc;
 char **argv;
@@ -59,21 +62,75 @@ pid_t _fork() {
 	return res;
 }
 
+// 0x05
+int _open(char* path, int flags) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"mov 	r7, #0x05\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (path), "m" (flags)
+					:
+	);
+	return res;
+}
+
+// 78
+int _getdents(int fd, struct dirent* user_dirent) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"mov 	r7, #78\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (fd), "m" (user_dirent)
+					:
+	);
+	return res;
+}
+
 // 0x0b:
 int _execve(const char *filename, char *const argv[],
                   char *const envp[]) {
+	int res;
 	asm volatile(
 		"mov r7, #0x0b\n"
-		"ldr r0, %0\n"
-		"ldr r1, %1\n"
-		"ldr r2, %2\n"
+		"ldr r0, %1\n"
+		"ldr r1, %2\n"
+		"ldr r2, %3\n"
 		"svc #0\n"
-		:
+		"pop {r7}\n"
+		"mov %0, r0\n"
+		: "=r" (res)
 		: "m" (filename), "m" (argv), "m" (envp)
 		:);
+	errno = -res;
 	return -1;
 }
 
+int _chdir(char* path) {
+	int res;
+	asm volatile(
+		"mov r7, #0x0c\n"
+		"ldr r0, %1\n"
+		"svc #0\n"
+		"pop {r7}\n"
+		"mov %0, r0\n"
+		: "=r" (res)
+		: "m" (path)
+		:);
+	errno = -res;
+	return 0;
+}
 
 int execvp(const char *filename, char *const argv[]) {
 	char* path = getenv("PATH");

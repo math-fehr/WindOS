@@ -104,8 +104,9 @@ int serial_readline(char* buffer, int buffer_size) {
 			serial_write("\033[D");
 			serial_putc(' ');
 			serial_write("\033[D");
-			buffer[i--] = 0;	
+			buffer[i--] = 0;
 		} else if (c == 0x1B) {
+			
 			serial_readc();
 			serial_readc();
 		} else {

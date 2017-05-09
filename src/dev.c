@@ -1,6 +1,7 @@
 #include "dev.h"
 
 #include "stdlib.h"
+#include "errno.h"
 
 
 static inode_operations_t dev_inode_operations = {
@@ -12,7 +13,6 @@ static inode_operations_t dev_inode_operations = {
   .mkfile = NULL,
 };
 
-
 superblock_t* dev_initialize(int id) {
     superblock_t* res = malloc(sizeof(superblock_t));
     res->id = id;
@@ -20,6 +20,7 @@ superblock_t* dev_initialize(int id) {
     res->root.st.st_size   = 0;
     res->root.st.st_mode   = S_IFDIR | S_IRWXU | S_IRWXO | S_IRWXG;
     res->root.st.st_dev    = id;
+	res->root.sb 		   = res;
     res->root.op           = &dev_inode_operations;
     return res;
 }
@@ -48,6 +49,7 @@ vfs_dir_list_t* dev_lsdir(inode_t from) {
         r.st.st_ino = DEV_ZERO;
         res = dev_append_elem(r, "zero", res);
 
+
         r.st.st_ino = DEV_RANDOM;
         res = dev_append_elem(r, "random", res);
 
@@ -57,9 +59,19 @@ vfs_dir_list_t* dev_lsdir(inode_t from) {
 		r.st.st_blksize = 1024;
 		r.st.st_nlink = 1;
         res = dev_append_elem(r, "serial", res);
+
+
+        r.st.st_ino = DEV_ROOT;
+        res = dev_append_elem(r, ".", res);
+
+        r.st.st_ino = DEV_ROOT;
+        res = dev_append_elem(r, "..", res);
         return res;
-    }
-    return 0;
+    } else {
+		kernel_printf("This is illegal.\n");
+	}
+	errno = ENOENT;
+    return NULL;
 }
 
 int dev_fread(inode_t from, char* buf, int size, int pos) {
@@ -77,11 +89,8 @@ int dev_fread(inode_t from, char* buf, int size, int pos) {
         case DEV_SERIAL:
 
             return serial_readline(buf, size);
-        default:
-            //TODO: Throw error
-            return 0;
     }
-    return 0;
+    return -1;
 }
 
 int dev_fwrite(inode_t from, char* buf, int size, int pos) {
@@ -92,6 +101,6 @@ int dev_fwrite(inode_t from, char* buf, int size, int pos) {
             }
             return size;
         default:
-            return 0;
+            return -1;
     }
 }

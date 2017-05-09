@@ -111,6 +111,13 @@ uint32_t software_interrupt_vector(void* user_context) {
 			break;
 		case SVC_CHDIR:
 			res = svc_chdir((char*)ctx->r[0]);
+			break;
+		case SVC_GETDENTS:
+			res = svc_getdents(ctx->r[0], (struct dirent *)ctx->r[1]);
+			break;
+		case SVC_OPEN:
+			res = svc_open((char*) ctx->r[0], ctx->r[1]);
+			break;
         default:
         kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", ctx->r[7]);
 		while(1) {}

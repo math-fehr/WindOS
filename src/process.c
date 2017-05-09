@@ -8,7 +8,7 @@ extern unsigned int __ram_size;
 process* process_load(char* path, inode_t cwd, const char* argv[], const char* envp[]) {
     inode_t fd = vfs_path_to_inode(NULL, path);
     if (errno > 0) {
-        kdebug(D_PROCESS, 5, "Could not load %s\n", path);
+        kdebug(D_PROCESS, 4, "Could not load %s: %s\n", path, strerror(errno));
 		errno = ENOENT;
         return 0;
     }
@@ -63,8 +63,8 @@ process* process_load(char* path, inode_t cwd, const char* argv[], const char* e
 		free(res);
     }
     // 1MB for the program. TODO: Make this less brutal. (not hardcoded as i could read the symbol table)
-    mmu_add_section(ttb_address, 0, section_addr, 0);
-    mmu_add_section(ttb_address, __ram_size-PAGE_SECTION, section_stack, 0);
+    mmu_add_section(ttb_address, 0, section_addr, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
+    mmu_add_section(ttb_address, __ram_size-PAGE_SECTION, section_stack, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
     // Loads executable data into memory and allocates it.
     ph_entry_t ph;
     for (int i=0; i<header.ph_num;i++) {

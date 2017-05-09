@@ -37,9 +37,16 @@
 /**
  * Definition of other flags
  */
-#define ENABLE_CACHE        (1 << 3) //Use the cache
-#define ENABLE_WRITE_BUFFER (1 << 2) //Enable write buffer
+#define ENABLE_CACHE        2 //Use the cache
+#define ENABLE_WRITE_BUFFER 1 //Enable write buffer
 
+/*
+ * Access Permission bits
+ */
+#define AP_PNONE_UNONE		0
+#define AP_PRW_UNONE 		1
+#define AP_PRW_URO 			2
+#define AP_PRW_URW 			3
 
 /**
  * Definition of formats for first-level descriptor
@@ -91,7 +98,7 @@ void mmu_setup_fine_table(uintptr_t fine_table_address, uintptr_t ttb_address,
 
 
 void mmu_add_section(uintptr_t ttb_address, uintptr_t from,
-                     uintptr_t to, uint32_t flags);
+                     uintptr_t to, uint32_t flags, uint32_t domain, uint32_t ap);
 
 
 void mmu_delete_section(uintptr_t ttb_address, uintptr_t address);

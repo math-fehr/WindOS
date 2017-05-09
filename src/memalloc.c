@@ -8,22 +8,29 @@ page_list_t* free_list;
 int tot_pages;
 int used_pages;
 
-// sort by decreasing order of size.
+// sort by increasing address.
+// TODO: merge consecutive page blocks.
 page_list_t* insertion(page_list_t* elem, page_list_t* list) {
-  if (elem->size >= list->size) {
-    elem->next = list;
-    return elem;
-  } else {
-    page_list_t* prev = NULL;
-    page_list_t* first = list;
-    while (list != NULL && elem->size < list->size) {
-      prev = list;
-      list = list->next;
-    }
-    prev->next = elem;
-    elem->next = list;
-    return first;
-  }
+	if (list == NULL) {
+		return elem;
+	} else if(elem == NULL) {
+		return list;
+	}
+
+  	if (elem->address <= list->address) {
+    	elem->next = list;
+    	return elem;
+  	} else {
+	    page_list_t* prev = NULL;
+	    page_list_t* first = list;
+	    while (list != NULL && elem->address > list->address) {
+	      prev = list;
+	      list = list->next;
+	    }
+	    prev->next = elem;
+	    elem->next = list;
+	    return first;
+ 	}
 }
 
 void paging_init(int n_total_pages, int n_reserved_pages) {
@@ -35,39 +42,65 @@ void paging_init(int n_total_pages, int n_reserved_pages) {
 	free_list->address = n_reserved_pages;
 }
 
+void paging_print_status() {
+	char* bitmap = malloc(tot_pages+1);
+	for(int i=0;i<tot_pages;i++) {
+		bitmap[i] = '#';
+	}
+
+	page_list_t* fl = free_list;
+	while(fl != NULL) {
+		for (int i=fl->address;i<fl->address+fl->size;i++) {
+			bitmap[i] = '.';
+		}
+		fl = fl->next;
+	}
+	bitmap[tot_pages] = 0;
+	kdebug(D_KERNEL,1,"%s\n", bitmap);
+}
+
 page_list_t* paging_allocate(int n_pages) {
-  page_list_t* result = NULL;
-  page_list_t* pointer = free_list;
-  page_list_t* previous = NULL;
+	page_list_t* result = NULL;
+	page_list_t* pointer = free_list;
 
-  used_pages += n_pages;
+	kdebug(D_KERNEL,1,"Alloc %d\n",n_pages);
+	used_pages += n_pages;
 
-  while (n_pages > 0 && pointer != NULL) {
-    int mn = min(pointer->size, n_pages);
-    n_pages -= mn;
-    pointer->size -= mn;
 
-    page_list_t *elem = malloc(sizeof(page_list_t));
-    elem->next = result;
-    elem->size = mn;
-    elem->address = pointer->address;
-    result = elem;
+	if (100*used_pages / tot_pages > 90 && 100*(used_pages-n_pages) / tot_pages <= 90) {
+		kdebug(D_KERNEL,10,"90%% of memory is used.\n");
+	}
+	page_list_t *tmp;
 
-    pointer->address += mn;
+	while (n_pages > 0 && pointer != NULL) {
+	    int mn = min(pointer->size, n_pages);
+	    n_pages -= mn;
+	    pointer->size -= mn;
 
-    page_list_t *tmp = pointer->next;
-    if (pointer->size == 0) {
-      previous->next = pointer->next;
-      free(pointer);
-      pointer = NULL;
-    } else {
-      previous = pointer;
-    }
-    pointer = tmp;
-  }
+	    page_list_t *elem = malloc(sizeof(page_list_t));
+		if (elem == NULL) {
+			serial_write("MALLOC FAILED I'M DONE.\n");
+			while(1) {} // dafuk.
+		}
+		elem->next = result;
+	    elem->size = mn;
+	    elem->address = pointer->address;
+		//kernel_printf("elemn of size %d address %d\n", mn, elem->address);
+	    result = elem;
 
-	if (pointer != NULL) {
-		free_list = insertion(pointer, free_list);
+		pointer->address += mn;
+	    tmp = pointer->next;
+
+	    if (pointer->size == 0) {
+			free(pointer);
+			pointer = tmp;
+		}
+  	}
+	free_list = tmp;
+
+	if (pointer != NULL && pointer != free_list) {
+		pointer->next = NULL;
+		free_list = insertion(pointer, tmp);
 	}
 
 	if (n_pages > 0) {
@@ -75,20 +108,23 @@ page_list_t* paging_allocate(int n_pages) {
 	} else {
 		kdebug(D_KERNEL, 1, "%d/%d pages in use.\n", used_pages, tot_pages);
 	}
-
-  return result;
+	paging_print_status();
+	return result;
 }
 
 
 void paging_free(int n_pages, int address) {
-  page_list_t* elem = malloc(sizeof(page_list_t));
-  elem->size = n_pages;
-  elem->address = address;
-  elem->next = NULL;
+	kdebug(D_KERNEL, 1, "free %d %d.\n", n_pages, address);
+	page_list_t* elem = malloc(sizeof(page_list_t));
+	elem->size = n_pages;
+	elem->address = address;
+	elem->next = NULL;
 
-  used_pages -= n_pages;
+	used_pages -= n_pages;
 
-  free_list = insertion(elem, free_list);
+	free_list = insertion(elem, free_list);
+	kdebug(D_KERNEL, 1, "%d/%d pages in use.\n", used_pages, tot_pages);
+	paging_print_status();
 }
 
 int memalloc(uint32_t ttb_address, uintptr_t address, size_t size) {
@@ -114,7 +150,7 @@ int memalloc(uint32_t ttb_address, uintptr_t address, size_t size) {
             mmu_add_section(ttb_address,
                             address,
                             physical_pages->address * 0x1000,
-                            DC_MANAGER);//TODO change flags
+                            ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);//TODO change flags
             physical_pages->size -= NB_PAGES_COARSE_TABLE;
             physical_pages->address += NB_PAGES_COARSE_TABLE;
             address += 0x100000;

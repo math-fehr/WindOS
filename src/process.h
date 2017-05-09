@@ -24,6 +24,7 @@ typedef struct {
 typedef struct {
     inode_t* inode;
     int position;
+	vfs_dir_list_t* dir_entry;
 } fd_t;
 
 /**

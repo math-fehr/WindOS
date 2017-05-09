@@ -2,8 +2,12 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#define MAX_MNT 20
+#define MAX_ID 1024
 inode_t root_inode;
-mount_point_t mount_points[20];
+mount_point_t mount_points[MAX_MNT];
+int dev_to_mnt[MAX_ID];
+
 int nmounted = 0;
 
 
@@ -17,6 +21,7 @@ void vfs_mount(superblock_t* sb, char* path) {
     kernel_printf("[INFO][VFS] FS mounted.\n");
     root_inode = sb->root;
     nmounted++;
+	dev_to_mnt[sb->id] = 0;
   } else {
       inode_t r = vfs_path_to_inode(NULL,path);
       if (errno > 0) {
@@ -24,6 +29,7 @@ void vfs_mount(superblock_t* sb, char* path) {
       } else {
           mount_points[nmounted].inode = r;
           mount_points[nmounted].fs = sb;
+		  dev_to_mnt[sb->id] = nmounted;
           nmounted++;
       }
   }
@@ -47,15 +53,15 @@ void free_vfs_dir_list(vfs_dir_list_t* lst) {
  * and writes into writebuf the name of ancestor.
  */
 inode_t vfs_parent(inode_t base, int* ancestor, char* writebuf) {
-	inode_t mnt_root = mount_points[base.st.st_dev].fs->root;
+	inode_t mnt_root = mount_points[dev_to_mnt[base.sb->id]].fs->root;
 	if (base.st.st_ino == mnt_root.st.st_ino) {
 		// If this is the root of a mount point, teleport back.
-		base = mount_points[base.st.st_dev].inode;
+		base = mount_points[dev_to_mnt[base.sb->id]].inode;
 	}
 
 	vfs_dir_list_t* result = base.op->read_dir(base);
 	vfs_dir_list_t* result_start = result;
-	kernel_printf("%d\n", *ancestor);
+
 	if (*ancestor == -1)
 		writebuf[0] = 0;
 
@@ -109,6 +115,7 @@ char* vfs_inode_to_path(inode_t base, char* buf, size_t size) {
 	for (int j=i;j<size;j++) {
 		buf[j-i] = buf[j];
 	}
+
 	return buf;
 }
 
@@ -140,7 +147,7 @@ inode_t vfs_path_to_inode(inode_t* base, char *path_) {
 
 	do {
 		if (!S_ISDIR(position.st.st_mode)) {
-			kdebug(D_VFS, 5, "Bad path name: %s failed on token %s\n", path_, token);
+			kdebug(D_VFS, 4, "Bad path name: %s failed on token %s\n", path_, token);
 			free(path);
 			errno = ENOENT;
 			return position;
@@ -152,10 +159,10 @@ inode_t vfs_path_to_inode(inode_t* base, char *path_) {
 		while (result != 0 && !found) {
 			if (strcmp(result->name, token) == 0) {
 				position = result->inode;
-				kdebug(D_VFS, 1, "%s:%d\n",token,result->inode.st.st_ino);
+				kdebug(D_VFS, 2, "%s:%d\n",token,result->inode.st.st_ino);
 				found = true;
 				for (int i=1;i<nmounted;i++) {
-	                kdebug(D_VFS, 1, "Mount transition: %s %d %d\n",
+	                kdebug(D_VFS, 2, "Mount transition: %s %d %d\n",
 										token,
 										mount_points[i].inode.st.st_ino,
 										result->inode.st.st_ino);
@@ -171,14 +178,14 @@ inode_t vfs_path_to_inode(inode_t* base, char *path_) {
 		free_vfs_dir_list(result_start);
 
 		if (!found) {
-			kdebug(D_VFS, 5, "Bad path name: %s failed on token %s\n", path_, token);
+			kdebug(D_VFS, 4, "Bad path name: %s failed on token %s\n", path_, token);
 			free(path);
 			errno = ENOENT;
 			return position;
 		}
 	} while ((token = strtok(NULL, "/")) != NULL);
 
-	kdebug(D_VFS, 3, "path_to_ino: %s -> %d\n", path_, position.st.st_ino);
+	kdebug(D_VFS, 2, "path_to_ino: %s -> %d\n", path_, position.st.st_ino);
 	free(path);
 
 	return position;
@@ -192,7 +199,6 @@ int vfs_fwrite(inode_t fd, char* buffer, int length, int offset) {
 
     if (offset > fd.st.st_size) {
         offset = fd.st.st_size;
-        kernel_printf("vfs_fwrite: offset > size.\n");
     }
 
     return fd.op->write(fd, buffer, length, offset);
@@ -207,7 +213,6 @@ int vfs_fread(inode_t fd, char* buffer, int length, int offset) {
 
   if (offset > fd.st.st_size) {
       offset = fd.st.st_size;
-      kernel_printf("vfs_fread: offset > size.\n");
   }
 
   return fd.op->read(fd, buffer, length, offset);

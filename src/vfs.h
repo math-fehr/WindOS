@@ -94,5 +94,5 @@ int 		vfs_mkdir	(char* path, char* name, int permissions);
 int 		vfs_rm		(char* path, char* name);
 int 		vfs_mkfile	(char* path, char* name, int permissions);
 perm_str_t 	vfs_permission_string(int attr);
-
+void 		free_vfs_dir_list(vfs_dir_list_t*);
 #endif

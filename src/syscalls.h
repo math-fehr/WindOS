@@ -13,6 +13,8 @@
 #include "mmu.h"
 #include "malloc.h"
 
+#include "../include/dirent.h"
+
 uint32_t svc_exit();
 uint32_t svc_sbrk(uint32_t ofs);
 uint32_t svc_fork();
@@ -25,5 +27,8 @@ uint32_t svc_execve(char* path, const char** argv, const char** env);
 pid_t 	 svc_waitpid(pid_t pid, int* wstatus, int options);
 char* 	 svc_getcwd(char* buf, size_t cnt);
 uint32_t svc_chdir(char* path);
+int 	 svc_open(char* path, int flags);
 
+// balek c'est pas standard
+uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry);
 #endif

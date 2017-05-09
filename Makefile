@@ -15,7 +15,7 @@ LINKER = kernel.ld
 LINKER_QEMU = kernel_qemu.ld
 
 USR_SRC 	= usr/
-USR_LIB		= libc/cstubs.c
+USR_LIB		= $(wildcard libc/*.c)
 USR_BINDIR 	= $(RAMFS)bin/
 
 # recursive wildcard.
@@ -125,7 +125,7 @@ $(LIB_USPI): $(LIB_USPI_CFG)
 	make -C $(LIB_USPI_DIR)
 
 $(LIB_USPI_CFG):
-	echo "RASPPI = 1" > $@ ; \
+	echo "RASPPI = 2" > $@ ; \
 	echo "PREFIX = arm-none-eabi-" >> $@ ;\
 
 # Userspace environment build.
