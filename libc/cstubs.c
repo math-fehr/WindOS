@@ -44,6 +44,9 @@ void *_sbrk(intptr_t increment) {
                 :   "=m" (res)
                 :   "m" (increment)
                 :);
+	if (res < 0) {
+		errno = -(int)res;
+	}
     return res;
 }
 
@@ -77,6 +80,9 @@ int _open(char* path, int flags) {
 					: "m" (path), "m" (flags)
 					:
 	);
+	if (res < 0) {
+		errno = -res;
+	}
 	return res;
 }
 
@@ -95,6 +101,9 @@ int _getdents(int fd, struct dirent* user_dirent) {
 					: "m" (fd), "m" (user_dirent)
 					:
 	);
+	if (res < 0) {
+		errno = -res;
+	}
 	return res;
 }
 
@@ -128,7 +137,9 @@ int _chdir(char* path) {
 		: "=r" (res)
 		: "m" (path)
 		:);
-	errno = -res;
+	if (res < 0) {
+		errno = -res;
+	}
 	return 0;
 }
 
@@ -165,6 +176,9 @@ char* getcwd(char* buf, size_t size) {
 					: "m" (buf), "m" (size)
 					:
 	);
+	if (res < 0) {
+		errno = -(int)res;
+	}
 	return res;
 }
 
@@ -184,6 +198,9 @@ ssize_t _write(int fd, const void* buf, size_t count) {
                 :   "=r" (res)
                 :   "m" (fd), "m" (buf), "m" (count)
                 :);
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }
 
@@ -200,6 +217,9 @@ int _close(int fd) {
                 :   "=r" (res)
                 :   "r" (fd)
                 :);
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }
 
@@ -217,6 +237,9 @@ int _fstat(int fd, struct stat* buf) {
                 :   "=r" (res)
                 :   "m" (fd), "m" (buf)
                 :);
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }
 
@@ -234,6 +257,9 @@ pid_t _waitpid(pid_t pid, int *wstatus, int options) {
 					"mov 	%0, r0\n"
 				:	"=r" (res)
 				: 	"m" (pid), "m" (wstatus), "m" (options) :);
+	if (res < 0) {
+		errno = -res;
+	}
 	return res;
 }
 
@@ -262,6 +288,9 @@ off_t _lseek(int fd, off_t offset, int whence) {
                 :   "=r" (res)
                 :   "m" (fd), "m" (offset), "m" (whence)
                 :);
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }
 
@@ -280,6 +309,8 @@ ssize_t _read(int fd, void* buf, size_t count) {
                 :   "=r" (res)
                 :   "m" (fd), "m" (buf), "m" (count)
                 :);
-
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }

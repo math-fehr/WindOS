@@ -17,19 +17,27 @@
 #include "mmu.h"
 #include "dev.h"
 #include "mailbox.h"
-
+#include "kernel.h"
 #include "malloc.h"
 
 
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
 extern uint32_t __ramfs_start;
-extern void dmb();
 
 extern int current_process;
+volatile unsigned int tim;
+
+volatile uint32_t __ram_size;
+
+extern char __kernel_bss_start;
+extern char __kernel_bss_end;
+
+extern int __kernel_phy_end;
+
 
 int memory_read(uint32_t address, void* buffer, uint32_t size) {
-    kdebug(D_KERNEL, 0, "Disk read  request at address %#08x of size %d\n", address, size);
+    kdebug(D_KERNEL, 0, "Disk read  request at address %p of size %d to %p\n", address, size, buffer);
 
     dmb();
 	intptr_t base = (intptr_t)&__ramfs_start; // The FS is concatenated with the kernel image.
@@ -46,14 +54,6 @@ int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	return 0;
 }
 
-volatile unsigned int tim;
-
-volatile uint32_t __ram_size;
-
-extern char __kernel_bss_start;
-extern char __kernel_bss_end;
-
-extern int __kernel_phy_end;
 
 void blink(int n) {
 	GPIO_setPinValue(GPIO_LED_PIN, true);
@@ -93,9 +93,22 @@ void kernel_main(uint32_t memory) {
 	// TTB0 is set up on each context switch
 	mmu_setup_ttbcr(TTBCR_ALIGN);
 
-	paging_init((__ram_size >> 20) - 1, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
+	paging_init((__ram_size >> 20) - 1, 2+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
 
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
+	kernel_printf("Beginning malloc test:\n");
+	int* tab = malloc(500*4);
+	for (int i=0;i<500;i+=2) {
+		tab[i] = malloc(2200);
+		tab[i+1] = memalign(4096, 4096);
+	}
+
+	for (int i=0;i<500;i+=3) {
+		free(tab[i]);
+	}
+
+	kernel_printf("%p %p %p %p\n", malloc(10), malloc(1024), memalign(16, 16), memalign(4096, 4096));//,memalign(4096, 4096), malloc(4096));
+
   //  kernel_printf("Mac address : %lld\n", mailbox_getMacAddress());
 
 	Timer_Setup();
@@ -107,16 +120,26 @@ void kernel_main(uint32_t memory) {
 	memorydisk.write   = memory_write;
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
+	if (fsroot == NULL) {
+		while(1) {}
+	}
     superblock_t* devroot = dev_initialize(10);
+	if (devroot == NULL) {
+		while(1) {}
+	}
+
 
 	vfs_setup();
 	vfs_mount(fsroot,"/");
+
+
     vfs_mkdir("/","dev",0x1FF);
     vfs_mount(devroot,"/dev");
 
 
 	setup_scheduler();
-	const char* param[] = {"/bin/init", "Enchanté", 0};
+	const char* param[] = {"/bin/init", 0};
+
 
 	process* p = process_load("/bin/init", vfs_path_to_inode(NULL, "/"), param, NULL); // init program
 	p->fd[0].inode      = malloc(sizeof(inode_t));
@@ -131,6 +154,9 @@ void kernel_main(uint32_t memory) {
 		sheduler_add_process(p);
 		Timer_Enable();
 		Timer_Enable_Interrupts();
+
+		// Enable serial IRQs.
+		RPI_GetIRQController()->Enable_IRQs_1 |= (1 << 29);
 
 	    current_process = p->asid;
 		p->parent_id 	= p->asid; // (Badass process)

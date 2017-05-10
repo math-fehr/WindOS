@@ -109,6 +109,7 @@ ext2_block_group_descriptor_t ext2_get_block_group_descriptor(
 	ext2_superblock_t* sb = devices[fs->id].sb;
 	storage_driver* disk = devices[fs->id].disk;
 
+
 	ext2_block_group_descriptor_t group_descriptor;
 	int block_size = 1024 << sb->log_block_size;
 	int bgdt = 2048;
@@ -145,6 +146,7 @@ void ext2_set_block_group_descriptor(
 ext2_inode_t ext2_get_inode_descriptor(
 		superblock_t* fs, int inode)
 {
+
 	ext2_superblock_t* sb = devices[fs->id].sb;
 	ext2_extended_superblock_t* esb = devices[fs->id].esb;
 	storage_driver* disk = devices[fs->id].disk;
@@ -273,7 +275,7 @@ int ext2_fread(
 	int last_block = (position+size-1) / block_size;
 
 	int offset = position % block_size;
-	kdebug(D_EXT2, 0,
+	kdebug(D_EXT2, 2,
 		"Reading file: size %#010x position %#010x to buffer %#010x\n",
 		size, position, buffer);
 
@@ -294,7 +296,6 @@ int ext2_fread(
 		ext2_inode_read_block(fs, info,
 			buffer+buffer_position, last_block, 0, size-buffer_position);
 	}
-	buffer[size] = 0;
 	return size;
 }
 

@@ -33,7 +33,8 @@ typedef struct {
 typedef enum {
     status_active,
     status_wait,
-    status_zombie
+    status_zombie,
+	status_blocked_svc
 } status_process;
 
 

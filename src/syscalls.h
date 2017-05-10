@@ -27,8 +27,12 @@ uint32_t svc_execve(char* path, const char** argv, const char** env);
 pid_t 	 svc_waitpid(pid_t pid, int* wstatus, int options);
 char* 	 svc_getcwd(char* buf, size_t cnt);
 uint32_t svc_chdir(char* path);
+off_t 	 svc_lseek(int fd, off_t offset, int whence);
 int 	 svc_open(char* path, int flags);
 
 // balek c'est pas standard
 uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry);
+
+
+bool his_own(process* p, void* pointer);
 #endif

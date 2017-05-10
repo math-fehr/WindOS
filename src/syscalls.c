@@ -1,16 +1,60 @@
 #include "syscalls.h"
 #include "errno.h"
-
+#include <sys/types.h>
+#include <unistd.h>
 
 extern int current_process;
 extern unsigned int __ram_size;
+
+/*
+ * check if the pointer effectively points to the process' allowed userspace.
+ */
+bool his_own(process *p, void* pointer) {
+	return (((uintptr_t)pointer) < __ram_size) && (pointer != NULL); // no further check.
+}
 
 uint32_t svc_exit() {
 	kdebug(D_SYSCALL, 2, "Program %d wants to quit (switch him to zombie state)\n", current_process);
 	kill_process(current_process, 0);
 	current_process = get_next_process();
+	if (current_process == -1) {
+		kdebug(D_SYSCALL, 10, "The last process has died. The end is near.\n");
+		while(1) {}
+	}
 	kdebug(D_SYSCALL, 2, "Next process: %d\n", current_process);
 	return current_process;
+}
+
+
+// TODO: Refresh inodes.
+off_t svc_lseek(int fd_i, off_t offset, int whence) {
+	kdebug(D_IRQ, 2, "LSEEK %d %d %d \n", fd_i, offset, whence);
+	process* p = get_process_list()[current_process];
+	if (fd_i >= MAX_OPEN_FILES
+	|| p->fd[fd_i].position < 0)
+	{
+		return -EBADF;
+	}
+
+	fd_t* fd = &p->fd[fd_i];
+	switch (whence) {
+		case SEEK_SET:
+			fd->position = offset;
+			break;
+		case SEEK_CUR:
+			fd->position += offset;
+			break;
+		case SEEK_END:
+			fd->position = fd->inode->st.st_size;
+			break;
+	}
+
+	if (fd->position < 0) {
+		fd->position = 0;
+	} else if (fd->position > fd->inode->st.st_size) {
+		fd->position = fd->inode->st.st_size;
+	}
+	return fd->position;
 }
 
 /*
@@ -18,12 +62,23 @@ uint32_t svc_exit() {
  */
 uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 	process* p 			= get_process_list()[current_process];
+
+	kdebug(D_SYSCALL, 2, "EXECVE => %s\n", path);
+
+	if (!his_own(p, path)
+	|| (!his_own(p, argv) && argv != NULL)
+	|| (!his_own(p, envp) && envp != NULL)) {
+		p->ctx.r[0] = -EFAULT;
+		return p->asid;
+	}
+
 	errno = 0;
 	process* new_p 		= process_load(path, p->cwd, argv, envp);
-	if (new_p == 0) {
+	if (new_p == NULL) {
 		p->ctx.r[0] = -errno;
 		return p->asid;
 	}
+
 
 	// Free program break.
 	int n_allocated_pages = p->brk_page;
@@ -43,12 +98,17 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 	new_p->fd[0].inode		= malloc(sizeof(inode_t));
 	*new_p->fd[0].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	new_p->fd[0].position   = 0;
+	new_p->fd[0].dir_entry 	= NULL;
+
 	new_p->fd[1].inode 		= malloc(sizeof(inode_t));
 	*new_p->fd[1].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	new_p->fd[1].position   = 0;
+	new_p->fd[1].dir_entry 	= NULL;
+
 	new_p->fd[2].inode 		= malloc(sizeof(inode_t));
 	*new_p->fd[2].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	new_p->fd[2].position   = 0;
+	new_p->fd[2].dir_entry 	= NULL;
 
 	get_process_list()[new_p->asid] = new_p;
 
@@ -61,12 +121,18 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 char* svc_getcwd(char* buf, size_t cnt) {
 	kdebug(D_SYSCALL, 2, "GETCWD\n");
 	process* p = get_process_list()[current_process];
+	if (!his_own(p, buf)) {
+		return (char*)-EFAULT;
+	}
 	return vfs_inode_to_path(p->cwd, buf, cnt);
 }
 
 uint32_t svc_chdir(char* path) {
 	kdebug(D_SYSCALL, 2, "CHDIR %s\n", path);
 	process* p = get_process_list()[current_process];
+	if (!his_own(p, path)) {
+		return -EFAULT;
+	}
 	errno = 0;
 	inode_t res = vfs_path_to_inode(&p->cwd, path);
 	if (errno > 0) {
@@ -80,10 +146,13 @@ uint32_t svc_chdir(char* path) {
 uint32_t svc_sbrk(uint32_t ofs) {
 	kdebug(D_SYSCALL, 2, "SBRK %d\n", ofs);
 	process* p = get_process_list()[current_process];
-	// TODO: check that the program doesn't fuck it up
 	int old_brk         = p->brk;
+
 	int current_brk     = old_brk+ofs;
 	int pages_needed    = (current_brk - 1) / (PAGE_SECTION); // As the base brk is PAGE_SECTION (should be moved though)
+	if (pages_needed > 64 || pages_needed < 0) {
+		return -EINVAL;
+	}
 
 	if (pages_needed > p->brk_page) {
 		page_list_t* pages = paging_allocate(pages_needed - p->brk_page);
@@ -111,17 +180,18 @@ uint32_t svc_sbrk(uint32_t ofs) {
 	return old_brk;
 }
 
+extern uintptr_t heap_end;
+
 uint32_t svc_fork() {
 	process* p 			= get_process_list()[current_process];
 	process* copy 		= malloc(sizeof(process));
 
-	kdebug(D_SYSCALL, 2, "FORK\n");
 	uint32_t table_size = 16*1024 >> TTBCR_ALIGN;
 	copy->ttb_address 	= (uintptr_t)memalign(table_size, table_size);
 
 	int pages_needed = 2+p->brk_page;
 	page_list_t* res = paging_allocate(pages_needed);
-	if (res == NULL) {
+	if (res == NULL || copy->ttb_address == NULL) {
 		kdebug(D_PROCESS, 10, "Can't fork: page allocation failed.\n");
 		return -ENOMEM;
 	}
@@ -152,8 +222,17 @@ uint32_t svc_fork() {
 	// Now all the data is copied..
 	copy->brk 		= p->brk;
 	copy->brk_page 	= p->brk_page;
-	for (int i=0;i<64;i++)
-		copy->fd[i] = p->fd[i];
+	for (int i=0;i<64;i++) {
+		copy->fd[i].position = p->fd[i].position;
+		if( copy->fd[i].position >= 0) {
+			copy->fd[i].inode = malloc(sizeof(inode_t));
+			copy->fd[i].dir_entry = NULL;
+			*copy->fd[i].inode = *p->fd[i].inode;
+		} else {
+			copy->fd[i].dir_entry = NULL;
+			copy->fd[i].inode = NULL;
+		}
+	}
 
 	copy->ctx 		= p->ctx;
 	copy->ctx.r[0] 	= 0;
@@ -166,12 +245,17 @@ uint32_t svc_fork() {
 		kdebug(D_SYSCALL, 5, "FORK FAILED, out of process\n");
 		return -ECHILD;
 	} else {
-		kdebug(D_SYSCALL, 4, "FORK => %d\n", pid);
+		kdebug(D_SYSCALL, 2, "FORK => %d\n", pid);
 	}
 	return pid;
 }
 
 pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
+	kdebug(D_SYSCALL, 2, "WAITPID\n");
+	if (!his_own(get_process_list()[current_process], wstatus) && wstatus != NULL) {
+		return -EFAULT;
+	}
+
 	int res = wait_process(current_process, pid, wstatus);
 	if (res == -1) {
 		current_process = get_next_process();
@@ -182,15 +266,28 @@ pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
 uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 	kdebug(D_SYSCALL, 2, "WRITE %d %#010x %#010x\n", fd, buf, cnt);
 	//int fd = r[0];
-	if (fd >= MAX_OPEN_FILES) {
+	if (fd >= MAX_OPEN_FILES
+	|| get_process_list()[current_process]->fd[fd].position < 0)
+	{
 		return -EBADF;
+	}
+
+	if (!his_own(get_process_list()[current_process], buf)) {
+		return -EFAULT;
+	}
+
+	if (cnt == 0) {
+		return 0;
 	}
 
 	fd_t* fd_ = &get_process_list()[current_process]->fd[fd];
 	if (fd_->position >= 0) {
 		int n = vfs_fwrite(*fd_->inode, buf, cnt, 0);
 		kdebug(D_SYSCALL, 2, "WRITE => %d\n",n);
-		//fd->position += n;
+		if (S_ISREG(fd_->inode->st.st_mode)) {
+			fd_->position += n;
+			fd_->inode->st.st_size = fd_->position;
+		}
 		if (n == -1) {
 			n = -errno;
 		}
@@ -201,47 +298,74 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 }
 
 uint32_t svc_close(uint32_t fd) {
-	kdebug(D_SYSCALL, 2, "CLOSE %d\n", fd);
+	process* p = get_process_list()[current_process];
+	if (fd >= MAX_OPEN_FILES
+	|| p->fd[fd].position < 0) {
+		return -EBADF;
+	}
+	kdebug(D_SYSCALL, 2, "CLOSE %d %p\n", fd, p->fd[fd].dir_entry);
+
+	free_vfs_dir_list(p->fd[fd].dir_entry);
+	free(p->fd[fd].inode);
+	p->fd[fd].dir_entry = NULL;
+	p->fd[fd].inode = NULL;
+	p->fd[fd].position = -1;
 	return 0;
 }
 
 uint32_t svc_fstat(uint32_t fd, struct stat* dest) {
 	kdebug(D_SYSCALL, 2, "FSTAT %d %#010x\n", fd, dest);
-	if (fd >= MAX_OPEN_FILES) {
+	process* p = get_process_list()[current_process];
+	if (fd >= MAX_OPEN_FILES
+	|| p->fd[fd].position < 0) {
 		return -EBADF;
 	}
-	fd_t req_fd = get_process_list()[current_process]->fd[fd];
-	if (req_fd.position >= 0) {
-		memcpy(dest,&req_fd.inode->st,sizeof(struct stat));
-		kdebug(D_SYSCALL, 2, "FSTAT OK\n");
-		return 0;
-	} else {
-		kdebug(D_SYSCALL, 5, "FSTAT ERR\n");
-		return -EBADF;
+
+	if (!his_own(p, dest)) {
+		return -EFAULT;
 	}
+
+	*dest = p->fd[fd].inode->st;
+	kdebug(D_SYSCALL, 2, "FSTAT OK\n");
+	return 0;
 }
 
 uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 	kdebug(D_SYSCALL, 2, "READ %d %#010x %d\n", fd, buf, cnt);
-	char* w_buf = buf;
-	size_t w_cnt = cnt;
 
-	if (fd >= MAX_OPEN_FILES) {
-		return -1;
+	process* p = get_process_list()[current_process];
+	if (fd >= MAX_OPEN_FILES
+	|| p->fd[fd].position < 0) {
+		return -EBADF;
 	}
 
-	fd_t* w_fd = &get_process_list()[current_process]->fd[fd];
-	if (w_fd->position >= 0) {
-		int n = vfs_fread(*w_fd->inode, w_buf, w_cnt, w_fd->position);
-		w_fd->position += n;
-		kdebug(D_SYSCALL, 2, "READ => %d\n",n);
-		return n;
-	} else {
-		return -1;
+	if (!his_own(p, buf)) {
+		return -EFAULT;
 	}
+
+	if (cnt == 0) {
+		return 0;
+	}
+
+	int n = vfs_fread(*p->fd[fd].inode, buf, cnt, p->fd[fd].position);
+	if (n == 0 && S_ISCHR(p->fd[fd].inode->st.st_mode)) {
+		// block the call.
+		p->status = status_blocked_svc;
+		return 0;
+	}
+	p->status = status_active;
+	p->fd[fd].position += n;
+	kdebug(D_SYSCALL, 2, "READ => %d\n",n);
+	return n;
 }
 
 uint32_t svc_time(time_t *tloc) {
+	kdebug(D_SYSCALL, 2, "TIME\n");
+	process* p = get_process_list()[current_process];
+	if (!his_own(p, tloc)) {
+		return -EFAULT;
+	}
+
 	if (tloc == NULL) {
 		return timer_get_posix_time();
 	} else {
@@ -252,6 +376,17 @@ uint32_t svc_time(time_t *tloc) {
 
 uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 	process* p = get_process_list()[current_process];
+	if (!his_own(p, user_entry)) {
+		return -EFAULT;
+	}
+
+	if (fd >= MAX_OPEN_FILES
+	|| p->fd[fd].position < 0) {
+		return -EBADF;
+	}
+
+	kdebug(D_SYSCALL, 2, "GETDENTS => %d\n", fd);
+
 	fd_t* w_fd = &p->fd[fd];
 
 	// reload dirlist
@@ -261,7 +396,7 @@ uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 	}
 
 	if (w_fd->dir_entry == NULL) {
-		return -1;
+		return 1;
 	} else {
 		w_fd->position++;
 		user_entry->d_ino = w_fd->dir_entry->inode.st.st_ino;
@@ -281,11 +416,15 @@ int svc_open(char* path, int flags) {
 	for (;(p->fd[i].position != -1) && (i<MAX_OPEN_FILES);i++);
 
 	if (i == MAX_OPEN_FILES) { // no available fd.
-		return -1;
+		return -ENFILE;
 	}
-	
-	inode_t ino = vfs_path_to_inode(&p->cwd, path);
 
+	if (!his_own(p, path)) {
+		return -EFAULT;
+	}
+
+	inode_t ino = vfs_path_to_inode(&p->cwd, path);
+	kdebug(D_SYSCALL, 2, "OPEN => %s\n", path);
 	if (errno > 0) {
 		return -errno;
 	} else {

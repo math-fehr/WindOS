@@ -6,6 +6,5 @@
 int main() {
 	char buf[255];
 	getcwd(buf, 255);
-	printf("%s", buf);
+	printf("%s\n", buf);
 }
- 

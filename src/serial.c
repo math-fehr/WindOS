@@ -41,9 +41,9 @@ void serial_init() {
 
   auxiliary->MU_MCR = 0;
 
-  /* Disable all interrupts from MU and clear the fifos */
-  auxiliary->MU_IER = 0;
-
+	/* Enable interrupts */
+  auxiliary->MU_IER = 0x02;
+    /* Clear the fifos */
   auxiliary->MU_IIR = 0xC6;
 
   /* Transposed calculation from Section 2.2.1 of the ARM peripherals
@@ -63,7 +63,7 @@ void serial_init() {
   getGPIOController()->GPPUDCLK0 = 0;
   dmb();
   /* Disable flow control,enable transmitter and receiver! */
-  auxiliary->MU_CNTL = AUX_MUCNTL_TX_ENABLE | AUX_MUCNTL_RX_ENABLE;
+  auxiliary->MU_CNTL = AUX_MUCNTL_TX_ENABLE | AUX_MUCNTL_RX_ENABLE ;
 
   kdebug(D_SERIAL, 1, "Serial port is hopefully set up!\n");
 }
@@ -73,8 +73,8 @@ void serial_putc(unsigned char data) {
   dmb();
   auxiliary->MU_IO = data;
 
-  if (data == '\n') {
-    serial_putc('\r');
+  if (data == '\r') {
+    serial_putc('\n');
   }
 }
 unsigned char serial_readc() {
@@ -83,7 +83,6 @@ unsigned char serial_readc() {
   dmb();
   return data;
 }
-
 
 void serial_write(char* str){
     while((*str) != '\0') {
@@ -95,32 +94,59 @@ void serial_newline() {
     serial_putc('\n');
 }
 
-int serial_readline(char* buffer, int buffer_size) {
-	int i = 0;
-	char c;
+#define MAX_BUFFER 1024
 
-	while ((i < buffer_size) && ((c = serial_readc()) != '\r')){
-		if (c == 0x7F) {
-			serial_write("\033[D");
-			serial_putc(' ');
-			serial_write("\033[D");
-			buffer[i--] = 0;
-		} else if (c == 0x1B) {
-			
+int read_buffer_index;
+char read_buffer[MAX_BUFFER];
+
+void serial_irq() {
+	while(auxiliary->MU_LSR & AUX_MULSR_DATA_READY) {
+		char c = auxiliary->MU_IO;
+		if (c == 0x7F) { // DEL
+			if (read_buffer_index > 0) {
+				serial_write("\033[D");
+				serial_putc(' ');
+				serial_write("\033[D");
+				read_buffer[read_buffer_index--] = 0;
+			}
+		} else if (c == 0x1B) { // ANSI Escape sequence
 			serial_readc();
 			serial_readc();
 		} else {
 			serial_putc(c);
-
-			buffer[i] = c;
-			i++;
+			read_buffer[read_buffer_index] = c;
+			read_buffer_index++;
 		}
+		dmb();
+	}
+}
 
+/*
+ * this is not so safe (buffer overflow.)
+ */
+int serial_readline(char* buffer, int buffer_size) {
+	if (read_buffer_index == 0) {
+		return 0;
 	}
-	if (i < buffer_size) {
-		buffer[i] = '\n';
-		i++;
-		serial_newline();
+
+	int i = 0;
+
+	if (buffer_size > MAX_BUFFER)
+		buffer_size = MAX_BUFFER;
+
+	for (;i<buffer_size && i<read_buffer_index && read_buffer[i] != '\r';i++) {}
+
+	if (i == read_buffer_index) {
+		return 0;
 	}
-  	return i;
+	memcpy(buffer, read_buffer, i+1);
+	buffer[i+1] = 0;
+	buffer[i] = '\n';
+
+	read_buffer_index -= i+1;
+
+	for (int j=0;j<buffer_size;j++) {
+		read_buffer[j] = read_buffer[j+i];
+	}
+  	return i+1;
 }

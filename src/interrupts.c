@@ -2,7 +2,6 @@
 /**
  * function used to make sure data is sent in order to GPIO
  */
-extern void dmb();
 
 static rpi_irq_controller_t* rpiIRQController =
   (rpi_irq_controller_t*) RPI_INTERRUPT_CONTROLLER_BASE;
@@ -26,32 +25,6 @@ void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
 static bool status;
 extern uint32_t current_process;
 
-// In IRQ mode - r0 => SP
-void interrupt_vector(void* user_context) {
-	process* p = get_process_list()[current_process];
-	p->ctx = *(user_context_t*)user_context; // Save current program context.
-
-    kdebug(D_IRQ, 2, "=> %d.\n", current_process);
-	print_context(2, user_context);
-
-	if (RPI_GetIRQController()->IRQ_basic_pending == RPI_BASIC_ARM_TIMER_IRQ) {
-		dmb();
-		Timer_ClearInterrupt();
-		GPIO_setPinValue(GPIO_LED_PIN, status);
-		status = !status;
-		dmb();
-
-		current_process = get_next_process();
-		p = get_process_list()[current_process];
-	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
-		*(user_context_t*)user_context = p->ctx;
-	} else {
-		kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ!\n");
-		while(1) {}
-	}
-    kdebug(D_IRQ, 2, "<= %d.\n", current_process);
-	print_context(2, user_context);
-}
 
 
 void print_context(int level, user_context_t* ctx) {
@@ -62,8 +35,62 @@ void print_context(int level, user_context_t* ctx) {
     kdebug(D_IRQ, level, "CPSR: %#010x\n", ctx->cpsr);
 }
 
+uint32_t software_interrupt_vector(void* user_context);
+
+// In IRQ mode - r0 => SP
+void interrupt_vector(void* user_context) {
+	process* p = get_process_list()[current_process];
+	p->ctx = *(user_context_t*)user_context; // Save current program context.
+
+    kdebug(D_IRQ, 2, "=> %d.\n", current_process);
+	print_context(2, user_context);
+
+	uint32_t irq = RPI_GetIRQController()->IRQ_basic_pending;
+	if (irq & (1 << 8)) {
+		if (RPI_GetIRQController()->IRQ_pending_1 & (1 << 29)) {
+			serial_irq();
+		} else {
+			kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ!\n");
+		}
+	} else if (irq & RPI_BASIC_ARM_TIMER_IRQ) {
+		dmb();
+		Timer_ClearInterrupt();
+		GPIO_setPinValue(GPIO_LED_PIN, status);
+		status = !status;
+		dmb();
+
+		current_process = get_next_process();
+		if (current_process == -1) {
+			kdebug(D_IRQ, 10,
+		"Every one is dead. Only the void remains. In the distance, sirens.\n");
+			while(1) {} // TODO: Reboot?
+		}
+		p = get_process_list()[current_process];
+	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+		*(user_context_t*)user_context = p->ctx;
+		if (p->status == status_blocked_svc) {
+			software_interrupt_vector(user_context);
+		}
+	} else {
+		kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ!\n");
+		while(1) {}
+	}
+    kdebug(D_IRQ, 2, "<= %d.\n", current_process);
+	print_context(2, user_context);
+}
+
+
 // In SVC mode
 uint32_t software_interrupt_vector(void* user_context) {
+	uint32_t irq;
+swi_beg:
+	irq = RPI_GetIRQController()->IRQ_basic_pending;
+	if (irq & (1 << 8)) {
+		if (RPI_GetIRQController()->IRQ_pending_1 & (1 << 29)) {
+			serial_irq();
+		}
+	}
+
     kdebug(D_IRQ, 1, "ENTREESWI.\n");
 	user_context_t* ctx = (user_context_t*) user_context;
 	print_context(1, ctx);
@@ -94,11 +121,13 @@ uint32_t software_interrupt_vector(void* user_context) {
             res = svc_fstat(ctx->r[0],(struct stat*)ctx->r[1]);
 			break;
         case SVC_LSEEK:
-            kdebug(D_IRQ, 2, "LSEEK %d %d %d \n", ctx->r[0], ctx->r[1], ctx->r[2]);
-			res = 0;
+			res = svc_lseek(ctx->r[0],ctx->r[1],ctx->r[2]);
             break;
         case SVC_READ:
             res = svc_read(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
+			if (p->status == status_blocked_svc) {
+				current_process = get_next_process();
+			}
 			break;
 		case SVC_TIME:
 			res = svc_time((time_t*)ctx->r[0]);
@@ -125,10 +154,15 @@ uint32_t software_interrupt_vector(void* user_context) {
 
 	if ((ctx->r[7] == SVC_EXIT)
 	|| 	(ctx->r[7] == SVC_EXECVE)
-	||	(ctx->r[7] == SVC_WAITPID && res == -1)) {
+	||	(ctx->r[7] == SVC_WAITPID && res == -1)
+	||  (p->status == status_blocked_svc)) {
 		p = get_process_list()[current_process];
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
 		*ctx = p->ctx; // Copy next process ctx
+		if (p->status == status_blocked_svc) {
+			*(user_context_t*)user_context = p->ctx;
+			goto swi_beg;
+		}
 	} else {
 		ctx->r[0] = res; // let's return the result in r0
 	}
@@ -137,20 +171,77 @@ uint32_t software_interrupt_vector(void* user_context) {
 	return 0;
 }
 
+
+static char* messages[] =
+{
+	"",
+	"Alignment fault",
+	"Debug event",
+	"Access flag fault, section",
+	"Instruction cache maintenance fault",
+	"Translation fault, section",
+	"Access flag fault, page",
+	"Translation fault, page",
+	"Synchronous external abort, non-translation",
+	"Domain fault, section",
+	"",
+	"Domain fault, page",
+	"Synchronous external abort on ttw 1",
+	"Permission fault, section",
+	"Synchronous external abort on ttw 2",
+	"Permission fault, page"
+};
+
 // In ABORT mode
 void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
 	kdebug(D_IRQ, 10, "PREFETCH ABORT at instruction %#010x.\n", ctx->pc-8);
 	print_context(10, ctx);
+
+	uint32_t reg = mrc(p15, 0, c5, c0, 1);
+	uint32_t status = reg & 0xF;
+
+	kdebug(D_IRQ, 10, "\"%s\" occured.\n", messages[status]);
+
+
     while(1);
 }
 
 // In ABORT mode
-void __attribute__ ((interrupt("ABORT"))) data_abort_vector(void* data) {
+void data_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
-	kdebug(D_IRQ, 10, "DATA ABORT at instruction %#010x.\n", ctx->pc-8);
-	print_context(10, ctx);
-    while(1);
+	if ((ctx->cpsr & 0x1F) == 0x10) {
+		kdebug(D_IRQ, 10, "USER DATA ABORT of process %d at instruction %#010x.\n", current_process, ctx->pc-8);
+		print_context(10, ctx);
+		uint32_t reg = mrc(p15, 0, c5, c0, 0);
+		uint32_t status = reg & 0xF;
+		uint32_t domain = (reg & 0xF0) >> 4;
+		bool wnr = reg & (1 << 11);
+
+		kdebug(D_IRQ, 10, "\"%s\" occured on domain %d. (w=%d)\n", messages[status], domain, wnr);
+
+		kill_process(current_process, -1);
+		current_process = get_next_process();
+		if (current_process == -1) {
+			kdebug(D_IRQ, 10, "No process left.\n");
+			while(1) {}
+		}
+		kdebug(D_IRQ, 10, "Switching to %d.\n", current_process);
+		process* p = get_process_list()[current_process];
+	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+		*ctx = p->ctx; // Copy next process ctx
+	} else {
+		kdebug(D_IRQ, 10, "KERNEL DATA ABORT at instruction %#010x.\n", ctx->pc-8);
+		print_context(10, ctx);
+
+		uint32_t reg = mrc(p15, 0, c5, c0, 0);
+		uint32_t status = reg & 0xF;
+		uint32_t domain = (reg & 0xF0) >> 4;
+		bool wnr = reg & (1 << 11);
+
+		kdebug(D_IRQ, 10, "\"%s\" occured on domain %d. (w=%d)\n", messages[status], domain, wnr);
+	    while(1);
+	}
 }
 
 

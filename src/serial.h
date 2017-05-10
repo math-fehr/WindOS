@@ -96,6 +96,8 @@ unsigned char serial_readc();
  */
 int serial_readline(char* buffer, int buffer_size);
 
+void serial_irq();
+
 
 /**
  * Some defines used by the peripheral
