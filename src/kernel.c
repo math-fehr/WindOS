@@ -19,9 +19,8 @@
 #include "mmu.h"
 #include "dev.h"
 #include "mailbox.h"
-
 #include "malloc.h"
-
+#include "uspibind.h"
 
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
@@ -98,10 +97,12 @@ void kernel_main(uint32_t memory) {
 	paging_init(__ram_size >> 20, 1+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
 
 	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
-    kernel_printf("Mac address : %lld\n", mailbox_getMacAddress());
 
-    while(1) ;
-    
+    unsigned char mac[6];
+    GetMACAddress(mac);
+    kernel_printf("Mac address : %X:%X:%X:%X:%X:%X\n",
+                  mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+
 	Timer_Setup();
 	Timer_SetLoad(500);
 
