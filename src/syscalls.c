@@ -35,9 +35,9 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 
 	new_p->asid 			= p->asid;
 	new_p->parent_id 		= p->parent_id;
-	new_p->fd[0].inode      = vfs_path_to_inode("/dev/serial");
+	new_p->fd[0].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	new_p->fd[0].position   = 0;
-	new_p->fd[1].inode      = vfs_path_to_inode("/dev/serial");
+	new_p->fd[1].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	new_p->fd[1].position   = 0;
 
 	get_process_list()[new_p->asid] = new_p;
@@ -50,12 +50,19 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 
 char* svc_getcwd(char* buf, size_t cnt) {
 	process* p = get_process_list()[current_process];
-
+	return vfs_inode_to_path(p->cwd, buf, cnt);
 }
 
 uint32_t svc_chdir(char* path) {
 	process* p = get_process_list()[current_process];
-
+	inode_t* res = vfs_path_to_inode(p->cwd, path);
+	if (res == NULL) {
+		return -1;
+	} else {
+		free(p->cwd);
+		p->cwd = res;
+	}
+	return 0;
 }
 
 uint32_t svc_sbrk(uint32_t ofs) {
@@ -140,7 +147,7 @@ uint32_t svc_fork() {
 	copy->ctx 		= p->ctx;
 	copy->ctx.r[0] 	= 0;
 	copy->status 	= p->status;
-	copy->cwd 		= p->cwd; 
+	copy->cwd 		= p->cwd;
 
 	int pid 		= sheduler_add_process(copy);
 	copy->parent_id = p->asid;
@@ -153,7 +160,6 @@ uint32_t svc_fork() {
 }
 
 pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
-	process* p = get_process_list()[current_process];
 	int res = wait_process(current_process, pid, wstatus);
 	if (res == -1) {
 		current_process = get_next_process();
