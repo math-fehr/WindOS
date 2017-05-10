@@ -98,11 +98,11 @@ $(TARGET_QEMU) : $(BUILD)output_qemu.elf
 	$(ARMGNU)-objcopy $(BUILD)output_qemu.elf -O binary $(TARGET_QEMU)
 
 $(BUILD)output.elf : $(LIB_USPI) $(OBJECTS) $(OBJECTS_C) $(LINKER)
-	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) \
+	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) $(LIB_USPI) \
 							 -o $(BUILD)output.elf -T $(LINKER) -lg -lgcc
 
 $(BUILD)output_qemu.elf : $(LIB_USPI) $(OBJECTS) $(OBJECTS_C) $(LINKER)
-	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) \
+	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) $(LIB_USPI) \
 							 -o $(BUILD)output_qemu.elf -T $(LINKER_QEMU) -lg -lgcc
 
 $(BUILD)%.o: $(SOURCE)%.S
@@ -125,8 +125,14 @@ $(LIB_USPI): $(LIB_USPI_CFG)
 	make -C $(LIB_USPI_DIR)
 
 $(LIB_USPI_CFG):
-	echo "RASPPI = 1" > $@ ; \
+	echo "RASPPI = 2" > $@ ; \
 	echo "PREFIX = arm-none-eabi-" >> $@ ;\
+	echo "ARCH = -march=armv7-a -mtune=cortex-a7 -mfloat-abi=soft" >> $@;
+
+# $(LIB_USPI_CFG):
+# 	echo "RASPPI = 1" > $@ ; \
+# 	echo "PREFIX = arm-none-eabi-" >> $@ ;\
+# 	echo "ARCH = -march=armv6j -mtune=arm1176jzf-s -mfloat-abi=soft" >> $@;
 
 # Userspace environment build.
 $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)

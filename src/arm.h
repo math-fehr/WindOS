@@ -3,6 +3,25 @@
 
 #include "stdint.h"
 
+#define SETWAY_LEVEL_SHIFT		1
+
+#define L1_DATA_CACHE_SETS		    128
+#define L1_DATA_CACHE_WAYS	        4
+#define L1_SETWAY_WAY_SHIFT		    30
+#define L1_DATA_CACHE_LINE_LENGTH	64
+#define L1_SETWAY_SET_SHIFT		    6
+
+//#ifdef RPI2
+#define L2_CACHE_SETS			1024
+#define L2_CACHE_WAYS			8
+#define L2_SETWAY_WAY_SHIFT		29
+//#endif
+
+#define L2_CACHE_LINE_LENGTH		64
+#define L2_SETWAY_SET_SHIFT		    6
+
+#define DATA_CACHE_LINE_LENGTH_MIN	64
+
 #define Q(a) \
     #a
 
@@ -35,15 +54,11 @@ inline static void tlb_invalidate(uint32_t page) {
 }
 
 inline void dmb() {
-    mcr(p15, 0, c7, c10, 5, 0);
+    __asm volatile ("mcr p15, 0, %0, c7, c10, 5" : : "r" (0) : "memory");
 }
 
 inline void dsb() {
-#ifdef RPI2
-    asm volatile ("dsb" ::: "memory");
-#else
-    mcr(p15, 0, c7, c10, 4, 0);
-#endif
+    __asm volatile ("mcr p15, 0, %0, c7, c10, 4" : : "r" (0) : "memory");
 }
 
 inline void flush_prefetch_buffer() {
@@ -76,7 +91,7 @@ inline uint32_t read_cache_size(uint32_t level, uint32_t type) {
     return mrc(p15, 1, c0, c0, 0);
 }
 
-static inline uint32_t log_2_n_round_up(uint32_t n)
+inline uint32_t log_2_n_round_up(uint32_t n)
 {
     uint32_t log2n = -1;
     uint32_t temp = n;
@@ -174,6 +189,34 @@ inline void flush_instruction_cache() {
     mcr(p15, 0, c7, c5, 0, 0);
     flush_branch_prediction();
     isb();
+}
+
+
+inline void cleanDataCache() {
+    for(register unsigned set = 0; set < L1_DATA_CACHE_SETS; set++)
+	{
+		for (register unsigned way = 0; way < L1_DATA_CACHE_WAYS; way++)
+		{
+			register uint32_t setWayLevel =   way << L1_SETWAY_WAY_SHIFT
+                | set << L1_SETWAY_SET_SHIFT
+                | 0 << SETWAY_LEVEL_SHIFT;
+
+			__asm volatile ("mcr p15, 0, %0, c7, c10,  2" : : "r" (setWayLevel) : "memory");	// DCCSW
+		}
+	}
+
+	// clean L2 unified cache
+	for (register unsigned set = 0; set < L2_CACHE_SETS; set++)
+	{
+		for (register unsigned way = 0; way < L2_CACHE_WAYS; way++)
+		{
+			register uint32_t setWayLevel =   way << L2_SETWAY_WAY_SHIFT
+                | set << L2_SETWAY_SET_SHIFT
+                | 1 << SETWAY_LEVEL_SHIFT;
+
+			__asm volatile ("mcr p15, 0, %0, c7, c10,  2" : : "r" (setWayLevel) : "memory");	// DCCSW
+		}
+	}
 }
 
 #endif
