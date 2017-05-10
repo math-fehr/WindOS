@@ -1,9 +1,20 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
-#include "mmu.h"
+#define PERIPHERALS_BASE  0xbf000000
+#define GPU_IO_BASE       0x7E000000
+#define GPU_CACHED_BASE   0x40000000
+#define GPU_UNCACHED_BASE 0xC0000000
 
-#define PERIPHERALS_BASE 0xbf000000UL
+#ifndef RPI2
+  #define GPU_MEM_BASE	GPU_UNCACHED_BASE
+#else
+  #ifdef GPU_L2_CACHE_ENABLED
+    #define GPU_MEM_BASE	GPU_CACHED_BASE
+  #else
+    #define GPU_MEM_BASE	GPU_UNCACHED_BASE
+  #endif
+#endif
 
 #define TTBCR_ALIGN TTBCR_ALIGN_4K
 
