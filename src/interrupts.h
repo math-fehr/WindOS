@@ -73,6 +73,18 @@ typedef struct {
   volatile uint32_t Disable_Basic_IRQs;
 } rpi_irq_controller_t;
 
+
+/**
+ * Types used for IRQ handling
+ */
+typedef void interruptFunction (void*);
+#define NUMBER_IRQ_INTERRUPTS  64
+typedef struct interruptHandler {
+    interruptFunction* function;
+    void* param;
+} interruptHandler;
+
+
 /**
  * Bits in the Enable_Basic_IRQs register to enable various interrupts.
  * See the BCM2835 ARM Peripherals manual, section 7.5
@@ -91,6 +103,16 @@ typedef struct {
  */
 rpi_irq_controller_t* RPI_GetIRQController(void);
 
+
+/**
+ * Initialize the IRQ interrupt handlers table
+ */
+void init_irq_interruptHandlers(void);
+
+/**
+ * Connect a function to an IRQ interrupt
+ */
+void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* param);
 
 /**
  * enable interrupts

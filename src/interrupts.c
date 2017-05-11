@@ -9,6 +9,8 @@
 static rpi_irq_controller_t* rpiIRQController =
   (rpi_irq_controller_t*) RPI_INTERRUPT_CONTROLLER_BASE;
 
+static interruptHandler IRQInterruptHandlers[NUMBER_IRQ_INTERRUPTS];
+
 rpi_irq_controller_t* RPI_GetIRQController(void) {
   return rpiIRQController;
 }
@@ -48,6 +50,8 @@ void interrupt_vector(void* user_context) {
     kdebug(D_IRQ, 2, "=> %d.\n", current_process);
 	print_context(2, user_context);
 
+    dmb();
+
 	uint32_t irq = RPI_GetIRQController()->IRQ_basic_pending;
 	if (irq & (1 << 8)) {
 		if (RPI_GetIRQController()->IRQ_pending_1 & (1 << 29)) {
@@ -78,6 +82,36 @@ void interrupt_vector(void* user_context) {
 		kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ!\n");
 		while(1) {}
 	}
+
+    dmb();
+    for(uint32_t i = 0; i<NUMBER_IRQ_INTERRUPTS; i++) {
+        if(i<32) {
+            if(RPI_GetIRQController()->IRQ_pending_1 & (1UL << i)) {
+                RPI_GetIRQController()->IRQ_pending_1 = (1UL << i);
+                if(IRQInterruptHandlers[i].function != NULL) {
+                    IRQInterruptHandlers[i].function(IRQInterruptHandlers[i].param);
+                    dmb();
+                }
+                else {
+                    RPI_GetIRQController()->Disable_IRQs_1 = (1 << i);
+                }
+            }
+        }
+        else {
+            if(RPI_GetIRQController()->IRQ_pending_2 & (1UL << (i&31))) {
+                RPI_GetIRQController()->IRQ_pending_2 = (1UL << (i&31));
+                if(IRQInterruptHandlers[i].function != NULL) {
+                    IRQInterruptHandlers[i].function(IRQInterruptHandlers[i].param);
+                    dmb();
+                }
+                else {
+                    RPI_GetIRQController()->Disable_IRQs_2 = (1UL << (i&31));
+                }
+            }
+        }
+    }
+    dmb();
+
     kdebug(D_IRQ, 2, "<= %d.\n", current_process);
 	print_context(2, user_context);
 }
@@ -248,6 +282,28 @@ void data_abort_vector(void* data) {
 		kdebug(D_IRQ, 10, "\"%s\" occured on domain %d. (w=%d)\n", messages[status], domain, wnr);
 	    while(1);
 	}
+}
+
+
+
+void init_irq_interruptHandlers(void) {
+    for(int i = 0; i<NUMBER_IRQ_INTERRUPTS; i++) {
+        IRQInterruptHandlers[i].function = NULL;
+        IRQInterruptHandlers[i].param = NULL;
+    }
+}
+
+
+void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* param) {
+    IRQInterruptHandlers[irqID].function = function;
+    IRQInterruptHandlers[irqID].param = param;
+    if(irqID < 32) {
+        RPI_GetIRQController()->Enable_IRQs_1 = (uint32_t)1 << (uint32_t)irqID;
+    }
+    else {
+        irqID &= 32;
+        RPI_GetIRQController()->Enable_IRQs_2 = (uint32_t)1 << (uint32_t)irqID;
+    }
 }
 
 

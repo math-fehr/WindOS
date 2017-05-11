@@ -6,6 +6,7 @@
 #include "stdint.h"
 #include "mailbox.h"
 #include "string.h"
+#include "interrupts.h"
 
 void MsDelay(unsigned nMilliSeconds) {
     Timer_WaitMicroSeconds(((uint32_t)1000)*(uint32_t)(nMilliSeconds));
@@ -17,17 +18,25 @@ void usDelay(unsigned nMicroSeconds) {
 }
 
 
-unsigned StartKernelTimer (unsigned	nHzDelay, TKernelTimerHandler *pHandler, void *pParam, void *pContext) {
-    return 0;
+unsigned StartKernelTimer (unsigned	hzDelay, TKernelTimerHandler *handler, void *param, void *context) {
+    timerFunction* function = (timerFunction*)handler;
+    uint32_t millis = (uint32_t)((uint64_t)(hzDelay * 1000) / (uint64_t)HZ);
+    int id = Timer_addHandler(millis,function,param,context);
+    if(id == -1) {
+        return 0; //Will result in a bug, but uspi didn't expect this
+                  //function to fail
+    }
+    return id;
 }
 
 
-void CancelKernelTimer (unsigned hTimer) {
+void CancelKernelTimer (unsigned id) {
+    Timer_deleteHandler(id);
 }
 
 
 void ConnectInterrupt (unsigned nIRQ, TInterruptHandler *pHandler, void *pParam) {
-    kernel_printf("Connect interrupt");
+    connectIRQInterrupt(nIRQ,(interruptFunction*)pHandler,pParam);
 }
 
 int SetPowerStateOn (unsigned deviceId) {
