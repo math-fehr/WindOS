@@ -127,14 +127,14 @@ void mmu_setup_ttb(uintptr_t ttb_address) {
     }
 
     for(; i<0xbf000000; i+=0x100000) {
-        mmu_add_section(ttb_address,i,i-0x8000000,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
+        mmu_add_section(ttb_address,i,i-0x8000000,ENABLE_CACHE | ENABLE_WRITE_BUFFER, 0, AP_PRW_UNONE);
     }
 
     for(; i<0xc0000000; i+=0x100000) {
         #ifdef RPI2
-        mmu_add_section(ttb_address,i,i-0x8000000,DC_CLIENT);
+        mmu_add_section(ttb_address,i,i-0x8000000, 0, 0, AP_PRW_UNONE);
         #else
-        mmu_add_section(ttb_address,i,i-0x9f00000,DC_CLIENT);
+        mmu_add_section(ttb_address,i,i-0x9f00000, 0, 0, AP_PRW_UNONE);
         #endif
     }
 
@@ -145,7 +145,7 @@ void mmu_setup_ttb(uintptr_t ttb_address) {
     int kernel_image_size = &__kernel_phy_end - &__kernel_phy_start;
 
     for(int j=0,k=0; j<0x100 && k<kernel_image_size; j++,i+=0x100000,k+=0x100000) {
-        mmu_add_section(ttb_address,i,k,ENABLE_CACHE | ENABLE_WRITE_BUFFER | DC_CLIENT);
+        mmu_add_section(ttb_address,i,k,ENABLE_CACHE | ENABLE_WRITE_BUFFER, 0, AP_PRW_UNONE);
     }
 }
 
@@ -179,9 +179,12 @@ void mmu_setup_fine_table(uintptr_t fine_table_address, uintptr_t ttb_address,
 
 
 void mmu_add_section(uintptr_t ttb_address, uintptr_t from,
-                     uintptr_t to, uint32_t flags) {
+                     uintptr_t to, uint32_t flags, uint32_t domain, uint32_t ap) {
+	if (flags >= 4 || domain >= 16 || ap >= 4) {
+		while(1) {} // Trap
+	}
     uintptr_t address_section = (ttb_address | (uintptr_t)((from & 0xFFF00000) >> 18));
-    uint32_t value_section = (0xFFF00000 & to) | flags | SECTION;
+    uint32_t value_section = (0xFFF00000 & to) | (flags << 2) | (domain << 5) | (ap << 10) | SECTION;
     *((uint32_t*)(address_section)) = value_section;
 }
 

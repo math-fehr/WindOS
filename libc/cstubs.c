@@ -6,6 +6,9 @@
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include "errno.h"
+
+#include "../include/dirent.h"
 
 int argc;
 char **argv;
@@ -29,6 +32,26 @@ void _exit(int error_code) {
     while(1){} // wait for your death
 }
 
+int _ioctl(int fd, int mode, int arg) {
+	int res;
+	asm volatile(
+					"push {r7}\n"
+					"ldr r0, %1\n"
+					"ldr r1, %2\n"
+					"ldr r2, %3\n"
+					"mov r7, #0x36\n"
+					"svc #0\n"
+					"pop {r7}\n"
+					"mov %0, r0"
+				:   "=r" (res)
+				:   "m" (fd), "m" (mode), "m" (arg)
+				:);
+	if (res < 0) {
+		errno = -res;
+	}
+	return res;
+}
+
 // 0x2d:
 void *_sbrk(intptr_t increment) {
     void* res;
@@ -41,6 +64,9 @@ void *_sbrk(intptr_t increment) {
                 :   "=m" (res)
                 :   "m" (increment)
                 :);
+	if (res < 0) {
+		errno = -(int)res;
+	}
     return res;
 }
 
@@ -59,21 +85,83 @@ pid_t _fork() {
 	return res;
 }
 
+// 0x05
+int _open(char* path, int flags) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"mov 	r7, #0x05\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (path), "m" (flags)
+					:
+	);
+	if (res < 0) {
+		errno = -res;
+	}
+	return res;
+}
+
+// 78
+int _getdents(int fd, struct dirent* user_dirent) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"mov 	r7, #78\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (fd), "m" (user_dirent)
+					:
+	);
+	if (res < 0) {
+		errno = -res;
+	}
+	return res;
+}
+
 // 0x0b:
 int _execve(const char *filename, char *const argv[],
                   char *const envp[]) {
+	int res;
 	asm volatile(
 		"mov r7, #0x0b\n"
-		"ldr r0, %0\n"
-		"ldr r1, %1\n"
-		"ldr r2, %2\n"
+		"ldr r0, %1\n"
+		"ldr r1, %2\n"
+		"ldr r2, %3\n"
 		"svc #0\n"
-		:
+		"pop {r7}\n"
+		"mov %0, r0\n"
+		: "=r" (res)
 		: "m" (filename), "m" (argv), "m" (envp)
 		:);
+	errno = -res;
 	return -1;
 }
 
+int _chdir(char* path) {
+	int res;
+	asm volatile(
+		"mov r7, #0x0c\n"
+		"ldr r0, %1\n"
+		"svc #0\n"
+		"pop {r7}\n"
+		"mov %0, r0\n"
+		: "=r" (res)
+		: "m" (path)
+		:);
+	if (res < 0) {
+		errno = -res;
+	}
+	return 0;
+}
 
 int execvp(const char *filename, char *const argv[]) {
 	char* path = getenv("PATH");
@@ -108,6 +196,9 @@ char* getcwd(char* buf, size_t size) {
 					: "m" (buf), "m" (size)
 					:
 	);
+	if (res < 0) {
+		errno = -(int)res;
+	}
 	return res;
 }
 
@@ -127,6 +218,9 @@ ssize_t _write(int fd, const void* buf, size_t count) {
                 :   "=r" (res)
                 :   "m" (fd), "m" (buf), "m" (count)
                 :);
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }
 
@@ -143,6 +237,9 @@ int _close(int fd) {
                 :   "=r" (res)
                 :   "r" (fd)
                 :);
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }
 
@@ -160,6 +257,9 @@ int _fstat(int fd, struct stat* buf) {
                 :   "=r" (res)
                 :   "m" (fd), "m" (buf)
                 :);
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }
 
@@ -177,6 +277,9 @@ pid_t _waitpid(pid_t pid, int *wstatus, int options) {
 					"mov 	%0, r0\n"
 				:	"=r" (res)
 				: 	"m" (pid), "m" (wstatus), "m" (options) :);
+	if (res < 0) {
+		errno = -res;
+	}
 	return res;
 }
 
@@ -205,6 +308,9 @@ off_t _lseek(int fd, off_t offset, int whence) {
                 :   "=r" (res)
                 :   "m" (fd), "m" (offset), "m" (whence)
                 :);
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }
 
@@ -223,6 +329,8 @@ ssize_t _read(int fd, void* buf, size_t count) {
                 :   "=r" (res)
                 :   "m" (fd), "m" (buf), "m" (count)
                 :);
-
+	if (res < 0) {
+		errno = -res;
+	}
     return res;
 }

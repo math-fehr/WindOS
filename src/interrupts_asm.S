@@ -51,7 +51,14 @@ _data_abort_vector:
 	mrs 	r1, spsr
 	stmfd 	sp!, {r1, lr}
 	mov 	r0, sp
-	ldr     pc, =data_abort_vector
+	ldr 	r1, =data_abort_vector
+	blx 	r1
+
+	ldmfd 	sp!, {r1, lr}
+	msr 	spsr, r1
+	ldmfd  	sp, {r0-r14}^ // Restore registers
+	add 	sp, sp, #15*4
+	movs 	pc, lr // Context switch
 
 .globl _interrupt_vector
 _interrupt_vector:
@@ -63,8 +70,8 @@ _interrupt_vector:
 	mov 	r0, sp
 
 	ldr 	r1, =interrupt_vector
-
 	blx		r1
+
 	ldmfd 	sp!, {r1, lr}
 	msr 	spsr_all, r1
 	ldmfd  	sp, {r0-r14}^ // Restore registers
@@ -84,8 +91,3 @@ You should place:
 •	A memory write barrier before the first write to a peripheral.
 •	A memory read barrier after the last read of a peripheral
 */
-/*.globl dmb
-dmb:
-	mov	r12, #0
-	mcr	p15, 0, r12, c7, c10, 5
-	mov 	pc, lr*/

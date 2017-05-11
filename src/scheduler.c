@@ -54,12 +54,12 @@ void free_process_data(process* p) {
 	int n_allocated_pages = p->brk_page;
 	for (int i=n_allocated_pages;i>0;i--) {
 		int phy_page = mmu_vir2phy(i*PAGE_SECTION) / PAGE_SECTION; // let's hope GCC optimizes this
-		paging_free(phy_page,1);
+		paging_free(1,phy_page);
 	}
 
 	// free stack and program code
-	paging_free(mmu_vir2phy(0)/PAGE_SECTION,1);
-	paging_free(mmu_vir2phy(__ram_size-PAGE_SECTION)/PAGE_SECTION,1);
+	paging_free(1,mmu_vir2phy(0)/PAGE_SECTION);
+	paging_free(1,mmu_vir2phy(__ram_size-PAGE_SECTION)/PAGE_SECTION);
 
 	free((void*)p->ttb_address);
 	free(p);

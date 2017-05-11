@@ -5,16 +5,16 @@
 
 extern unsigned int __ram_size;
 
-process* process_load(char* path, inode_t* cwd, const char* argv[], const char* envp[]) {
-    inode_t* fd = vfs_path_to_inode(NULL, path);
-    if (fd == 0) {
-        kdebug(D_PROCESS, 5, "Could not load %s\n", path);
+process* process_load(char* path, inode_t cwd, const char* argv[], const char* envp[]) {
+    inode_t fd = vfs_path_to_inode(&cwd, path);
+
+    if (errno > 0) {
+        kdebug(D_PROCESS, 4, "Could not load %s: %s\n", path, strerror(errno));
 		errno = ENOENT;
         return 0;
     }
     elf_header_t header;
-    vfs_fread(fd,(char*)&header,sizeof(header),0);
-
+   	vfs_fread(fd,(char*)&header,sizeof(elf_header_t),0);
 
     if (strncmp(header.magic_number,"\x7F""ELF",4) != 0) {
         kdebug(D_PROCESS, 2, "Can't load %s: no elf header detected.\n", path);
@@ -45,7 +45,12 @@ process* process_load(char* path, inode_t* cwd, const char* argv[], const char* 
 
     uint32_t table_size = 16*1024 >> TTBCR_ALIGN;
     ttb_address = (uintptr_t)memalign(table_size, table_size);
-
+	if (ttb_address == 0) {
+		int * test = malloc(50);
+		kdebug(D_PROCESS, 10, "Something failed and this is important %p. %s\n", test, strerror(errno));
+		errno = ENOMEM;
+		return NULL;
+	}
     page_list_t* res = paging_allocate(2);
     if (res == NULL) {
         kdebug(D_PROCESS, 10, "Can't load %s: page allocation failed.\n", path);
@@ -63,8 +68,8 @@ process* process_load(char* path, inode_t* cwd, const char* argv[], const char* 
 		free(res);
     }
     // 1MB for the program. TODO: Make this less brutal. (not hardcoded as i could read the symbol table)
-    mmu_add_section(ttb_address, 0, section_addr, 0);
-    mmu_add_section(ttb_address, __ram_size-PAGE_SECTION, section_stack, 0);
+    mmu_add_section(ttb_address, 0, section_addr, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
+    mmu_add_section(ttb_address, __ram_size-PAGE_SECTION, section_stack, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
     // Loads executable data into memory and allocates it.
     ph_entry_t ph;
     for (int i=0; i<header.ph_num;i++) {
@@ -140,6 +145,9 @@ process* process_load(char* path, inode_t* cwd, const char* argv[], const char* 
     processus->brk = PAGE_SECTION;
     processus->brk_page = 0;
 	processus->cwd = cwd;
+
+	kdebug(D_PROCESS, 2, "Program loaded %s. S0=%p, S1=%p\n ttb=%p\n", path, section_addr, section_stack, ttb_address);
+
 
     for (int i=0;i<MAX_OPEN_FILES;i++) {
         processus->fd[i].position = -1;

@@ -13,24 +13,29 @@
 #define KERNEL_TTB_ADDRESS 0xf0004000
 
 extern int __kernel_phy_end;
+uintptr_t heap_end = 0;
 
 uintptr_t _sbrk(int incr) {
-  static uintptr_t heap_end = 0;
   static uint32_t allocated_pages = 0;
   uintptr_t prev_heap_end;
   if(heap_end == 0) { // first initialization of heap.
     heap_end = (uintptr_t) HEAP_BASE;
-    allocated_pages = 1;
+    allocated_pages = 2;
 
     mmu_add_section(KERNEL_TTB_ADDRESS,
                     HEAP_BASE,
                     (uintptr_t)&__kernel_phy_end + PAGE_SECTION - 1,
-                    0);
+                    ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_UNONE);
+
+    mmu_add_section(KERNEL_TTB_ADDRESS,
+                    HEAP_BASE+PAGE_SECTION,
+                    (uintptr_t)&__kernel_phy_end + 2*PAGE_SECTION - 1,
+                    ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_UNONE);
   }
 
   prev_heap_end = heap_end;
   heap_end += incr;
-  uint32_t n_sections = (heap_end - HEAP_BASE + 1024*1024 - 1) >> 20;
+  uint32_t n_sections = (heap_end - HEAP_BASE + PAGE_SECTION - 1) >> 20;
 
   if (n_sections > allocated_pages) {
     // TODO: Proper error handling
@@ -42,7 +47,7 @@ uintptr_t _sbrk(int incr) {
           KERNEL_TTB_ADDRESS,
           HEAP_BASE + allocated_pages*PAGE_SECTION,
           (res->address + i)*PAGE_SECTION,
-          0);
+          ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_UNONE);
         allocated_pages++;
       }
       res = res->next;

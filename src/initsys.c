@@ -10,7 +10,7 @@ extern int __kernel_phy_end;
 
 void init_map(uintptr_t from, uintptr_t to, uint32_t flags) {
   uintptr_t address_section = (KERNEL_PHY_TTB_ADDRESS | (uintptr_t)((from & 0xFFF00000) >> 18));
-  uint32_t value_section = (0xFFF00000 & to) | flags | SECTION;
+  uint32_t value_section = (0xFFF00000 & to) | (1 << 10) | SECTION;
   *((uint32_t*)(address_section)) = value_section;
 }
 
@@ -75,7 +75,8 @@ void sys_init() {
     dsb();
     isb();
 
-    mcr(p15,0,c3,c0,0, ~0); // domain
+
+    mcr(p15,0,c3,c0,0,1); // domain 0 is checked against permission bits
 
     uint32_t mmu_ctrl = mrc(p15,0,c1,c0,0);
     mmu_ctrl |= (1 << 11) | (1 << 2) | (1 << 12) | (1 << 0) | (1 << 5);

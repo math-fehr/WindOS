@@ -18,6 +18,10 @@ int main () {
 		while(1) {
 			pid_t res = wait(&status);
 			printf("[INIT] Process %d exited with status %d.\n", res, status);
+			if (pid == res) {
+				printf("[INIT] The shell is dead. Restarting..\n");
+				main();
+			}
 		}
 	} else {
 		char* argv_wesh[] = {"/bin/wesh", NULL};

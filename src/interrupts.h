@@ -11,10 +11,27 @@
 #include "scheduler.h"
 #include "syscalls.h"
 
+#include "arm.h"
+
 /**
  * Theses functions handle interrupts made by the processor
  */
 
+
+#define ALIGNMENT_FAULT 		0b0001
+#define DEBUG_EVENT 			0b0010
+#define ACCESS_FAULT_SEC 		0b0011
+#define INSTR_CACHE_FAULT 		0b0100
+#define TRANSLATION_FAULT_SEC 	0b0101
+#define ACCESS_FAULT_PAGE  		0b0110
+#define TRANSLATION_FAULT_PAGE	0b0111
+#define SYNC_EXT_ABORT 			0b1000
+#define DOMAIN_FAULT_SEC 		0b1001
+#define DOMAIN_FAULT_PAGE 		0b1011
+#define SYNC_EXT_ABORT_TBL_1 	0b1100
+#define PERMISSION_FAULT_SEC	0b1101
+#define SYNC_EXT_ABORT_TBL_2 	0b1110
+#define PERMISSION_FAULT_PAGE 	0b1111
 
 
 /**
@@ -25,6 +42,7 @@
 #define     SVC_FORK        0x02
 #define     SVC_READ        0x03
 #define     SVC_WRITE       0x04
+#define 	SVC_OPEN 		0x05
 #define     SVC_CLOSE       0x06
 #define 	SVC_WAITPID		0x07
 #define 	SVC_EXECVE 		0x0b
@@ -33,7 +51,9 @@
 #define     SVC_LSEEK       0x13
 #define     SVC_FSTAT       0x1c
 #define     SVC_SBRK        0x2d
+#define 	SVC_IOCTL 		0x36
 #define 	SVC_GETCWD 		0xb7
+#define 	SVC_GETDENTS 	78
 
 #define RPI_INTERRUPT_CONTROLLER_BASE (PERIPHERALS_BASE + 0xB200UL)
 

@@ -63,6 +63,9 @@ typedef struct {
  */
 aux_t* serial_get_aux();
 
+
+void serial_setmode(int arg);
+
 /**
  * Initialize the serial
  */
@@ -95,6 +98,8 @@ unsigned char serial_readc();
  * Returns the number of characters read
  */
 int serial_readline(char* buffer, int buffer_size);
+
+void serial_irq();
 
 
 /**

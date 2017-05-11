@@ -11,8 +11,6 @@
  * The functions and defines are here to debug more easily
  */
 
-
-
 /**
  * The pin holding the gpio led
  */

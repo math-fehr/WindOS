@@ -23,4 +23,8 @@
  */
 #define MAX_PROCESSES 500
 
+#define VFS_MAX_OPEN_FILES 1000
+#define VFS_MAX_OPEN_INODES 1000
+
+
 #endif
