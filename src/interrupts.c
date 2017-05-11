@@ -28,7 +28,7 @@ void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
 }
 
 static bool status;
-extern uint32_t current_process;
+extern int current_process;
 
 
 
@@ -133,7 +133,7 @@ swi_beg:
 	print_context(1, ctx);
 	process* p = get_process_list()[current_process];
 	p->ctx = *ctx;
-	int res;
+	uint32_t res;
 
     switch(ctx->r[7]) {
 		case SVC_IOCTL:
@@ -176,7 +176,7 @@ swi_beg:
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
 			break;
 		case SVC_GETCWD:
-			res = svc_getcwd((char*)ctx->r[0],ctx->r[1]);
+			res = (uint32_t)svc_getcwd((char*)ctx->r[0],ctx->r[1]);
 			break;
 		case SVC_CHDIR:
 			res = svc_chdir((char*)ctx->r[0]);
@@ -194,7 +194,7 @@ swi_beg:
 
 	if ((ctx->r[7] == SVC_EXIT)
 	|| 	(ctx->r[7] == SVC_EXECVE)
-	||	(ctx->r[7] == SVC_WAITPID && res == -1)
+    ||	(ctx->r[7] == SVC_WAITPID && res == (uint32_t)-1)
 	||  (p->status == status_blocked_svc)) {
 		p = get_process_list()[current_process];
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);

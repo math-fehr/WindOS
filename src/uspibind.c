@@ -59,15 +59,18 @@ int GetMACAddress(unsigned char buffer[6]) {
 
 void LogWrite (const char *pSource, unsigned Severity, const char *pMessage, ...) {
     //TODO
-    kdebug(12,0,"[%s] %s\n",pSource,pMessage);
+    kdebug(12,Severity,"[%s] %s\n",pSource,pMessage);
 }
 
 
 void uspi_assertion_failed (const char *pExpr, const char *pFile, unsigned nLine) {
-    kdebug(12,0,"Assertion '%s' on file '%s',line %d\n",pExpr,pFile,nLine);
+    kdebug(12,10,"Assertion '%s' on file '%s',line %d\n",pExpr,pFile,nLine);
 }
 
 void DebugHexdump (const void *pBuffer, unsigned nBufLen, const char *pSource) {
+    (void)pBuffer;
+    (void)nBufLen;
+    (void)pSource;
     //TODO do that
     kdebug(12,0,"Needs to implement DebugHexDump function");
 }

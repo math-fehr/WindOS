@@ -70,7 +70,7 @@ page_list_t* paging_allocate(int n_pages) {
 	if (100*used_pages / tot_pages > 90 && 100*(used_pages-n_pages) / tot_pages <= 90) {
 		kdebug(D_KERNEL,10,"90%% of memory is used.\n");
 	}
-	page_list_t *tmp;
+	page_list_t *tmp = NULL;
 
 	while (n_pages > 0 && pointer != NULL) {
 	    int mn = min(pointer->size, n_pages);

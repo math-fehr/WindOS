@@ -8,7 +8,7 @@
 
 extern int __kernel_phy_end;
 
-void init_map(uintptr_t from, uintptr_t to, uint32_t flags) {
+void init_map(uintptr_t from, uintptr_t to) {
   uintptr_t address_section = (KERNEL_PHY_TTB_ADDRESS | (uintptr_t)((from & 0xFFF00000) >> 18));
   uint32_t value_section = (0xFFF00000 & to) | (1 << 10) | SECTION;
   *((uint32_t*)(address_section)) = value_section;
@@ -18,22 +18,22 @@ void init_setup_ttb() {
   uintptr_t i;
   const uint32_t section_size = 0x00100000;
   for(i=0;i<0x80000000;i+=section_size) { // temporary linear mapping (deleted as soon as we enter real kernel code)
-    init_map(i,i,0);
+      init_map(i,i);
   }
 
   for(;i<0xbf000000;i+=section_size) { // physical ram mapping for kernel.
-    init_map(i,i-0x80000000,0);
+      init_map(i,i-0x80000000);
   }
 
   for(;i<0xc0000000;i+=section_size) { // peripherals mapping
     #ifdef RPI2
-    init_map(i,i-0x80000000,0);
+    init_map(i,i-0x80000000);
     #else
-    init_map(i,i-0x9f000000,0);
+    init_map(i,i-0x9f000000);
     #endif
   }
   for(i=0xf0000000;i<0xf0000000+(uintptr_t)&__kernel_phy_end;i+=section_size) { // kernel data & code mapping
-    init_map(i,i-0xf0000000,0);
+    init_map(i,i-0xf0000000);
   }
 }
 

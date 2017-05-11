@@ -86,6 +86,7 @@ vfs_dir_list_t* dev_lsdir(inode_t from) {
 }
 
 int dev_fread(inode_t from, char* buf, int size, int pos) {
+    (void)pos;
     switch (from.st.st_ino) {
         case DEV_NULL:
             return 0;
@@ -105,6 +106,7 @@ int dev_fread(inode_t from, char* buf, int size, int pos) {
 }
 
 int dev_fwrite(inode_t from, char* buf, int size, int pos) {
+    (void)pos;
     switch (from.st.st_ino) {
         case DEV_SERIAL:
             for (int i=0;i<size;i++) {

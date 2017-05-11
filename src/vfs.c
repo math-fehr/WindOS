@@ -116,7 +116,7 @@ char* vfs_inode_to_path(inode_t base, char* buf, size_t size) {
 		i--;
 	}
 
-	for (int j=i;j<size;j++) {
+	for (int j=i;(unsigned)j<size;j++) {
 		buf[j-i] = buf[j];
 	}
 
@@ -250,7 +250,7 @@ int vfs_mkdir(char* path, char* name, int permissions) {
   if (errno == 0) {
 	  vfs_dir_list_t* ls = position.op->read_dir(position);
 	  vfs_dir_list_t* ls_start = ls;
-	  if (ls == -1) {
+	  if ((int32_t)ls == -1) {
 		  return 0;
 	  }
 
@@ -286,7 +286,7 @@ int vfs_mkfile(char* path, char* name, int permissions) {
   if (errno == 0) {
 	  vfs_dir_list_t* ls = position.op->read_dir(position);
 	  vfs_dir_list_t* ls_start = ls;
-	  if (ls == -1) {
+	  if ((int32_t)ls == -1) {
 		  return 0;
 	  }
 
