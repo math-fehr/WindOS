@@ -84,8 +84,8 @@ You should place:
 •	A memory write barrier before the first write to a peripheral.
 •	A memory read barrier after the last read of a peripheral
 */
-.globl dmb
+/*.globl dmb
 dmb:
 	mov	r12, #0
 	mcr	p15, 0, r12, c7, c10, 5
-	mov 	pc, lr
+	mov 	pc, lr*/
