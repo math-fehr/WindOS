@@ -105,7 +105,7 @@ void kernel_main(uint32_t memory) {
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
 	Timer_Setup();
-	Timer_SetLoad(500);
+	Timer_SetLoad(500000);
 
 
 	storage_driver memorydisk;
@@ -148,8 +148,10 @@ void kernel_main(uint32_t memory) {
 		Timer_Enable();
 		Timer_Enable_Interrupts();
 
+	    RPI_GetIRQController()->Enable_Basic_IRQs |= RPI_BASIC_ARM_TIMER_IRQ;
 		// Enable serial IRQs.
 		RPI_GetIRQController()->Enable_IRQs_1 |= (1 << 29);
+	    dmb();
 
 	    current_process = p->asid;
 		p->parent_id 	= p->asid; // (Badass process)

@@ -415,6 +415,7 @@ uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 		w_fd->position++;
 		user_entry->d_ino = w_fd->dir_entry->inode.st.st_ino;
 		user_entry->d_type = w_fd->dir_entry->inode.st.st_mode;
+
 		strcpy(user_entry->d_name, w_fd->dir_entry->name);
 		vfs_dir_list_t *prec = w_fd->dir_entry;
 		w_fd->dir_entry = w_fd->dir_entry->next;

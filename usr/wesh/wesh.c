@@ -51,7 +51,7 @@ void wesh_readline(char* buffer) {
 			c = getc(stdin);
 			if (hist_bot != hist_top) {
 				char* new_entry;
-				int prev = hist_pos;
+				
 				if (c == 'A') { // ^
 					if (hist_pos != hist_bot) {
 						hist_pos--;

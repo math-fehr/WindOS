@@ -21,8 +21,6 @@ void Timer_Setup() {
   rpiArmTimer->control |= TIMER_CTRL_HALT_STOP;
   rpiArmTimer->pre_divider = 249; // Gives a 1MHz timer.
   dmb();
-  RPI_GetIRQController()->Enable_Basic_IRQs |= RPI_BASIC_ARM_TIMER_IRQ;
-  dmb();
 }
 
 void Timer_Enable() {
