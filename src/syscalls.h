@@ -14,7 +14,7 @@
 #include "malloc.h"
 
 #include "../include/dirent.h"
-
+ 
 uint32_t svc_exit();
 uint32_t svc_sbrk(uint32_t ofs);
 uint32_t svc_fork();
@@ -29,6 +29,7 @@ char* 	 svc_getcwd(char* buf, size_t cnt);
 uint32_t svc_chdir(char* path);
 off_t 	 svc_lseek(int fd, off_t offset, int whence);
 int 	 svc_open(char* path, int flags);
+int 	 svc_ioctl(int fd, int cmd, int arg);
 
 // balek c'est pas standard
 uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry);

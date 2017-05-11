@@ -25,14 +25,27 @@ uint32_t svc_exit() {
 	return current_process;
 }
 
+int svc_ioctl(int fd, int cmd, int arg) {
+	kdebug(D_IRQ, 2, "IOCTL %d %d %d \n", fd, cmd, arg);
+	process* p = get_process_list()[current_process];
+	if (fd >= MAX_OPEN_FILES
+	|| p->fd[fd].position < 0)
+	{
+		return -EBADF;
+	}
+
+	return p->fd[fd].inode->op->ioctl(*p->fd[fd].inode, cmd, arg);
+}
 
 // TODO: Refresh inodes.
 off_t svc_lseek(int fd_i, off_t offset, int whence) {
-	kdebug(D_IRQ, 2, "LSEEK %d %d %d \n", fd_i, offset, whence);
 	process* p = get_process_list()[current_process];
+	kdebug(D_IRQ, 2, "LSEEK %d %d %d\n", fd_i, offset, whence);
+
 	if (fd_i >= MAX_OPEN_FILES
 	|| p->fd[fd_i].position < 0)
 	{
+		kernel_printf("K%d\n",fd_i);
 		return -EBADF;
 	}
 
@@ -54,6 +67,7 @@ off_t svc_lseek(int fd_i, off_t offset, int whence) {
 	} else if (fd->position > fd->inode->st.st_size) {
 		fd->position = fd->inode->st.st_size;
 	}
+	kdebug(D_IRQ, 1, "LSEEK %d %d %d => %d %d\n", fd_i, offset, whence, fd->position, fd->inode->st.st_size);
 	return fd->position;
 }
 
@@ -424,7 +438,8 @@ int svc_open(char* path, int flags) {
 	}
 
 	inode_t ino = vfs_path_to_inode(&p->cwd, path);
-	kdebug(D_SYSCALL, 2, "OPEN => %s\n", path);
+	kdebug(D_SYSCALL, 2, "OPEN => %s %d\n", path, ino.st.st_size);
+
 	if (errno > 0) {
 		return -errno;
 	} else {

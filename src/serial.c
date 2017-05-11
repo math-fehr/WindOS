@@ -16,56 +16,64 @@ aux_t* serial_get_aux()
   return auxiliary;
 }
 
+#define MAX_BUFFER 1024
+
+int read_buffer_index;
+char read_buffer[MAX_BUFFER];
+int mode;
+
+
 void serial_init() {
-  volatile int i;
-  dmb();
-  /* As this is a mini uart the configuration is complete! Now just
-     enable the uart. Note from the documentation in section 2.1.1 of
-     the ARM peripherals manual:
+	volatile int i;
+	dmb();
+	/* As this is a mini uart the configuration is complete! Now just
+	 enable the uart. Note from the documentation in section 2.1.1 of
+	 the ARM peripherals manual:
 
-     If the enable bits are clear you will have no access to a
-     peripheral. You can not even read or write the registers */
-  auxiliary->ENABLES = AUX_ENA_MINIUART;
+	 If the enable bits are clear you will have no access to a
+	 peripheral. You can not even read or write the registers */
+	auxiliary->ENABLES = AUX_ENA_MINIUART;
 
-  /* Disable interrupts for now */
-  /* auxillary->IRQ &= ~AUX_IRQ_MU; */
+	/* Disable interrupts for now */
+	/* auxillary->IRQ &= ~AUX_IRQ_MU; */
 
-  auxiliary->MU_IER = 0;
+	auxiliary->MU_IER = 0;
 
-  /* Disable flow control,enable transmitter and receiver! */
-  auxiliary->MU_CNTL = 0;
+	/* Disable flow control,enable transmitter and receiver! */
+	auxiliary->MU_CNTL = 0;
 
-  /* Decide between seven or eight-bit mode */
-  auxiliary->MU_LCR = AUX_MULCR_8BIT_MODE;
+	/* Decide between seven or eight-bit mode */
+	auxiliary->MU_LCR = AUX_MULCR_8BIT_MODE;
 
 
-  auxiliary->MU_MCR = 0;
+	auxiliary->MU_MCR = 0;
 
 	/* Enable interrupts */
-  auxiliary->MU_IER = 0x02;
-    /* Clear the fifos */
-  auxiliary->MU_IIR = 0xC6;
+	auxiliary->MU_IER = 0x02;
+	/* Clear the fifos */
+	auxiliary->MU_IIR = 0xC6;
 
-  /* Transposed calculation from Section 2.2.1 of the ARM peripherals
-     manual */
-  int baud = 115200;
-  auxiliary->MU_BAUD = ( SYS_FREQ / ( 8 * baud ) ) - 1;
+	/* Transposed calculation from Section 2.2.1 of the ARM peripherals
+	 manual */
+	int baud = 115200;
+	auxiliary->MU_BAUD = ( SYS_FREQ / ( 8 * baud ) ) - 1;
 
-   /* Setup GPIO 14 and 15 as alternative function 5 which is
-      UART 1 TXD/RXD. These need to be set before enabling the UART */
-  GPIO_setPinFunction(14, PIN_FUN5 );
-  GPIO_setPinFunction(15, PIN_FUN5 );
+	/* Setup GPIO 14 and 15 as alternative function 5 which is
+	  UART 1 TXD/RXD. These need to be set before enabling the UART */
+	GPIO_setPinFunction(14, PIN_FUN5 );
+	GPIO_setPinFunction(15, PIN_FUN5 );
 
-  getGPIOController()->GPPUD = 0;
-  for( i=0; i<150; i++ ) { }
-  getGPIOController()->GPPUDCLK0 = ( 1 << 14 );
-  for( i=0; i<150; i++ ) { }
-  getGPIOController()->GPPUDCLK0 = 0;
-  dmb();
-  /* Disable flow control,enable transmitter and receiver! */
-  auxiliary->MU_CNTL = AUX_MUCNTL_TX_ENABLE | AUX_MUCNTL_RX_ENABLE ;
+	getGPIOController()->GPPUD = 0;
+	for( i=0; i<150; i++ ) { }
+	getGPIOController()->GPPUDCLK0 = ( 1 << 14 );
+	for( i=0; i<150; i++ ) { }
+	getGPIOController()->GPPUDCLK0 = 0;
+	dmb();
+	/* Disable flow control,enable transmitter and receiver! */
+	auxiliary->MU_CNTL = AUX_MUCNTL_TX_ENABLE | AUX_MUCNTL_RX_ENABLE ;
 
-  kdebug(D_SERIAL, 1, "Serial port is hopefully set up!\n");
+	kdebug(D_SERIAL, 1, "Serial port is hopefully set up!\n");
+	mode = 1;
 }
 
 void serial_putc(unsigned char data) {
@@ -94,29 +102,36 @@ void serial_newline() {
     serial_putc('\n');
 }
 
-#define MAX_BUFFER 1024
-
-int read_buffer_index;
-char read_buffer[MAX_BUFFER];
+void serial_setmode(int arg) {
+	if (arg >= 0 && arg < 2) {
+		mode = arg;
+	}
+}
 
 void serial_irq() {
 	while(auxiliary->MU_LSR & AUX_MULSR_DATA_READY) {
 		char c = auxiliary->MU_IO;
-		if (c == 0x7F) { // DEL
-			if (read_buffer_index > 0) {
-				serial_write("\033[D");
-				serial_putc(' ');
-				serial_write("\033[D");
-				read_buffer[read_buffer_index--] = 0;
+		if (mode == 1) { // canon mode
+			if (c == 0x7F) { // DEL
+				if (read_buffer_index > 0) {
+					serial_write("\033[D");
+					serial_putc(' ');
+					serial_write("\033[D");
+					read_buffer[read_buffer_index--] = 0;
+				}
+			} else if (c == 0x1B) { // ANSI Escape sequence
+				serial_readc();
+				serial_readc();
+			} else {
+				serial_putc(c);
+				read_buffer[read_buffer_index] = c;
+				read_buffer_index++;
 			}
-		} else if (c == 0x1B) { // ANSI Escape sequence
-			serial_readc();
-			serial_readc();
 		} else {
-			serial_putc(c);
 			read_buffer[read_buffer_index] = c;
 			read_buffer_index++;
 		}
+
 		dmb();
 	}
 }
@@ -127,6 +142,13 @@ void serial_irq() {
 int serial_readline(char* buffer, int buffer_size) {
 	if (read_buffer_index == 0) {
 		return 0;
+	}
+
+	if (mode == 0) {
+		int sz = min(buffer_size, read_buffer_index);
+		memcpy(buffer, read_buffer, sz);
+		read_buffer_index -= sz;
+		return sz;
 	}
 
 	int i = 0;

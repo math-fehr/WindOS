@@ -85,7 +85,7 @@ run: $(TARGET_QEMU) $(USR_BIN)
 	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty -serial pty
 
 runs: $(TARGET_QEMU) $(USR_BIN)
-	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -serial pty -serial stdio
+	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -serial pty -serial stdio 2>/dev/null
 
 
 minicom:
@@ -136,7 +136,7 @@ $(LIB_USPI_CFG):
 
 # Userspace environment build.
 $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
-	$(ARMGNU)-gcc $(USR_SRC)$*/* $(USR_LIB) -std=gnu11 -static -o $@
+	$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) -std=gnu11 -static -o $@
 
 
 copy_nappy: all

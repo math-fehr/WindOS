@@ -32,6 +32,26 @@ void _exit(int error_code) {
     while(1){} // wait for your death
 }
 
+int _ioctl(int fd, int mode, int arg) {
+	int res;
+	asm volatile(
+					"push {r7}\n"
+					"ldr r0, %1\n"
+					"ldr r1, %2\n"
+					"ldr r2, %3\n"
+					"mov r7, #0x36\n"
+					"svc #0\n"
+					"pop {r7}\n"
+					"mov %0, r0"
+				:   "=r" (res)
+				:   "m" (fd), "m" (mode), "m" (arg)
+				:);
+	if (res < 0) {
+		errno = -res;
+	}
+	return res;
+}
+
 // 0x2d:
 void *_sbrk(intptr_t increment) {
     void* res;

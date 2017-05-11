@@ -63,6 +63,9 @@ typedef struct {
  */
 aux_t* serial_get_aux();
 
+
+void serial_setmode(int arg);
+
 /**
  * Initialize the serial
  */

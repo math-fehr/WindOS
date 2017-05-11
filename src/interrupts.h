@@ -51,6 +51,7 @@
 #define     SVC_LSEEK       0x13
 #define     SVC_FSTAT       0x1c
 #define     SVC_SBRK        0x2d
+#define 	SVC_IOCTL 		0x36
 #define 	SVC_GETCWD 		0xb7
 #define 	SVC_GETDENTS 	78
 

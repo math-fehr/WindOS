@@ -11,6 +11,7 @@ static inode_operations_t dev_inode_operations = {
   .mkdir = NULL,
   .rm = NULL,
   .mkfile = NULL,
+  .ioctl = dev_ioctl,
 };
 
 superblock_t* dev_initialize(int id) {
@@ -32,6 +33,16 @@ vfs_dir_list_t* dev_append_elem(inode_t inode, char* name, vfs_dir_list_t* lst) 
     res->inode = inode;
     res->next = lst;
     return res;
+}
+
+int dev_ioctl(inode_t from, int cmd, int arg) {
+	if (from.st.st_ino == DEV_SERIAL) {
+		if (cmd == 0) { // set mode
+			serial_setmode(arg);
+		}
+	}
+
+	return 0;
 }
 
 vfs_dir_list_t* dev_lsdir(inode_t from) {

@@ -99,6 +99,9 @@ swi_beg:
 	int res;
 
     switch(ctx->r[7]) {
+		case SVC_IOCTL:
+			res = svc_ioctl(ctx->r[0],ctx->r[1],ctx->r[2]);
+			break;
         case SVC_EXIT:
 			res = svc_exit();
 			break;

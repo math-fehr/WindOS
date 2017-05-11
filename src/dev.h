@@ -15,3 +15,5 @@ vfs_dir_list_t* dev_append_elem(inode_t inode, char* name, vfs_dir_list_t* lst);
 vfs_dir_list_t* dev_lsdir(inode_t from) ;
 int dev_fread(inode_t from, char* buf, int size, int pos);
 int dev_fwrite(inode_t from, char* buf, int size, int pos);
+
+int dev_ioctl(inode_t from, int cmd, int arg);

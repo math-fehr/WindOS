@@ -33,6 +33,7 @@ typedef struct {
   int (*mkdir) (inode_t, char*, int);
   int (*rm) (inode_t, char*);
   int (*mkfile) (inode_t, char*, int);
+  int (*ioctl) (inode_t, int, int);
 } inode_operations_t;
 
 
