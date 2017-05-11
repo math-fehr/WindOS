@@ -75,9 +75,9 @@ rpi2: all
 
 # Builds a 1MB filesystem
 $(BUILD)fs.img: $(RAMFS_OBJ)
-	genext2fs -b 8192 -i 256 -d $(RAMFS) $(BUILD)fs.tmp
-	$(ARMGNU)-ld -b binary -r -o $(BUILD)fs.ren $(BUILD)fs.tmp
-	$(ARMGNU)-objcopy --rename-section .data=.fs \
+	@genext2fs -b 8192 -i 256 -d $(RAMFS) $(BUILD)fs.tmp
+	@$(ARMGNU)-ld -b binary -r -o $(BUILD)fs.ren $(BUILD)fs.tmp
+	@$(ARMGNU)-objcopy --rename-section .data=.fs \
 										--set-section-flags .data=alloc,code,load \
 										$(BUILD)fs.ren $(BUILD)fs.img
 
@@ -92,28 +92,31 @@ minicom:
 	minicom -b 115200 -o -D /dev/pts/2
 
 $(TARGET) : $(BUILD)output.elf
-	$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET)
+	@echo "Making $@"
+	@$(ARMGNU)-objcopy $(BUILD)output.elf -O binary $(TARGET)
 
 $(TARGET_QEMU) : $(BUILD)output_qemu.elf
-	$(ARMGNU)-objcopy $(BUILD)output_qemu.elf -O binary $(TARGET_QEMU)
+	@$(ARMGNU)-objcopy $(BUILD)output_qemu.elf -O binary $(TARGET_QEMU)
 
 $(BUILD)output.elf : $(LIB_USPI) $(OBJECTS) $(OBJECTS_C) $(LINKER)
-	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) $(LIB_USPI) \
+	@$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) $(LIB_USPI) \
 							 -o $(BUILD)output.elf -T $(LINKER) -lg -lgcc
 
 $(BUILD)output_qemu.elf : $(LIB_USPI) $(OBJECTS) $(OBJECTS_C) $(LINKER)
-	$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) $(LIB_USPI) \
+	@$(ARMGNU)-ld --no-undefined -L$(LIBGCC) $(OBJECTS) $(OBJECTS_C) $(LIBC) $(LIB_USPI) \
 							 -o $(BUILD)output_qemu.elf -T $(LINKER_QEMU) -lg -lgcc
 
 $(BUILD)%.o: $(SOURCE)%.S
-	$(ARMGNU)-gcc $(CFLAGS) $(HARDWARE_FLAGS) -I $(SOURCE) -c $< -o $@ $(RPI_FLAG)
+	@echo "Making $@"
+	@$(ARMGNU)-gcc $(CFLAGS) $(HARDWARE_FLAGS) -I $(SOURCE) -c $< -o $@ $(RPI_FLAG)
 #$(ARMGNU)-as -I $(SOURCE) $< -o $@ $(SFLAGS) $(RPI_FLAG)
 
 -include $(BUILD)$(OBJECTS_C:.o=.d)
 
 $(BUILD)%.o: $(SOURCE)%.c
-	$(ARMGNU)-gcc $(CFLAGS) $(HARDWARE_FLAGS) $(RPI_FLAG) -c $< -o $@
-	$(ARMGNU)-gcc $(CFLAGS) $(HARDWARE_FLAGS) $(RPI_FLAG) -MM $< -o $(BUILD)$*.d
+	@echo "Making $@"
+	@$(ARMGNU)-gcc $(CFLAGS) $(HARDWARE_FLAGS) $(RPI_FLAG) -c $< -o $@
+	@$(ARMGNU)-gcc $(CFLAGS) $(HARDWARE_FLAGS) $(RPI_FLAG) -MM $< -o $(BUILD)$*.d
 	@mv -f $(BUILD)$*.d $(BUILD)$*.d.tmp
 	@sed -e 's|.*:|$(BUILD)$*.o:|' < $(BUILD)$*.d.tmp > $(BUILD)$*.d
 	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILD)$*.d.tmp | fmt -1 | \
@@ -122,10 +125,11 @@ $(BUILD)%.o: $(SOURCE)%.c
 
 
 $(LIB_USPI): $(LIB_USPI_CFG)
-	make -C $(LIB_USPI_DIR)
+	@make -s -C $(LIB_USPI_DIR)
 
 $(LIB_USPI_CFG):
-	echo "RASPPI = 2" > $@ ; \
+	@echo "Making USPi Lib"
+	@echo "RASPPI = 2" > $@ ; \
 	echo "PREFIX = arm-none-eabi-" >> $@ ;\
 	echo "ARCH = -march=armv7-a -mtune=cortex-a7 -mfloat-abi=soft" >> $@;
 
@@ -136,7 +140,7 @@ $(LIB_USPI_CFG):
 
 # Userspace environment build.
 $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
-	$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) -std=gnu11 -static -o $@
+	@$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) -std=gnu11 -static -o $@
 
 
 copy_nappy: all
