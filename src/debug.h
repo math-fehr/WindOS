@@ -36,6 +36,7 @@
 #define D_SDCARD  10
 #define D_SYSCALL 11
 #define D_USPI    12
+#define D_MBX     13
 
 /**
  * printf to serial

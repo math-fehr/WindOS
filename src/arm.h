@@ -63,7 +63,7 @@ inline void dsb() {
 
 inline void flush_prefetch_buffer() {
 #ifdef RPI2
-
+    asm volatile("isb" ::: "memory");
 #else
     mcr(p15, 0, c7, c5, 4, 0);
 #endif
@@ -205,6 +205,10 @@ inline void cleanDataCache() {
 		}
 	}
 
+    #ifndef RPI2
+    return;
+    #endif
+
 	// clean L2 unified cache
 	for (register unsigned set = 0; set < L2_CACHE_SETS; set++)
 	{
@@ -218,5 +222,10 @@ inline void cleanDataCache() {
 		}
 	}
 }
+
+inline void invalidateInstructionCache() {
+    asm volatile("mcr p15, 0, %0, c7, c5, 0" :: "r" (0) : "memory");
+}
+
 
 #endif

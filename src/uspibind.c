@@ -27,9 +27,15 @@ void CancelKernelTimer (unsigned hTimer) {
 
 
 void ConnectInterrupt (unsigned nIRQ, TInterruptHandler *pHandler, void *pParam) {
+    kernel_printf("Connect interrupt");
 }
 
-int SetPowerStateOn (unsigned nDeviceId) {
+int SetPowerStateOn (unsigned deviceId) {
+    uint32_t device32 = (uint32_t)deviceId;
+    int success = mbxSetPowerStateOn(device32);
+    if(success == MBX_SUCCESS) {
+        return 1;
+    }
     return 0;
 }
 

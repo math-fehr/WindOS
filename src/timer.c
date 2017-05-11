@@ -80,7 +80,9 @@ void Timer_WaitMicroSeconds(uint32_t time) {
 
 void Timer_WaitCycles(uint32_t count) {
   volatile uint32_t val = count;
-  for (;val>0;--val);
+  for (;val>0;--val) {
+      asm("");
+  }
 }
 
 //TODO implement the function

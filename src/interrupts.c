@@ -1,4 +1,7 @@
 #include "interrupts.h"
+
+#include "arm.h"
+
 /**
  * function used to make sure data is sent in order to GPIO
  */
@@ -250,6 +253,27 @@ void data_abort_vector(void* data) {
 
 void enable_interrupts(void) {
     kdebug(D_IRQ, 1, "Enabling interrupts.\n");
+    cleanDataCache();
+    dsb();
+
+    invalidateInstructionCache();
+    flush_branch_prediction();
+    dsb();
+
+    isb();
+    dmb();
+
+    rpi_irq_controller_t* controller =  RPI_GetIRQController();
+    controller->FIQ_control = 0;
+    controller->Disable_IRQs_1 = (uint32_t) -1;
+    controller->Disable_IRQs_2 = (uint32_t) -1;
+    controller->Disable_Basic_IRQs = (uint32_t) -1;
+    controller->IRQ_basic_pending = controller->IRQ_basic_pending;
+    controller->IRQ_pending_1 = controller->IRQ_pending_1;
+    controller->IRQ_pending_2 = controller->IRQ_pending_2;
+
+    dmb();
+
     asm volatile("cpsie i");
 }
 
