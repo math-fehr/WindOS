@@ -169,14 +169,18 @@ int execvp(const char *filename, char *const argv[]) {
 		return execve(filename, argv, environ); // will execute in cwd
 	} else { // let's search in path
 		char* tok = strtok(path, ":");
-		do {
-			char* dest_buf = malloc(strlen(filename)+2+strlen(tok));
-			strcpy(dest_buf, tok);
-			strcat(dest_buf, "/");
-			strcat(dest_buf, filename);
-			execve(dest_buf, argv, environ);
-			free(dest_buf);
-		} while ((tok = strtok(NULL, ":")) != NULL);
+		if (tok == NULL) {
+			return execve(filename, argv, environ);
+		} else {
+			do {
+				char* dest_buf = malloc(strlen(filename)+2+strlen(tok));
+				strcpy(dest_buf, tok);
+				strcat(dest_buf, "/");
+				strcat(dest_buf, filename);
+				execve(dest_buf, argv, environ);
+				free(dest_buf);
+			} while ((tok = strtok(NULL, ":")) != NULL);
+		}
 	}
 	return -1;
 }
@@ -310,6 +314,7 @@ off_t _lseek(int fd, off_t offset, int whence) {
                 :);
 	if (res < 0) {
 		errno = -res;
+		res = -1;
 	}
     return res;
 }

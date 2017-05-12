@@ -69,6 +69,11 @@ void sys_init() {
     dsb();
     isb();
 
+	r = mrc(p15,0,c1,c0,0);
+	r &= ~(0x1000);
+	r &= ~(0x0004);
+	mcr(p15,0,c1,c0,0,r);
+
     init_setup_ttb();
 
     mcr(p15,0,c2,c0,0,0x4000 | (1 << 3) | (1 << 6)); // TTB0
@@ -76,7 +81,6 @@ void sys_init() {
     mcr(p15,0,c2,c0,2,0); // TTBCR
     dsb();
     isb();
-
 
     mcr(p15,0,c3,c0,0,1); // domain 0 is checked against permission bits
 

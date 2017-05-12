@@ -12,11 +12,11 @@ static rpi_arm_timer_t* rpiArmTimer =
  */
 extern void dmb();
 
-
 void Timer_Enable() {
   dmb();
   rpiArmTimer->control |= TIMER_CTRL_FREERUNNING_COUNTER;
   rpiArmTimer->control |= TIMER_CTRL_ENABLE_BIT;
+  rpiArmTimer->control |= TIMER_CTRL_COUNTER_23BITS;
   dmb();
 }
 

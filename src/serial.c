@@ -35,7 +35,7 @@ void serial_init() {
 	auxiliary->ENABLES = AUX_ENA_MINIUART;
 
 	/* Disable interrupts for now */
-	/* auxillary->IRQ &= ~AUX_IRQ_MU; */
+	auxiliary->IRQ = 0;
 
 	auxiliary->MU_IER = 0;
 
@@ -49,8 +49,9 @@ void serial_init() {
 	auxiliary->MU_MCR = 0;
 
 	/* Enable interrupts */
-	auxiliary->MU_IER = 0x02;
+	auxiliary->MU_IER = 0x00;
 	/* Clear the fifos */
+	//auxiliary->MU_IIR = 0x06;
 	auxiliary->MU_IIR = 0xC6;
 
 	/* Transposed calculation from Section 2.2.1 of the ARM peripherals
@@ -109,8 +110,10 @@ void serial_setmode(int arg) {
 }
 
 void serial_irq() {
+	//kernel_printf("fifo: %d\n", (auxiliary->MU_STAT & 0x000F0000) >> 16);
 	while(auxiliary->MU_LSR & AUX_MULSR_DATA_READY) {
 		char c = auxiliary->MU_IO;
+		//kernel_printf("data ready: %c\n", c);
 		if (mode == 1) { // canon mode
 			if (c == 0x7F) { // DEL
 				if (read_buffer_index > 0) {
@@ -134,12 +137,14 @@ void serial_irq() {
 
 		dmb();
 	}
+	//kernel_printf("fifo>: %d\n", (auxiliary->MU_STAT & 0x000F0000) >> 16);
 }
 
 /*
  * this is not so safe (buffer overflow.)
  */
 int serial_readline(char* buffer, int buffer_size) {
+	serial_irq();
 	if (read_buffer_index == 0) {
 		return 0;
 	}

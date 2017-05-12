@@ -45,7 +45,7 @@ _fast_interrupt_vector_h:           .word   _fast_interrupt_vector
    */
 
 _reset_:
-    #ifdef RPI2
+#ifdef RPI2
     mrs     r0, cpsr
     // The first thing is to make sure we boot in the right mode,
     // Rpi2 boots in hypervisor mode so we have to go back to svr mode.
@@ -55,7 +55,8 @@ _reset_:
     add     r0,pc,#4
     msr     ELR_hyp,r0
     eret
-    #endif
+#endif
+skip:
 	//Setting up interrupt table at physical address 0
 	ldr     r0, =_start
 	mov     r1, #0x0000

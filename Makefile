@@ -48,7 +48,8 @@ QEMU = qemu-fvm/arm-softmmu/fvm-arm
 
 SD_NAPPY = /media/nappy/boot/
 SD_NAPPY2 = /media/nappy/OUI/
-SD_LORTEX = /media/lucas/460D-5801/
+SD_LORTEX = /media/lucas/boot/
+SD_LORTEX_2 = /media/lucas/OUI/
 
 DEPDIR = .d
 $(shell mkdir -p $(DEPDIR) >/dev/null)
@@ -142,15 +143,18 @@ $(LIB_USPI_CFG):
 
 # Userspace environment build.
 $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
-	@$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) -std=gnu11 -static -o $@
+	@$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) $(HARDWARE_FLAGS) -std=gnu11 -static -o $@
+
 
 
 copy_nappy: all
 	cp $(IMGDIR)* $(SD_NAPPY)
 copy_nappy2: rpi
 	cp $(IMGDIR)* $(SD_NAPPY2)
-copy_lortex: rpi
+copy_lortex: all
 	cp $(IMGDIR)* $(SD_LORTEX)
+copy_lortex_2: rpi
+	cp $(IMGDIR)* $(SD_LORTEX_2)
 
 clean:
 	@rm -fr $(BUILD)*

@@ -1,6 +1,7 @@
 #include "mmu.h"
 #include "stdlib.h"
 #include "debug.h"
+#include "arm.h"
 
 extern int __kernel_phy_start;
 extern int __kernel_phy_end;
@@ -38,8 +39,12 @@ void mmu_set_ttb_1(uint32_t addr) {
         : "r" (reg)
         :);
 
-    mmu_invalidate_unified_tlb();
-    mmu_invalidate_caches();
+/*	invalidateInstructionCache();
+	flush_data_cache(true);
+	dmb();
+	dsb();
+	isb();*/
+	mmu_invalidate_unified_tlb();
 
     kdebug(D_MEMORY, 1, "TTB1 address updated (%#010x)\n", addr);
 }
@@ -63,8 +68,13 @@ void mmu_set_ttb_0(uint32_t addr, uint32_t N) {
         : "r" (reg)
         :);
 
+
     mmu_invalidate_unified_tlb();
-    mmu_invalidate_caches();
+	flush_prefetch_buffer();
+	flush_instruction_cache();
+	dmb();
+	dsb();
+	isb();
 
     kdebug(D_MEMORY, 1, "TTB0 address updated (%#010x %d)\n", addr, N);
 }
@@ -72,8 +82,12 @@ void mmu_set_ttb_0(uint32_t addr, uint32_t N) {
 uintptr_t mmu_vir2phy_ttb(uintptr_t addr, uintptr_t ttb_phy) {
 	uintptr_t* address_section = (uintptr_t*)(0x80000000 | ttb_phy | ((addr & 0xFFF00000) >> 18));
     uintptr_t target_section = *address_section;
-    target_section &= 0xFFF00000;
-    return target_section | (addr & 0x000FFFFF);
+	if (target_section & 3 != 0) {
+	    target_section &= 0xFFF00000;
+	    return target_section | (addr & 0x000FFFFF);
+	} else {
+		return -1;
+	}
 }
 
 uintptr_t mmu_vir2phy(uintptr_t addr) {
@@ -98,12 +112,6 @@ uintptr_t mmu_vir2phy(uintptr_t addr) {
     return target_section | (addr & 0x000FFFFF);
 }
 
-inline void dsb() {
-  asm("mcr p15, 0, %0, c7,c10,4"
-      :
-      : "r" (0)
-      :);
-}
 
 
 void mmu_stop() {
