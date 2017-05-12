@@ -20,6 +20,7 @@
 #include "kernel.h"
 
 #include "malloc.h"
+#include "uspi.h"
 #include "uspibind.h"
 
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
@@ -28,7 +29,6 @@ extern uint32_t __ramfs_start;
 
 extern int current_process;
 volatile unsigned int tim;
-
 volatile uint32_t __ram_size;
 
 extern char __kernel_bss_start;
@@ -87,6 +87,7 @@ void kernel_main(uint32_t memory) {
 	}
     blink(5);
 
+    enable_interrupts();
 
 	serial_init();
 
@@ -96,7 +97,7 @@ void kernel_main(uint32_t memory) {
 
 	paging_init((__ram_size >> 20) - 1, 2+((((uintptr_t)&__kernel_phy_end) + PAGE_SECTION - 1) >> 20));
 
-	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\n");
+	kernel_printf("[INFO][SERIAL] Serial output is hopefully ON.\r");
 
 
     unsigned char mac[6];
@@ -105,7 +106,15 @@ void kernel_main(uint32_t memory) {
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
 	Timer_Setup();
-	Timer_SetLoad(500);
+	Timer_SetLoad(1000000);
+
+    if(USPiInitialize()) {
+        kernel_printf("Uspi is correctly initialized\n");
+    }
+    else {
+        kernel_printf("Uspi failed\n");
+    }
+
 
 
 	storage_driver memorydisk;
