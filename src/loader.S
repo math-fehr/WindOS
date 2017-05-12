@@ -45,6 +45,7 @@ _fast_interrupt_vector_h:           .word   _fast_interrupt_vector
    */
 
 _reset_:
+#ifdef RPI2
     mrs     r0, cpsr
     and     r1, r0, #0x1F
     cmp     r1, #0x13
@@ -57,6 +58,7 @@ _reset_:
     add     r0,pc,#4
     msr     ELR_hyp,r0
     eret
+#endif
 skip:
 	//Setting up interrupt table at physical address 0
 	ldr     r0, =_start

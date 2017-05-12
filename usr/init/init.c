@@ -12,11 +12,12 @@ extern char** argv;
 extern char** envp;
 
 int main () {
-	int pid = fork();
+	int pid = _fork();
+
 	if (pid != 0) {
 		int status;
 		while(1) {
-			pid_t res = wait(&status);
+			pid_t res = _wait(&status);
 			printf("[INIT] Process %d exited with status %d.\n", res, status);
 			if (pid == res) {
 				printf("[INIT] The shell is dead. Restarting..\n");
@@ -24,8 +25,13 @@ int main () {
 			}
 		}
 	} else {
-		char* argv_wesh[] = {"/bin/wesh", NULL};
-		char* envp_wesh[] = {"PATH=/bin", NULL};
-		execve("/bin/wesh", argv_wesh, envp_wesh);
+		pid = _fork();
+		if (pid != 0) {
+			while (1) {}
+		} else {
+			char* argv_wesh[] = {"/bin/wesh", NULL};
+			char* envp_wesh[] = {"PATH=/bin", NULL};
+			execve("/bin/wesh", argv_wesh, envp_wesh);
+		}
 	}
 }

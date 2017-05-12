@@ -6,6 +6,7 @@
 
 #include "memalloc.h"
 #include "mmu.h"
+#include <sys/types.h>
 
 
 //#define HEAP_BASE 0xc0000000
@@ -14,6 +15,21 @@
 
 extern int __kernel_phy_end;
 uintptr_t heap_end = 0;
+
+
+ssize_t _write(int fd, const void* buf, ssize_t count) {
+	return 0;
+}
+ssize_t _read(int fd, const void* buf, ssize_t count) {
+	return 0;
+}
+off_t _lseek(int fd, off_t cnt, int mode) {
+	return 0;
+}
+
+int _close(int fd) {
+	return 0;
+}
 
 uintptr_t _sbrk(int incr) {
   static uint32_t allocated_pages = 0;

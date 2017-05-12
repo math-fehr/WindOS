@@ -26,7 +26,7 @@ extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
 extern uint32_t __ramfs_start;
 
-extern int current_process;
+extern int current_process_id;
 volatile unsigned int tim;
 
 volatile uint32_t __ram_size;
@@ -71,7 +71,6 @@ void blink(int n) {
 	GPIO_setPinValue(GPIO_LED_PIN, true);
 }
 
-
 void kernel_main(uint32_t memory) {
 	// Initialize BSS segment
 	for (char* val = (char*)&__kernel_bss_start; val < (char*)&__kernel_bss_end; val++) {
@@ -105,12 +104,14 @@ void kernel_main(uint32_t memory) {
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
 	Timer_Setup();
-	Timer_SetLoad(500000);
+	Timer_SetLoad(250000);
+	Timer_SetReload(250000);
 
 
 	storage_driver memorydisk;
 	memorydisk.read    = memory_read;
 	memorydisk.write   = memory_write;
+
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
 	if (fsroot == NULL) {
@@ -143,19 +144,28 @@ void kernel_main(uint32_t memory) {
 	*p->fd[1].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	p->fd[1].position   = 0;
 
+
+
 	if (p != NULL) {
+		asm volatile("mrs r0,cpsr\n"
+					 "orr r0,r0,#0x80\n"
+					 "msr cpsr_c,r0\n");
+
 		sheduler_add_process(p);
 		Timer_Enable();
 		Timer_Enable_Interrupts();
 
-	    RPI_GetIRQController()->Enable_Basic_IRQs |= RPI_BASIC_ARM_TIMER_IRQ;
-		// Enable serial IRQs.
-		RPI_GetIRQController()->Enable_IRQs_1 |= (1 << 29);
-	    dmb();
+	    RPI_GetIRQController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
+		dmb();
 
-	    current_process = p->asid;
+
+	    current_process_id = p->asid;
 		p->parent_id 	= p->asid; // (Badass process)
+		kernel_printf("%p\n", p);
+		kernel_printf("%p %p\n", p->ttb_address, mmu_vir2phy(p->ttb_address));
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+
+		kernel_printf("ici\n");
 
 		asm volatile(
 			"mov 	r0, %0\n"

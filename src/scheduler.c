@@ -13,8 +13,12 @@ static int free_processes[MAX_PROCESSES];
 //Zombie processes
 static int zombie_processes[MAX_PROCESSES];
 
-//The current process running
-int current_process;
+//The current process running in active_processes list
+static int current_process;
+
+//
+int current_process_id;
+
 //The number of active processes
 static int number_active_processes;
 //The number of free processes
@@ -44,6 +48,9 @@ int get_next_process() {
     if(number_active_processes == 0) {
         return -1;
     }
+	process_list[active_processes[current_process]]->dummy++;
+
+	kernel_printf("\033[s\033[%d;%dH%d\033[u", 1, 1, active_processes[current_process]);
     return active_processes[current_process];
 }
 

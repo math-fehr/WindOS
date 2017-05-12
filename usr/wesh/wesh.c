@@ -15,11 +15,11 @@ extern char** argv;
 extern char** environ;
 
 int exec_blocking(char* command, char* params[]) {
-	int r = fork();
+	int r = _fork();
 	if (r == 0) {
 		execvp(command, params);
 		perror(command);
-		exit(1);
+		_exit(1);
 	} else {
 		return wait(NULL);
 	}
@@ -51,7 +51,7 @@ void wesh_readline(char* buffer) {
 			c = getc(stdin);
 			if (hist_bot != hist_top) {
 				char* new_entry;
-				
+
 				if (c == 'A') { // ^
 					if (hist_pos != hist_bot) {
 						hist_pos--;

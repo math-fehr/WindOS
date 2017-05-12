@@ -14,12 +14,8 @@ extern void dmb();
 
 void Timer_Setup() {
   dmb();
-  rpiArmTimer->control = 0;
-  rpiArmTimer->control |= (249 << 16);
-  rpiArmTimer->control |= TIMER_CTRL_COUNTER_23BITS;
-  rpiArmTimer->control |= TIMER_CTRL_PRESCALE_1;
-  rpiArmTimer->control |= TIMER_CTRL_HALT_STOP;
-  rpiArmTimer->pre_divider = 249; // Gives a 1MHz timer.
+  rpiArmTimer->control = 0x003E0000;
+  rpiArmTimer->pre_divider = 0xF9; // Gives a 1MHz timer.
   dmb();
 }
 
@@ -27,6 +23,7 @@ void Timer_Enable() {
   dmb();
   rpiArmTimer->control |= TIMER_CTRL_FREERUNNING_COUNTER;
   rpiArmTimer->control |= TIMER_CTRL_ENABLE_BIT;
+  rpiArmTimer->control |= TIMER_CTRL_COUNTER_23BITS;
   dmb();
 }
 
