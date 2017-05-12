@@ -47,6 +47,7 @@ SFLAGS = $(INCLUDE_C)
 QEMU = qemu-fvm/arm-softmmu/fvm-arm
 
 SD_NAPPY = /media/nappy/boot/
+SD_NAPPY2 = /media/nappy/OUI/
 SD_LORTEX = /media/lucas/460D-5801/
 
 DEPDIR = .d
@@ -134,7 +135,8 @@ $(LIB_USPI_CFG):
 	echo "ARCH = -march=armv7-a -mtune=cortex-a7 -mfloat-abi=soft" >> $@;
 
 # $(LIB_USPI_CFG):
-# 	echo "RASPPI = 1" > $@ ; \
+# 	@echo "Making USPi Lib"
+# 	@echo "RASPPI = 1" > $@ ; \
 # 	echo "PREFIX = arm-none-eabi-" >> $@ ;\
 # 	echo "ARCH = -march=armv6j -mtune=arm1176jzf-s -mfloat-abi=soft" >> $@;
 
@@ -145,6 +147,8 @@ $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
 
 copy_nappy: all
 	cp $(IMGDIR)* $(SD_NAPPY)
+copy_nappy2: rpi
+	cp $(IMGDIR)* $(SD_NAPPY2)
 copy_lortex: rpi
 	cp $(IMGDIR)* $(SD_LORTEX)
 
