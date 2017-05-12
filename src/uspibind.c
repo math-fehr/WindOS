@@ -7,6 +7,7 @@
 #include "mailbox.h"
 #include "string.h"
 #include "interrupts.h"
+#include "stdarg.h"
 
 void MsDelay(unsigned nMilliSeconds) {
     Timer_WaitMicroSeconds(((uint32_t)1000)*(uint32_t)(nMilliSeconds));
@@ -58,8 +59,12 @@ int GetMACAddress(unsigned char buffer[6]) {
 }
 
 void LogWrite (const char *pSource, unsigned Severity, const char *pMessage, ...) {
-    //TODO
-    kdebug(12,Severity,"[%s] %s\n",pSource,pMessage);
+    kernel_printf("[USPI][%s][%s]",pSource,Severity);
+
+    va_list args;
+    va_start(args,pMessage);
+    vkernel_printf(pMessage,args);
+    va_end(args);
 }
 
 

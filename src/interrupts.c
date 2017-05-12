@@ -57,7 +57,7 @@ void interrupt_vector(void* user_context) {
 		if (RPI_GetIRQController()->IRQ_pending_1 & (1 << 29)) {
 			serial_irq();
 		} else {
-			kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ!\n");
+			kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ (%X)!\n",irq);
 		}
 	} else if (irq & RPI_BASIC_ARM_TIMER_IRQ) {
 		dmb();
@@ -78,9 +78,6 @@ void interrupt_vector(void* user_context) {
 		if (p->status == status_blocked_svc) {
 			software_interrupt_vector(user_context);
 		}
-	} else {
-		kdebug(D_IRQ, 10, "[ERROR] Unhandled IRQ!\n");
-		while(1) {}
 	}
 
     dmb();

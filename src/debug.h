@@ -6,6 +6,7 @@
 #include "stdint.h"
 #include "cstubs.h"
 #include "serial.h"
+#include "stdarg.h"
 
 /**
  * The functions and defines are here to debug more easily
@@ -37,6 +38,12 @@
 #define D_SYSCALL 11
 #define D_USPI    12
 #define D_MBX     13
+
+/**
+ * Used in function kdebug.
+ * Act the same as kernel_printf, but when the va_list is already set up
+ */
+void vkernel_printf(const char* fmt, va_list args);
 
 /**
  * printf to serial

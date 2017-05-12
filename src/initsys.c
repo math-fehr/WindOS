@@ -61,7 +61,9 @@ void sys_init() {
     isb();
     dsb();
 
+    #ifdef RPI2
     flush_data_cache(true);
+    #endif
     flush_instruction_cache();
     tlb_flush_all();
     dsb();
