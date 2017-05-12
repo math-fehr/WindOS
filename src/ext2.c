@@ -266,7 +266,7 @@ int ext2_fread(
 		return 0;
 	}
 
-	if (position + size > info.size) {
+	if ((uint32_t)(position + size) > info.size) {
 		size = info.size - position;
 	}
 
@@ -570,7 +570,7 @@ int ext2_get_free_inode(superblock_t* fs) {
 
   kdebug(D_EXT2, 0, "I: %d, %d\n", sb->total_inode_count, sb->inodes_per_group);
 
-  for (int i=0; i<sb->total_inode_count/sb->inodes_per_group;i++) {
+  for (unsigned i=0; i<sb->total_inode_count/sb->inodes_per_group;i++) {
     group_descriptor = ext2_get_block_group_descriptor(fs, i);
     if (group_descriptor.unallocated_inode_count > 0) {
       uint8_t* bitmap = malloc(block_size);
@@ -604,7 +604,7 @@ int ext2_get_free_block(superblock_t* fs) {
   int block_size = 1024 << sb->log_block_size;
 
   kdebug(D_EXT2, 0, "B: %d, %d\n", sb->total_block_count, sb->blocks_per_group);
-  for (int i=0; i<sb->total_block_count / sb->blocks_per_group;i++) {
+  for (unsigned i=0; i<sb->total_block_count / sb->blocks_per_group;i++) {
     group_descriptor = ext2_get_block_group_descriptor(fs, i);
     kdebug(D_EXT2, 0, "%d, %d, %d\n", group_descriptor.unallocated_block_count,
     group_descriptor.unallocated_inode_count, group_descriptor.directory_count);

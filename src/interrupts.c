@@ -9,6 +9,8 @@
 static rpi_irq_controller_t* rpiIRQController =
   (rpi_irq_controller_t*) RPI_INTERRUPT_CONTROLLER_BASE;
 
+static interruptHandler IRQInterruptHandlers[NUMBER_IRQ_INTERRUPTS];
+
 rpi_irq_controller_t* RPI_GetIRQController(void) {
   return rpiIRQController;
 }
@@ -26,6 +28,7 @@ void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
 }
 
 static bool status;
+
 extern uint32_t current_process_id;
 
 
@@ -52,6 +55,8 @@ void interrupt_vector(void* user_context) {
 
     kdebug(D_IRQ, 5, "T=> %d.\n", current_process_id);
 	print_context(5, user_context);
+
+    dmb();
 
 	uint32_t irq = RPI_GetIRQController()->IRQ_basic_pending;
 
@@ -93,8 +98,38 @@ void interrupt_vector(void* user_context) {
 		// Ghost interrupt.
 		return;
 	}
-	print_context(5, user_context);
-    kdebug(D_IRQ, 5, "T<= %d.\n", current_process_id);
+
+    dmb();
+    for(uint32_t i = 0; i<NUMBER_IRQ_INTERRUPTS; i++) {
+        if(i<32) {
+            if(RPI_GetIRQController()->IRQ_pending_1 & (1UL << i)) {
+                RPI_GetIRQController()->IRQ_pending_1 = (1UL << i);
+                if(IRQInterruptHandlers[i].function != NULL) {
+                    IRQInterruptHandlers[i].function(IRQInterruptHandlers[i].param);
+                    dmb();
+                }
+                else {
+                    RPI_GetIRQController()->Disable_IRQs_1 = (1 << i);
+                }
+            }
+        }
+        else {
+            if(RPI_GetIRQController()->IRQ_pending_2 & (1UL << (i&31))) {
+                RPI_GetIRQController()->IRQ_pending_2 = (1UL << (i&31));
+                if(IRQInterruptHandlers[i].function != NULL) {
+                    IRQInterruptHandlers[i].function(IRQInterruptHandlers[i].param);
+                    dmb();
+                }
+                else {
+                    RPI_GetIRQController()->Disable_IRQs_2 = (1UL << (i&31));
+                }
+            }
+        }
+    }
+    dmb();
+
+    kdebug(D_IRQ, 2, "<= %d.\n", current_process_id);
+	print_context(2, user_context);
 }
 
 
@@ -114,7 +149,7 @@ uint32_t software_interrupt_vector(void* user_context) {
 swi_beg:
 	p = get_process_list()[current_process_id];
 	p->ctx = *ctx;
-	int res;
+	uint32_t res;
 
     switch(ctx->r[7]) {
 		case SVC_IOCTL:
@@ -163,7 +198,7 @@ swi_beg:
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
 			break;
 		case SVC_GETCWD:
-			res = svc_getcwd((char*)ctx->r[0],ctx->r[1]);
+			res = (uint32_t)svc_getcwd((char*)ctx->r[0],ctx->r[1]);
 			break;
 		case SVC_CHDIR:
 			res = svc_chdir((char*)ctx->r[0]);
@@ -181,7 +216,7 @@ swi_beg:
 
 	if ((ctx->r[7] == SVC_EXIT)
 	|| 	(ctx->r[7] == SVC_EXECVE)
-	||	(ctx->r[7] == SVC_WAITPID && res == -1)
+    ||	(ctx->r[7] == SVC_WAITPID && res == (uint32_t)-1)
 	||  (p->status == status_blocked_svc)) {
 		p = get_process_list()[current_process_id];
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
@@ -292,6 +327,28 @@ void data_abort_vector(void* data) {
 
 	    while(1);
 	}
+}
+
+
+
+void init_irq_interruptHandlers(void) {
+    for(int i = 0; i<NUMBER_IRQ_INTERRUPTS; i++) {
+        IRQInterruptHandlers[i].function = NULL;
+        IRQInterruptHandlers[i].param = NULL;
+    }
+}
+
+
+void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* param) {
+    IRQInterruptHandlers[irqID].function = function;
+    IRQInterruptHandlers[irqID].param = param;
+    if(irqID < 32) {
+        RPI_GetIRQController()->Enable_IRQs_1 = (uint32_t)1 << (uint32_t)irqID;
+    }
+    else {
+        irqID &= 32;
+        RPI_GetIRQController()->Enable_IRQs_2 = (uint32_t)1 << (uint32_t)irqID;
+    }
 }
 
 

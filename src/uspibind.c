@@ -6,6 +6,7 @@
 #include "stdint.h"
 #include "mailbox.h"
 #include "string.h"
+#include "interrupts.h"
 
 void MsDelay(unsigned nMilliSeconds) {
     Timer_WaitMicroSeconds(((uint32_t)1000)*(uint32_t)(nMilliSeconds));
@@ -17,17 +18,25 @@ void usDelay(unsigned nMicroSeconds) {
 }
 
 
-unsigned StartKernelTimer (unsigned	nHzDelay, TKernelTimerHandler *pHandler, void *pParam, void *pContext) {
-    return 0;
+unsigned StartKernelTimer (unsigned	hzDelay, TKernelTimerHandler *handler, void *param, void *context) {
+    timerFunction* function = (timerFunction*)handler;
+    uint32_t millis = (uint32_t)((uint64_t)(hzDelay * 1000) / (uint64_t)HZ);
+    int id = Timer_addHandler(millis,function,param,context);
+    if(id == -1) {
+        return 0; //Will result in a bug, but uspi didn't expect this
+                  //function to fail
+    }
+    return id;
 }
 
 
-void CancelKernelTimer (unsigned hTimer) {
+void CancelKernelTimer (unsigned id) {
+    Timer_deleteHandler(id);
 }
 
 
 void ConnectInterrupt (unsigned nIRQ, TInterruptHandler *pHandler, void *pParam) {
-    kernel_printf("Connect interrupt");
+    connectIRQInterrupt(nIRQ,(interruptFunction*)pHandler,pParam);
 }
 
 int SetPowerStateOn (unsigned deviceId) {
@@ -50,15 +59,18 @@ int GetMACAddress(unsigned char buffer[6]) {
 
 void LogWrite (const char *pSource, unsigned Severity, const char *pMessage, ...) {
     //TODO
-    kdebug(12,0,"[%s] %s\n",pSource,pMessage);
+    kdebug(12,Severity,"[%s] %s\n",pSource,pMessage);
 }
 
 
 void uspi_assertion_failed (const char *pExpr, const char *pFile, unsigned nLine) {
-    kdebug(12,0,"Assertion '%s' on file '%s',line %d\n",pExpr,pFile,nLine);
+    kdebug(12,10,"Assertion '%s' on file '%s',line %d\n",pExpr,pFile,nLine);
 }
 
 void DebugHexdump (const void *pBuffer, unsigned nBufLen, const char *pSource) {
+    (void)pBuffer;
+    (void)nBufLen;
+    (void)pSource;
     //TODO do that
     kdebug(12,0,"Needs to implement DebugHexDump function");
 }

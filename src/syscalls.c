@@ -10,6 +10,7 @@ extern unsigned int __ram_size;
  * check if the pointer effectively points to the process' allowed userspace.
  */
 bool his_own(process *p, void* pointer) {
+    (void)p;
 	return (((uintptr_t)pointer) < __ram_size) && (pointer != NULL); // no further check.
 }
 
@@ -205,7 +206,7 @@ uint32_t svc_fork() {
 
 	int pages_needed = 2+p->brk_page;
 	page_list_t* res = paging_allocate(pages_needed);
-	if (res == NULL || copy->ttb_address == NULL) {
+	if (res == NULL || copy->ttb_address == (uintptr_t)NULL) {
 		kdebug(D_PROCESS, 10, "Can't fork: page allocation failed.\n");
 		return -ENOMEM;
 	}
@@ -266,6 +267,7 @@ uint32_t svc_fork() {
 }
 
 pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
+    (void)options;
 	kdebug(D_SYSCALL, 2, "WAITPID\n");
 	if (!his_own(get_process_list()[current_process_id], wstatus) && wstatus != NULL) {
 		return -EFAULT;
@@ -427,6 +429,7 @@ uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 
 int svc_open(char* path, int flags) {
 	process* p = get_process_list()[current_process_id];
+    (void)flags;
 	int i=0;
 	for (;(p->fd[i].position != -1) && (i<MAX_OPEN_FILES);i++);
 

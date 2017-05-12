@@ -117,6 +117,50 @@ void Timer_SetReload(uint32_t value);
 void Timer_ClearInterrupt();
 
 /**
+ * the functions called by the timer
+ * params are id,param and context
+ */
+typedef void timerFunction (unsigned,void*,void*);
+
+typedef struct timerHandler {
+    timerFunction* function;
+    void* param;
+    void* context;
+    uint32_t triggerTime;
+    uint32_t overflowTime;
+} timerHandler;
+
+/**
+ * Call a function after some time
+ */
+int Timer_addHandler(uint32_t millis, timerFunction* function, void* param, void* context);
+
+/**
+ * Calculate the next time a handler needs to be called
+ */
+void Timer_updateNextHandler();
+
+/**
+ * Call a handling function and delete it
+ */
+void Timer_callHandlingFunction(unsigned int i);
+
+/**
+ * Call necessary handlers
+ */
+void Timer_callHandlers();
+
+/**
+ * Get a free timer handler
+ */
+int Timer_getFreeHandler();
+
+/**
+ * Delete a timer handler
+ */
+void Timer_deleteHandler(unsigned id);
+
+/**
  * Return the current time
  */
 uint32_t Timer_GetTime();

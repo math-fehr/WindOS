@@ -85,7 +85,7 @@ int kill_process(int const process_id, int wstatus) {
 		parent->status 		= status_active;
 		parent->ctx.r[0] 	= process_id;
 		if (parent->wait.wstatus != NULL) {
-			int* phy_addr = 0x80000000+mmu_vir2phy_ttb((intptr_t)parent->wait.wstatus, parent->ttb_address);
+			int* phy_addr = (int*)(0x80000000+mmu_vir2phy_ttb((intptr_t)parent->wait.wstatus, parent->ttb_address));
 			*phy_addr = wstatus;
 		}
 
@@ -119,7 +119,7 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 	}
 
 	process* parent = process_list[process_id];
-	int* phy_addr = 0x80000000+mmu_vir2phy_ttb((intptr_t)wstatus, parent->ttb_address);
+	int* phy_addr = (int*)(0x80000000+mmu_vir2phy_ttb((intptr_t)wstatus, parent->ttb_address));
 
 	if (target_pid == -1) { // Reap a zombie children.
 		for (int i=0;i<number_zombie_processes;i++) {
@@ -133,7 +133,7 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 				number_free_processes++;
 				process_list[child_pid] = 0;
 				if (wstatus != NULL)
-					*phy_addr = child->wait.wstatus;
+					*phy_addr = (int)child->wait.wstatus;
 				free_process_data(child);
 				return child_pid;
 			}
@@ -151,7 +151,7 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 			process_list[target_pid] = 0;
 
 			if (wstatus != NULL)
-				*phy_addr = child->wait.wstatus;
+				*phy_addr = (int)child->wait.wstatus;
 			free_process_data(child);
 			return target_pid;
 		}

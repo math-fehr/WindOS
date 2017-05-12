@@ -16,7 +16,7 @@ static volatile rpi_gpio_controller_t* GPIOController =
   (rpi_gpio_controller_t*) GPIO_BASE;
 
 
-rpi_gpio_controller_t* getGPIOController(void) {
+volatile rpi_gpio_controller_t* getGPIOController(void) {
     return GPIOController;
 }
 
