@@ -14,7 +14,8 @@ struct page_list_t {
   int size; // in number of pages.
   int address; // page-aligned
 };
- 
+
+void paging_print_status();
 void paging_free(int n_pages, int address);
 void paging_init(int n_total_pages, int n_reserved_pages);
 page_list_t* paging_allocate(int n_pages);

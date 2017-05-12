@@ -1,6 +1,8 @@
 #include "interrupts.h"
 
 #include "arm.h"
+#include "memalloc.h"
+#include "stdio.h"
 
 /**
  * function used to make sure data is sent in order to GPIO
@@ -81,7 +83,7 @@ void interrupt_vector(void* user_context) {
 		dmb();
 
 		current_process_id = get_next_process();
-		if (current_process_id == -1) {
+		if (current_process_id == (uint32_t)-1) {
 			kdebug(D_IRQ, 10,
 		"Every one is dead. Only the void remains. In the distance, sirens.\n");
 			while(1) {} // TODO: Reboot?
@@ -130,7 +132,6 @@ void interrupt_vector(void* user_context) {
 
 // In SVC mode
 uint32_t software_interrupt_vector(void* user_context) {
-	uint32_t irq;
     kdebug(D_IRQ,10, "ENTREESWI. %p \n", user_context);
 	user_context_t* ctx = (user_context_t*) user_context;
 	if (0xfeff726b == ctx->r[12]) {
@@ -178,9 +179,9 @@ swi_beg:
             res = svc_read(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
 			if (p->status == status_blocked_svc) {
 				current_process_id = get_next_process();
-				int n = get_number_active_processes();
+				/*int n = get_number_active_processes();
 				process** p_list = get_process_list();
-				/*kernel_printf("f => %d %d\n", current_process_id, n);
+				kernel_printf("f => %d %d\n", current_process_id, n);
 				for (int i=0;i<n;i++) {
 				 	kernel_printf(">%d: %d\n", i, p_list[get_active_processes()[i]]->dummy);
 				}*/
@@ -259,7 +260,7 @@ void kern_debug() {
 	while(1) {
 		while(serial_readline(buf, 1024) == 0){}
 		uintptr_t val;
-		sscanf(buf, "%x", &val);
+		sscanf(buf, "%x", (unsigned*)(&val));
 		uintptr_t phy = mmu_vir2phy(val);
 		if (phy <= __ram_size) {
 			kernel_printf("phi: %010p\n", phy);
@@ -301,7 +302,7 @@ void data_abort_vector(void* data) {
 		kern_debug();
 		kill_process(current_process_id, -1);
 		current_process_id = get_next_process();
-		if (current_process_id == -1) {
+		if (current_process_id == (uint32_t)-1) {
 			kdebug(D_IRQ, 10, "No process left.\n");
 			while(1) {}
 		}

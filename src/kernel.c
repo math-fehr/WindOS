@@ -106,7 +106,7 @@ void kernel_main(uint32_t memory) {
 
 	Timer_Setup();
 	Timer_SetLoad(250000);
-    Timer_SetReload(250000)
+    Timer_SetReload(250000);
 
     if(USPiInitialize()) {
         kernel_printf("Uspi is correctly initialized\n");

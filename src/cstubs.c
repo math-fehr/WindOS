@@ -18,16 +18,26 @@ uintptr_t heap_end = 0;
 
 
 ssize_t _write(int fd, const void* buf, ssize_t count) {
+    (void)fd;
+    (void)buf;
+    (void)count;
 	return 0;
 }
 ssize_t _read(int fd, const void* buf, ssize_t count) {
+    (void)fd;
+    (void)buf;
+    (void)count;
 	return 0;
 }
 off_t _lseek(int fd, off_t cnt, int mode) {
-	return 0;
+    (void)fd;
+    (void)cnt;
+    (void)mode;
+    return 0;
 }
 
 int _close(int fd) {
+    (void)fd;
 	return 0;
 }
 
