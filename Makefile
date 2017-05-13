@@ -68,7 +68,7 @@ qemu: $(LIB_USPI) $(TARGET_QEMU) $(USR_BIN)
 #rpi: sets the flag for the RPI1 build.
 rpi: RPI_FLAG = -D RPI
 rpi: HARDWARE_FLAGS = -mfpu=vfp -mfloat-abi=soft -march=armv6zk -mtune=arm1176jzf-s
-rpi: RPI_FLAG_S = --defsym RPI2=1
+rpi: RPI_FLAG_S = --defsym RPI=1
 rpi: all
 
 #rpi: sets the flag for the RPI2 build.
