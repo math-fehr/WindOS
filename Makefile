@@ -35,7 +35,7 @@ USPI_INCLUDE_DIR  = uspi/include
 
 CLIBS = -L$(LIB_USPI_DIR) -luspi
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu11 $(INCLUDE_C) -mno-unaligned-access $(CLIBS) -I $(USPI_INCLUDE_DIR)
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu11 $(INCLUDE_C) -mno-unaligned-access -fno-omit-frame-pointer $(CLIBS) -I $(USPI_INCLUDE_DIR)
 
 HARDWARE_FLAGS = -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=soft \
 								 -mtune=cortex-a7
