@@ -48,6 +48,8 @@ int count;
 
 // In IRQ mode - r0 => SP
 void interrupt_vector(void* user_context) {
+    callInterruptHandlers();
+
 	user_context_t* uc = user_context;
     kdebug(D_IRQ,5,"ENTREEIRQ\n");
 	kdebug(D_IRQ,5,"fp: %p\n", uc->r[12]);
@@ -91,42 +93,12 @@ void interrupt_vector(void* user_context) {
 		}
 
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
-        p->ctx.pc -=4;
 		if (p->status == status_blocked_svc) {
 			software_interrupt_vector(user_context);
 		}
 	}
 
-    dmb();
-    for(uint32_t i = 0; i<NUMBER_IRQ_INTERRUPTS; i++) {
-        if(i<32) {
-            if(RPI_GetIRQController()->IRQ_pending_1 & (1UL << i)) {
-                RPI_GetIRQController()->IRQ_pending_1 = (1UL << i);
-                if(IRQInterruptHandlers[i].function != NULL) {
-                    IRQInterruptHandlers[i].function(IRQInterruptHandlers[i].param);
-                    dmb();
-                }
-                else {
-                    RPI_GetIRQController()->Disable_IRQs_1 = (1 << i);
-                }
-            }
-        }
-        else {
-            if(RPI_GetIRQController()->IRQ_pending_2 & (1UL << (i&31))) {
-                RPI_GetIRQController()->IRQ_pending_2 = (1UL << (i&31));
-                if(IRQInterruptHandlers[i].function != NULL) {
-                    IRQInterruptHandlers[i].function(IRQInterruptHandlers[i].param);
-                    dmb();
-                }
-                else {
-                    RPI_GetIRQController()->Disable_IRQs_2 = (1UL << (i&31));
-                }
-            }
-        }
-    }
-    dmb();
-
-    kdebug(D_IRQ, 2, "<= %d.\n", get_current_process_id());
+    kdebug(D_IRQ, 7, "<= %d.\n", get_current_process_id());
 	print_context(2, user_context);
 }
 
@@ -150,43 +122,43 @@ swi_beg:
 
     switch(ctx->r[7]) {
 		case SVC_IOCTL:
-            //kernel_printf("ENTREEIOCTL\n");
+            kdebug(D_IRQ,5,"ENTREEIOCTL\n");
 			res = svc_ioctl(ctx->r[0],ctx->r[1],ctx->r[2]);
 			break;
         case SVC_EXIT:
-            //kernel_printf("ENTREEEXIT\n");
+            kdebug(D_IRQ,5,"ENTREEEXIT\n");
 			res = svc_exit();
 			break;
         case SVC_SBRK:
-            //kernel_printf("ENTREESBRK\n");
+            kdebug(D_IRQ,5,"ENTREESBRK\n");
 			res = svc_sbrk(ctx->r[0]);
 			break;
 		case SVC_FORK:
-            //kernel_printf("ENTREEFORK\n");
+            kdebug(D_IRQ,5,"ENTREEFORK\n");
 			res = svc_fork();
 			break;
         case SVC_WRITE:
-            //kernel_printf("ENTREEWRITE\n");
+            kdebug(D_IRQ,5,"ENTREEWRITE\n");
             res = svc_write(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
 			break;
         case SVC_CLOSE:
-            //kernel_printf("ENTREECLOSE\n");
+            kdebug(D_IRQ,5,"ENTREECLOSE\n");
             res = svc_close(ctx->r[0]);
 			break;
 		case SVC_WAITPID:
-            //kernel_printf("ENTREEWAITPID\n");
+            kdebug(D_IRQ,5,"ENTREEWAITPID\n");
 			res = svc_waitpid(ctx->r[0],(int*) ctx->r[1], ctx->r[2]);
 			break;
         case SVC_FSTAT:
-            //kernel_printf("ENTREEFSTAT\n");
+            kdebug(D_IRQ,5,"ENTREEFSTAT\n");
             res = svc_fstat(ctx->r[0],(struct stat*)ctx->r[1]);
 			break;
         case SVC_LSEEK:
-            //kernel_printf("ENTREELSEEK\n");
+            kdebug(D_IRQ,5,"ENTREELSEEK\n");
 			res = svc_lseek(ctx->r[0],ctx->r[1],ctx->r[2]);
             break;
         case SVC_READ:
-            //kernel_printf("ENTREEREAD\n");
+            //kdebug(D_IRQ,5,"ENTREEREAD\n");
             res = svc_read(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
 			if (p->status == status_blocked_svc) {
 				get_next_process();
@@ -199,27 +171,27 @@ swi_beg:
 			}
 			break;
 		case SVC_TIME:
-            //kernel_printf("ENTREETIME\n");
+            kdebug(D_IRQ,5,"ENTREETIME\n");
 			res = svc_time((time_t*)ctx->r[0]);
 			break;
 		case SVC_EXECVE:
-            //kernel_printf("ENTREEEXECVE\n");
+            kdebug(D_IRQ,5,"ENTREEEXECVE\n");
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
 			break;
 		case SVC_GETCWD:
-            //kernel_printf("ENTREEGETCWD\n");
+            kdebug(D_IRQ,5,"ENTREEGETCWD\n");
 			res = (uint32_t)svc_getcwd((char*)ctx->r[0],ctx->r[1]);
 			break;
 		case SVC_CHDIR:
-            //kernel_printf("ENTREECHDIR\n");
+            kdebug(D_IRQ,5,"ENTREECHDIR\n");
 			res = svc_chdir((char*)ctx->r[0]);
 			break;
 		case SVC_GETDENTS:
-            //kernel_printf("ENTREEGETENTS\n");
+            kdebug(D_IRQ,5,"ENTREEGETENTS\n");
 			res = svc_getdents(ctx->r[0], (struct dirent *)ctx->r[1]);
 			break;
 		case SVC_OPEN:
-            //kernel_printf("ENTREEOPEN\n");
+            kdebug(D_IRQ,5,"ENTREEOPEN\n");
 			res = svc_open((char*) ctx->r[0], ctx->r[1]);
 			break;
         default:
@@ -362,6 +334,37 @@ void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* 
         irqID &= 32;
         RPI_GetIRQController()->Enable_IRQs_2 = (uint32_t)1 << (uint32_t)irqID;
     }
+}
+
+void callInterruptHandlers() {
+    dmb();
+    for(uint32_t i = 0; i<NUMBER_IRQ_INTERRUPTS; i++) {
+        if(i<32) {
+            if(RPI_GetIRQController()->IRQ_pending_1 & (1UL << i)) {
+                RPI_GetIRQController()->IRQ_pending_1 = (1UL << i);
+                if(IRQInterruptHandlers[i].function != NULL) {
+                    IRQInterruptHandlers[i].function(IRQInterruptHandlers[i].param);
+                    dmb();
+                }
+                else {
+                    RPI_GetIRQController()->Disable_IRQs_1 = (1 << i);
+                }
+            }
+        }
+        else {
+            if(RPI_GetIRQController()->IRQ_pending_2 & (1UL << (i&31))) {
+                RPI_GetIRQController()->IRQ_pending_2 = (1UL << (i&31));
+                if(IRQInterruptHandlers[i].function != NULL) {
+                    IRQInterruptHandlers[i].function(IRQInterruptHandlers[i].param);
+                    dmb();
+                }
+                else {
+                    RPI_GetIRQController()->Disable_IRQs_2 = (1UL << (i&31));
+                }
+            }
+        }
+    }
+    dmb();
 }
 
 

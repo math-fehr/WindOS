@@ -115,6 +115,11 @@ void init_irq_interruptHandlers(void);
 void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* param);
 
 /**
+ * Call all handled function that needs to be called
+ */
+void callInterruptHandlers();
+
+/**
  * enable interrupts
  */
 void enable_interrupts(void);

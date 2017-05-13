@@ -83,12 +83,14 @@ void kernel_main(uint32_t memory) {
 	for (uint32_t i=0;i<0x80000000;i+=PAGE_SECTION) {
 		mmu_delete_section(0xf0004000, i);
 	}
-    blink(5);
+
+    serial_init();
+    setup_scheduler();
+
+    blink(3);
 
     enable_interrupts();
 
-	serial_init();
-    setup_scheduler();
 
 	// TTB1 is already set up on boot (-> 0x4000)
 	// TTB0 is set up on each context switch
@@ -115,7 +117,8 @@ void kernel_main(uint32_t memory) {
     }
     else {
         kernel_printf("Uspi failed\n");
-    }*/
+        }*/
+
 
 	storage_driver memorydisk;
 	memorydisk.read    = memory_read;
@@ -154,9 +157,9 @@ void kernel_main(uint32_t memory) {
 
 
 	if (p != NULL) {
-		/*asm volatile("mrs r0,cpsr\n"
+		asm volatile("mrs r0,cpsr\n"
 					 "orr r0,r0,#0x80\n"
-					 "msr cpsr_c,r0\n");*/
+					 "msr cpsr_c,r0\n");
 
 		sheduler_add_process(p);
 
