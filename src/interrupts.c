@@ -93,6 +93,7 @@ void interrupt_vector(void* user_context) {
 		}
 
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+        *(user_context_t*)user_context = p->ctx;
 		if (p->status == status_blocked_svc) {
 			software_interrupt_vector(user_context);
 		}
@@ -105,12 +106,11 @@ void interrupt_vector(void* user_context) {
 
 // In SVC mode
 uint32_t software_interrupt_vector(void* user_context) {
-    kdebug(D_IRQ,10, "ENTREESWI. %p \n", user_context);
+    kdebug(D_IRQ,5, "ENTREESWI. %p \n", user_context);
 	user_context_t* ctx = (user_context_t*) user_context;
 	//if (0xfeff726b == ctx->r[12]) {
 	//	while(1) {}
 	//}
-	kernel_printf("fp: %p\n", ctx->r[12]);
     kdebug(D_IRQ, 5, "S=> %d.\n", get_current_process_id());
 
 	print_context(5, ctx);
@@ -140,6 +140,7 @@ swi_beg:
         case SVC_WRITE:
             kdebug(D_IRQ,5,"ENTREEWRITE\n");
             res = svc_write(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
+            kdebug(D_IRQ,5,"SORTIEWRITE\n");
 			break;
         case SVC_CLOSE:
             kdebug(D_IRQ,5,"ENTREECLOSE\n");
@@ -177,6 +178,7 @@ swi_beg:
 		case SVC_EXECVE:
             kdebug(D_IRQ,5,"ENTREEEXECVE\n");
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
+            kdebug(D_IRQ,5,"SORTIEEXECVE\n");
 			break;
 		case SVC_GETCWD:
             kdebug(D_IRQ,5,"ENTREEGETCWD\n");

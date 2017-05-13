@@ -106,7 +106,6 @@ int kill_process(int const process_id, int wstatus) {
 	for (;active_processes[i] != process_id;i++) {} // Danger
 	active_processes[i] = active_processes[number_active_processes-1];
 	number_active_processes--;
-
     return 0;
 }
 

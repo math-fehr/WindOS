@@ -77,7 +77,7 @@ rpi2: all
 
 # Builds a 1MB filesystem
 $(BUILD)fs.img: $(RAMFS_OBJ)
-	@genext2fs -b 8192 -i 256 -d $(RAMFS) $(BUILD)fs.tmp
+	@genext2fs -b 16384 -i 256 -d $(RAMFS) $(BUILD)fs.tmp
 	@$(ARMGNU)-ld -b binary -r -o $(BUILD)fs.ren $(BUILD)fs.tmp
 	@$(ARMGNU)-objcopy --rename-section .data=.fs \
 										--set-section-flags .data=alloc,code,load \

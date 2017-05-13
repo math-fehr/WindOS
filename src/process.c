@@ -122,7 +122,6 @@ process* process_load(char* path, inode_t cwd, const char* argv[], const char* e
 		}
 
 		position += 4*(envc + 1);
-
 		for (int i=0;i<envc;i++) {
 			phy_base[ofs+i] = position;
 			strcpy((char*)(intptr_t)(position+0x80000000+section_addr), envp[i]);

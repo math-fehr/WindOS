@@ -143,10 +143,10 @@ void kernel_main(uint32_t memory) {
     vfs_mount(devroot,"/dev");
 
 
-	const char* param[] = {"/bin/wesh", 0};
+	const char* param[] = {"/bin/test",0};
+    const char* env[] = {"a","b",NULL};
 
-
-	process* p = process_load("/bin/wesh", vfs_path_to_inode(NULL, "/"), param, NULL); // init program
+	process* p = process_load("/bin/test", vfs_path_to_inode(NULL, "/"), param, NULL); // init program
 	p->fd[0].inode      = malloc(sizeof(inode_t));
 	*p->fd[0].inode 	= vfs_path_to_inode(NULL, "/dev/serial");
 	p->fd[0].position   = 0;
@@ -157,9 +157,9 @@ void kernel_main(uint32_t memory) {
 
 
 	if (p != NULL) {
-		asm volatile("mrs r0,cpsr\n"
+		/*asm volatile("mrs r0,cpsr\n"
 					 "orr r0,r0,#0x80\n"
-					 "msr cpsr_c,r0\n");
+					 "msr cpsr_c,r0\n");*/
 
 		sheduler_add_process(p);
 
