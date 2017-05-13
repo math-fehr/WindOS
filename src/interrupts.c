@@ -31,8 +31,6 @@ void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
 
 static bool status;
 
-extern uint32_t current_process_id;
-
 
 
 void print_context(int level, user_context_t* ctx) {
@@ -51,12 +49,14 @@ int count;
 // In IRQ mode - r0 => SP
 void interrupt_vector(void* user_context) {
 	user_context_t* uc = user_context;
-	kernel_printf("fp: %p\n", uc->r[12]);
-	process* p = get_process_list()[current_process_id];
-	p->ctx = *(user_context_t*)user_context; // Save current program context.
-
-    kdebug(D_IRQ, 5, "T=> %d.\n", current_process_id);
-	print_context(5, user_context);
+    kdebug(D_IRQ,5,"ENTREEIRQ\n");
+	kdebug(D_IRQ,5,"fp: %p\n", uc->r[12]);
+	process* p = get_current_process();
+    if(p != NULL) {
+        p->ctx.pc -= 4;
+        p->ctx = *(user_context_t*)user_context; // Save current program context.
+        print_context(5, user_context);
+    }
 
     dmb();
 
@@ -82,15 +82,16 @@ void interrupt_vector(void* user_context) {
 		}
 		dmb();
 
-		current_process_id = get_next_process();
-		if (current_process_id == (uint32_t)-1) {
+
+		p = get_next_process();
+		if (p == NULL) {
 			kdebug(D_IRQ, 10,
 		"Every one is dead. Only the void remains. In the distance, sirens.\n");
-			while(1) {} // TODO: Reboot?
+            return; //We are probably in the kernel
 		}
-		p = get_process_list()[current_process_id];
+
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
-		*(user_context_t*)user_context = p->ctx;
+        p->ctx.pc -=4;
 		if (p->status == status_blocked_svc) {
 			software_interrupt_vector(user_context);
 		}
@@ -125,7 +126,7 @@ void interrupt_vector(void* user_context) {
     }
     dmb();
 
-    kdebug(D_IRQ, 2, "<= %d.\n", current_process_id);
+    kdebug(D_IRQ, 2, "<= %d.\n", get_current_process_id());
 	print_context(2, user_context);
 }
 
@@ -134,51 +135,61 @@ void interrupt_vector(void* user_context) {
 uint32_t software_interrupt_vector(void* user_context) {
     kdebug(D_IRQ,10, "ENTREESWI. %p \n", user_context);
 	user_context_t* ctx = (user_context_t*) user_context;
-	if (0xfeff726b == ctx->r[12]) {
-		while(1) {}
-	}
+	//if (0xfeff726b == ctx->r[12]) {
+	//	while(1) {}
+	//}
 	kernel_printf("fp: %p\n", ctx->r[12]);
-    kdebug(D_IRQ, 5, "S=> %d.\n", current_process_id);
+    kdebug(D_IRQ, 5, "S=> %d.\n", get_current_process_id());
 
 	print_context(5, ctx);
 	process* p;
 swi_beg:
-	p = get_process_list()[current_process_id];
+	p = get_current_process();
 	p->ctx = *ctx;
 	uint32_t res;
 
     switch(ctx->r[7]) {
 		case SVC_IOCTL:
+            //kernel_printf("ENTREEIOCTL\n");
 			res = svc_ioctl(ctx->r[0],ctx->r[1],ctx->r[2]);
 			break;
         case SVC_EXIT:
+            //kernel_printf("ENTREEEXIT\n");
 			res = svc_exit();
 			break;
         case SVC_SBRK:
+            //kernel_printf("ENTREESBRK\n");
 			res = svc_sbrk(ctx->r[0]);
 			break;
 		case SVC_FORK:
+            //kernel_printf("ENTREEFORK\n");
 			res = svc_fork();
 			break;
         case SVC_WRITE:
+            //kernel_printf("ENTREEWRITE\n");
             res = svc_write(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
 			break;
         case SVC_CLOSE:
+            //kernel_printf("ENTREECLOSE\n");
             res = svc_close(ctx->r[0]);
 			break;
 		case SVC_WAITPID:
+            //kernel_printf("ENTREEWAITPID\n");
 			res = svc_waitpid(ctx->r[0],(int*) ctx->r[1], ctx->r[2]);
 			break;
         case SVC_FSTAT:
+            //kernel_printf("ENTREEFSTAT\n");
             res = svc_fstat(ctx->r[0],(struct stat*)ctx->r[1]);
 			break;
         case SVC_LSEEK:
+            //kernel_printf("ENTREELSEEK\n");
 			res = svc_lseek(ctx->r[0],ctx->r[1],ctx->r[2]);
             break;
         case SVC_READ:
+            //kernel_printf("ENTREEREAD\n");
             res = svc_read(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
 			if (p->status == status_blocked_svc) {
-				current_process_id = get_next_process();
+				get_next_process();
 				/*int n = get_number_active_processes();
 				process** p_list = get_process_list();
 				kernel_printf("f => %d %d\n", current_process_id, n);
@@ -188,21 +199,27 @@ swi_beg:
 			}
 			break;
 		case SVC_TIME:
+            //kernel_printf("ENTREETIME\n");
 			res = svc_time((time_t*)ctx->r[0]);
 			break;
 		case SVC_EXECVE:
+            //kernel_printf("ENTREEEXECVE\n");
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
 			break;
 		case SVC_GETCWD:
+            //kernel_printf("ENTREEGETCWD\n");
 			res = (uint32_t)svc_getcwd((char*)ctx->r[0],ctx->r[1]);
 			break;
 		case SVC_CHDIR:
+            //kernel_printf("ENTREECHDIR\n");
 			res = svc_chdir((char*)ctx->r[0]);
 			break;
 		case SVC_GETDENTS:
+            //kernel_printf("ENTREEGETENTS\n");
 			res = svc_getdents(ctx->r[0], (struct dirent *)ctx->r[1]);
 			break;
 		case SVC_OPEN:
+            //kernel_printf("ENTREEOPEN\n");
 			res = svc_open((char*) ctx->r[0], ctx->r[1]);
 			break;
         default:
@@ -214,7 +231,7 @@ swi_beg:
 	|| 	(ctx->r[7] == SVC_EXECVE)
     ||	(ctx->r[7] == SVC_WAITPID && res == (uint32_t)-1)
 	||  (p->status == status_blocked_svc)) {
-		p = get_process_list()[current_process_id];
+		p = get_current_process();
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
 		*ctx = p->ctx; // Copy next process ctx
 		if (p->status == status_blocked_svc) {
@@ -226,7 +243,7 @@ swi_beg:
 	}
 
 	print_context(5, ctx);
-    kdebug(D_IRQ, 5, "S<= %d.\n", current_process_id);
+    kdebug(D_IRQ, 5, "Sortie SWI : <= %d.\n", get_current_process_id());
 	return 0;
 }
 
@@ -291,7 +308,7 @@ void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
 void data_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
 	if ((ctx->cpsr & 0x1F) == 0x10) {
-		kdebug(D_IRQ, 10, "USER DATA ABORT of process %d at instruction %#010x.\n", current_process_id, ctx->pc-8);
+		kdebug(D_IRQ, 10, "USER DATA ABORT of process %d at instruction %#010x.\n", get_current_process_id(), ctx->pc-8);
 		print_context(10, ctx);
 		uint32_t reg = mrc(p15, 0, c5, c0, 0);
 		uint32_t status = reg & 0xF;
@@ -300,14 +317,14 @@ void data_abort_vector(void* data) {
 
 		kdebug(D_IRQ, 10, "\"%s\" occured on domain %d. (w=%d)\n", messages[status], domain, wnr);
 		kern_debug();
-		kill_process(current_process_id, -1);
-		current_process_id = get_next_process();
-		if (current_process_id == (uint32_t)-1) {
+		kill_process(get_current_process_id(), -1); //we are sure a running process exist
+		process* p = get_next_process();
+		if (p == NULL) {
 			kdebug(D_IRQ, 10, "No process left.\n");
 			while(1) {}
 		}
-		kdebug(D_IRQ, 10, "Switching to %d.\n", current_process_id);
-		process* p = get_process_list()[current_process_id];
+		kdebug(D_IRQ, 10, "Switching to %d.\n", get_current_process_id());
+		p = get_current_process();
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
 		*ctx = p->ctx; // Copy next process ctx
 	} else {

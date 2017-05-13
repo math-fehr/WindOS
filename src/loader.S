@@ -47,6 +47,9 @@ _fast_interrupt_vector_h:           .word   _fast_interrupt_vector
 _reset_:
 #ifdef RPI2
     mrs     r0, cpsr
+	and     r1, r0, #0x1F
+	cmp     r1, #0x13
+	beq     skip
     // The first thing is to make sure we boot in the right mode,
     // Rpi2 boots in hypervisor mode so we have to go back to svr mode.
     bic     r0, r0, #0x1F

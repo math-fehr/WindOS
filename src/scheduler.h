@@ -20,10 +20,10 @@ void setup_scheduler();
 int sheduler_add_process(process* p);
 
 /**
- * Gets the ID of the next process to analyse
- * Returns -1 if there is no active process
+ * Gets the next process to analyse
+ * Returns NULL if there is no active process
  */
-int get_next_process();
+process* get_next_process();
 
 /**
  * Kill a process with its id
@@ -52,5 +52,16 @@ process** get_process_list();
  */
 int* get_active_processes();
 
+/**
+ * Return a pointer to the current process
+ * Return NULL if no process are running
+ */
+process* get_current_process();
+
+/**
+ * Return the id of the current process
+ * Return -1 if no process are running
+ */
+int get_current_process_id();
 
 #endif //SCHEDULER_H

@@ -20,7 +20,20 @@ _undefined_instruction_vector:
 
 .globl _software_interrupt_vector
 _software_interrupt_vector:
-	stmfd 	sp, {r14}^
+    stmfd	sp, {r0-r14}^
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr
+	stmfd 	sp!, {r1, lr}
+	mov 	r0, sp
+	ldr 	r1, =software_interrupt_vector
+	blx 	r1
+
+	ldmfd 	sp!, {r1, lr}
+	msr 	spsr, r1
+	ldmfd  	sp, {r0-r14}^ // Restore registers
+	add 	sp, sp, #15*4
+	movs 	pc, lr
+	/*stmfd 	sp, {r14}^
 	sub 	sp, sp, #4
 	stmfd 	sp, {r13}^
 	sub 	sp, sp, #4
@@ -71,7 +84,7 @@ _software_interrupt_vector:
 	ldmfd 	sp, {r14}^
 	add 	sp, sp, #4
 
-	movs 	pc, lr // Context switch
+	movs 	pc, lr // Context switch*/
 
 .globl _prefetch_abort_vector
 _prefetch_abort_vector:
@@ -100,7 +113,20 @@ _data_abort_vector:
 
 .globl _interrupt_vector
 _interrupt_vector:
-	stmfd 	sp, {r14}^
+  	stmfd	sp, {r0-r14}^
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr
+	stmfd 	sp!, {r1, lr}
+	mov 	r0, sp
+	ldr 	r1, =interrupt_vector
+	blx 	r1
+
+	ldmfd 	sp!, {r1, lr}
+	msr 	spsr, r1
+	ldmfd  	sp, {r0-r14}^ // Restore registers
+	add 	sp, sp, #15*4
+	movs 	pc, lr
+	/*stmfd 	sp, {r14}^
 	add 	sp, sp, #4
 	stmfd 	sp, {r13}^
 	add 	sp, sp, #4
@@ -155,7 +181,7 @@ _interrupt_vector:
 	ldmfd 	sp, {r14}^
 	sub 	sp, sp, #4
 
-	movs 	pc, lr // Context switch
+	movs 	pc, lr // Context switch*/
 
 .globl _fast_interrupt_vector
 _fast_interrupt_vector:

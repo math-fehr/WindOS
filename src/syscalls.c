@@ -3,7 +3,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-extern int current_process_id;
 extern unsigned int __ram_size;
 
 /*
@@ -15,20 +14,21 @@ bool his_own(process *p, void* pointer) {
 }
 
 uint32_t svc_exit() {
+    int current_process_id = get_current_process_id();
 	kdebug(D_SYSCALL, 2, "Program %d wants to quit (switch him to zombie state)\n", current_process_id);
 	kill_process(current_process_id, 0);
-	current_process_id = get_next_process();
-	if (current_process_id == -1) {
+    process* p = get_next_process();
+	if (p == NULL) {
 		kdebug(D_SYSCALL, 10, "The last process has died. The end is near.\n");
 		while(1) {}
 	}
-	kdebug(D_SYSCALL, 2, "Next process: %d\n", current_process_id);
+	kdebug(D_SYSCALL, 2, "Next process: %d\n", get_current_process_id());
 	return current_process_id;
 }
 
 int svc_ioctl(int fd, int cmd, int arg) {
 	kdebug(D_IRQ, 2, "IOCTL %d %d %d \n", fd, cmd, arg);
-	process* p = get_process_list()[current_process_id];
+	process* p = get_current_process();
 	if (fd >= MAX_OPEN_FILES
 	|| p->fd[fd].position < 0)
 	{
@@ -40,7 +40,7 @@ int svc_ioctl(int fd, int cmd, int arg) {
 
 // TODO: Refresh inodes.
 off_t svc_lseek(int fd_i, off_t offset, int whence) {
-	process* p = get_process_list()[current_process_id];
+	process* p = get_current_process();
 	kdebug(D_IRQ, 2, "LSEEK %d %d %d\n", fd_i, offset, whence);
 
 	if (fd_i >= MAX_OPEN_FILES
@@ -76,7 +76,7 @@ off_t svc_lseek(int fd_i, off_t offset, int whence) {
  * Transform current process into process designed by path.
  */
 uint32_t svc_execve(char* path, const char** argv, const char** envp) {
-	process* p 			= get_process_list()[current_process_id];
+	process* p = get_current_process();
 
 	kdebug(D_SYSCALL, 2, "EXECVE => %s\n", path);
 
@@ -135,7 +135,7 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 
 char* svc_getcwd(char* buf, size_t cnt) {
 	kdebug(D_SYSCALL, 2, "GETCWD\n");
-	process* p = get_process_list()[current_process_id];
+    process* p = get_current_process();
 	if (!his_own(p, buf)) {
 		return (char*)-EFAULT;
 	}
@@ -144,7 +144,7 @@ char* svc_getcwd(char* buf, size_t cnt) {
 
 uint32_t svc_chdir(char* path) {
 	kdebug(D_SYSCALL, 2, "CHDIR %s\n", path);
-	process* p = get_process_list()[current_process_id];
+    process* p = get_current_process();
 	if (!his_own(p, path)) {
 		return -EFAULT;
 	}
@@ -160,7 +160,7 @@ uint32_t svc_chdir(char* path) {
 
 uint32_t svc_sbrk(uint32_t ofs) {
 	kdebug(D_SYSCALL, 2, "SBRK %d\n", ofs);
-	process* p = get_process_list()[current_process_id];
+    process* p = get_current_process();
 	int old_brk         = p->brk;
 
 	int current_brk     = old_brk+ofs;
@@ -198,7 +198,7 @@ uint32_t svc_sbrk(uint32_t ofs) {
 extern uintptr_t heap_end;
 
 uint32_t svc_fork() {
-	process* p 			= get_process_list()[current_process_id];
+	process* p = get_current_process();
 	process* copy 		= malloc(sizeof(process));
 
 	uint32_t table_size = 16*1024 >> TTBCR_ALIGN;
@@ -269,13 +269,13 @@ uint32_t svc_fork() {
 pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
     (void)options;
 	kdebug(D_SYSCALL, 2, "WAITPID\n");
-	if (!his_own(get_process_list()[current_process_id], wstatus) && wstatus != NULL) {
+	if (!his_own(get_current_process(), wstatus) && wstatus != NULL) {
 		return -EFAULT;
 	}
 
-	int res = wait_process(current_process_id, pid, wstatus);
+	int res = wait_process(get_current_process_id(), pid, wstatus);
 	if (res == -1) {
-		current_process_id = get_next_process();
+		get_next_process();
 	}
 	return res;
 }
@@ -284,12 +284,12 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 	kdebug(D_SYSCALL, 1, "WRITE %d %#010x %#010x\n", fd, buf, cnt);
 	//int fd = r[0];
 	if (fd >= MAX_OPEN_FILES
-	|| get_process_list()[current_process_id]->fd[fd].position < 0)
+        || get_current_process()->fd[fd].position < 0)
 	{
 		return -EBADF;
 	}
 
-	if (!his_own(get_process_list()[current_process_id], buf)) {
+	if (!his_own(get_current_process(), buf)) {
 		return -EFAULT;
 	}
 
@@ -297,7 +297,7 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 		return 0;
 	}
 
-	fd_t* fd_ = &get_process_list()[current_process_id]->fd[fd];
+	fd_t* fd_ = &(get_current_process()->fd[fd]);
 	if (fd_->position >= 0) {
 		int n = vfs_fwrite(*fd_->inode, buf, cnt, 0);
 		kdebug(D_SYSCALL, 2, "WRITE => %d\n",n);
@@ -315,7 +315,7 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 }
 
 uint32_t svc_close(uint32_t fd) {
-	process* p = get_process_list()[current_process_id];
+	process* p = get_current_process();
 	if (fd >= MAX_OPEN_FILES
 	|| p->fd[fd].position < 0) {
 		return -EBADF;
@@ -332,7 +332,7 @@ uint32_t svc_close(uint32_t fd) {
 
 uint32_t svc_fstat(uint32_t fd, struct stat* dest) {
 	kdebug(D_SYSCALL, 2, "FSTAT %d %#010x\n", fd, dest);
-	process* p = get_process_list()[current_process_id];
+	process* p = get_current_process();
 	if (fd >= MAX_OPEN_FILES
 	|| p->fd[fd].position < 0) {
 		return -EBADF;
@@ -349,7 +349,7 @@ uint32_t svc_fstat(uint32_t fd, struct stat* dest) {
 
 uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 
-	process* p = get_process_list()[current_process_id];
+	process* p = get_current_process();
 	if (fd >= MAX_OPEN_FILES
 	|| p->fd[fd].position < 0) {
 		return -EBADF;
@@ -377,7 +377,7 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 
 uint32_t svc_time(time_t *tloc) {
 	kdebug(D_SYSCALL, 1, "TIME\n");
-	process* p = get_process_list()[current_process_id];
+	process* p = get_current_process();
 	if (!his_own(p, tloc)) {
 		return -EFAULT;
 	}
@@ -391,7 +391,7 @@ uint32_t svc_time(time_t *tloc) {
 }
 
 uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
-	process* p = get_process_list()[current_process_id];
+	process* p = get_current_process();
 	if (!his_own(p, user_entry)) {
 		return -EFAULT;
 	}
@@ -428,7 +428,7 @@ uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 }
 
 int svc_open(char* path, int flags) {
-	process* p = get_process_list()[current_process_id];
+	process* p = get_current_process();
     (void)flags;
 	int i=0;
 	for (;(p->fd[i].position != -1) && (i<MAX_OPEN_FILES);i++);

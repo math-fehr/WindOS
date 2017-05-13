@@ -13,11 +13,8 @@ static int free_processes[MAX_PROCESSES];
 //Zombie processes
 static int zombie_processes[MAX_PROCESSES];
 
-//The current process running in active_processes list
-static int current_process;
-
-//
-int current_process_id;
+//The current process running in active_processes
+static int current_process_id;
 
 //The number of active processes
 static int number_active_processes;
@@ -29,29 +26,29 @@ static int number_zombie_processes;
 
 void setup_scheduler() {
     kernel_printf("[SHED] Scheduler set up!\n");
-    current_process = 0;
+    current_process_id = -1;
     number_active_processes = 0;
 	number_zombie_processes = 0;
     number_free_processes = MAX_PROCESSES;
     for(int i = 0; i<MAX_PROCESSES; i++) {
-        process_list[i] = 0;
+        process_list[i] = NULL;
         free_processes[i] = MAX_PROCESSES-i-1;
     }
 }
 
 
-int get_next_process() {
-    current_process++;
-    if(current_process >= number_active_processes) {
-        current_process = 0;
+process* get_next_process() {
+    current_process_id++;
+    if(current_process_id >= number_active_processes) {
+        current_process_id = 0;
     }
     if(number_active_processes == 0) {
-        return -1;
+        return NULL;
     }
-	process_list[active_processes[current_process]]->dummy++;
+	process_list[active_processes[current_process_id]]->dummy++;
 
-	kernel_printf("\033[s\033[%d;%dH%d\033[u", 1, 1, active_processes[current_process]);
-    return active_processes[current_process];
+	kernel_printf("\033[s\033[%d;%dH%d\033[u", 1, 1, active_processes[current_process_id]);
+    return process_list[active_processes[current_process_id]];
 }
 
 extern uint32_t __ram_size;
@@ -96,7 +93,7 @@ int kill_process(int const process_id, int wstatus) {
 		number_free_processes++;
 
 		free_process_data(child);
-		process_list[process_id] = 0;
+		process_list[process_id] = NULL;
 	} else {
 		// parent doesn't care, so let's put the child into zombie mode.
 		child->status = status_zombie;
@@ -180,6 +177,11 @@ int sheduler_add_process(process* p) {
     number_active_processes++;
     process_list[new_process_id] = p;
     p->asid = new_process_id;
+
+    //If there was no running process, we set this as current
+    if(current_process_id == -1) {
+        current_process_id = 0;
+    }
     return new_process_id;
 }
 
@@ -195,4 +197,18 @@ process** get_process_list() {
 
 int* get_active_processes() {
     return active_processes;
+}
+
+process* get_current_process() {
+    if(current_process_id< 0) {
+        return NULL;
+    }
+    return process_list[active_processes[current_process_id]];
+}
+
+int get_current_process_id() {
+    if(current_process_id < 0) {
+        return -1;
+    }
+    return active_processes[current_process_id];
 }

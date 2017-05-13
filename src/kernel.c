@@ -27,7 +27,6 @@ extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
 extern uint32_t __ramfs_start;
 
-extern int current_process_id;
 volatile unsigned int tim;
 volatile uint32_t __ram_size;
 
@@ -89,6 +88,7 @@ void kernel_main(uint32_t memory) {
     enable_interrupts();
 
 	serial_init();
+    setup_scheduler();
 
 	// TTB1 is already set up on boot (-> 0x4000)
 	// TTB0 is set up on each context switch
@@ -105,16 +105,17 @@ void kernel_main(uint32_t memory) {
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
 	Timer_Setup();
-	Timer_SetLoad(250000);
-    Timer_SetReload(250000);
+	Timer_SetLoad(5000000);
+    Timer_SetReload(500000);
+    Timer_Enable();
+    Timer_Enable_Interrupts();
 
-    if(USPiInitialize()) {
+    /*if(USPiInitialize()) {
         kernel_printf("Uspi is correctly initialized\n");
     }
     else {
         kernel_printf("Uspi failed\n");
-    }
-
+    }*/
 
 	storage_driver memorydisk;
 	memorydisk.read    = memory_read;
@@ -139,11 +140,10 @@ void kernel_main(uint32_t memory) {
     vfs_mount(devroot,"/dev");
 
 
-	setup_scheduler();
-	const char* param[] = {"/bin/init", 0};
+	const char* param[] = {"/bin/wesh", 0};
 
 
-	process* p = process_load("/bin/init", vfs_path_to_inode(NULL, "/"), param, NULL); // init program
+	process* p = process_load("/bin/wesh", vfs_path_to_inode(NULL, "/"), param, NULL); // init program
 	p->fd[0].inode      = malloc(sizeof(inode_t));
 	*p->fd[0].inode 	= vfs_path_to_inode(NULL, "/dev/serial");
 	p->fd[0].position   = 0;
@@ -153,28 +153,22 @@ void kernel_main(uint32_t memory) {
 	p->fd[1].position   = 0;
 
 
-
 	if (p != NULL) {
-		asm volatile("mrs r0,cpsr\n"
+		/*asm volatile("mrs r0,cpsr\n"
 					 "orr r0,r0,#0x80\n"
-					 "msr cpsr_c,r0\n");
+					 "msr cpsr_c,r0\n");*/
 
 		sheduler_add_process(p);
-		Timer_Enable();
-		Timer_Enable_Interrupts();
 
 	    RPI_GetIRQController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
 		dmb();
 
 
-	    current_process_id = p->asid;
 		p->parent_id 	= p->asid; // (Badass process)
 		kernel_printf("%p\n", p);
 		kernel_printf("%p %p\n", p->ttb_address, mmu_vir2phy(p->ttb_address));
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
-
-		kernel_printf("ici\n");
-
+        //while(1);
 		asm volatile(
 			"mov 	r0, %0\n"
 			"ldmfd 	r0!, {r1, lr}\n"
