@@ -117,12 +117,7 @@ void kernel_main(uint32_t memory) {
     Timer_Enable();
     Timer_Enable_Interrupts();
 
-    /*if(USPiInitialize()) {
-        kernel_printf("Uspi is correctly initialized\n");
-    }
-    else {
-        kernel_printf("Uspi failed\n");
-        }*/
+    //USPiInitialize();
 
 
 	storage_driver memorydisk;
@@ -132,10 +127,12 @@ void kernel_main(uint32_t memory) {
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
 	if (fsroot == NULL) {
+        kernel_printf("Error while initializing fsroot\n");
 		while(1) {}
 	}
     superblock_t* devroot = dev_initialize(10);
 	if (devroot == NULL) {
+        kernel_printf("Error while initializing devroot\n");
 		while(1) {}
 	}
 
@@ -149,9 +146,10 @@ void kernel_main(uint32_t memory) {
 
 
 	const char* param[] = {"/bin/init",0};
-    const char* env[] = {"a","b",NULL};
+    const char* env[] = {NULL};
 
 	process* p = process_load("/bin/init", vfs_path_to_inode(NULL, "/"), param, env); // init program
+
 	p->fd[0].inode      = malloc(sizeof(inode_t));
 	*p->fd[0].inode 	= vfs_path_to_inode(NULL, "/dev/serial");
 	p->fd[0].position   = 0;
@@ -164,6 +162,7 @@ void kernel_main(uint32_t memory) {
 	if (p != NULL) {
 
 		sheduler_add_process(p);
+        get_next_process();
 
 	    RPI_GetIRQController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
 		dmb();
@@ -173,7 +172,6 @@ void kernel_main(uint32_t memory) {
 		kernel_printf("%p\n", p);
 		kernel_printf("%p %p\n", p->ttb_address, mmu_vir2phy(p->ttb_address));
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
-        //while(1);
 		asm volatile(
 			"mov 	r0, %0\n"
 			"ldmfd 	r0!, {r1, lr}\n"
