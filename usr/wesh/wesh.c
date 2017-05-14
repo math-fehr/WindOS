@@ -12,7 +12,6 @@
 
 extern int argc;
 extern char** argv;
-extern char** environ;
 
 int exec_blocking(char* command, char* params[]) {
 	int r = _fork();
@@ -34,6 +33,7 @@ int hist_top; // first free slot.
 int hist_bot; // first occupied slot.
 
 void wesh_readline(char* buffer) {
+
 	int pos = 0;
 	int hist_pos = hist_top;
 	char* current_buffer = buffer;
@@ -104,6 +104,7 @@ int main() {
 	hist_top = 0;
 	hist_bot = 0;
 
+
 	while(1) {
 		char buf[1500];
 		getcwd(buf, 1500);
@@ -125,10 +126,15 @@ int main() {
 			return 0;
 		} else if (strcmp(buf, "cd") == 0) {
 			token = strtok(NULL," ");
-			if (token == NULL)
+			if (token == NULL) {
 				_chdir("/");
-			else
-				_chdir(token);
+			}
+			else {
+				int res = _chdir(token);
+				if (res == -1) {
+					perror("cd");
+				}
+			}
 		} else {
 			int i = 0;
 			while(token != NULL) {

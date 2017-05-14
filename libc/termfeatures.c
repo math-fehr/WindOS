@@ -1,4 +1,6 @@
 #include "../include/termfeatures.h"
+#include <unistd.h>
+#include <sys/stat.h>
 
 void term_get_size(int* row, int* cols) {
 	printf("\033[s"); // save cursor position
@@ -11,6 +13,40 @@ void term_get_size(int* row, int* cols) {
 	fflush(stdout);
 	scanf("\033[%d;%dR", row, cols);
 	term_raw_enable(false);
+}
+
+void get_permission_string(mode_t attr, char* buf) {
+  buf[10] = 0;
+  for (int i=0;i<10;i++)
+    buf[i] = '-';
+
+  if (S_ISDIR(attr))
+    buf[0] = 'd';
+  if (S_ISCHR(attr))
+    buf[0] = 'c';
+  if (S_ISBLK(attr))
+    buf[0] = 'b';
+
+  if (attr & S_IRUSR)
+    buf[1] = 'r';
+  if (attr & S_IWUSR)
+    buf[2] = 'w';
+  if (attr & S_IXUSR)
+    buf[3] = 'x';
+
+  if (attr & S_IRGRP)
+    buf[4] = 'r';
+  if (attr & S_IWGRP)
+    buf[5] = 'w';
+  if (attr & S_IXGRP)
+    buf[6] = 'x';
+
+  if (attr & S_IROTH)
+    buf[7] = 'r';
+  if (attr & S_IWOTH)
+    buf[8] = 'w';
+  if (attr & S_IXOTH)
+    buf[9] = 'x';
 }
 
 void term_save_cursor() {

@@ -34,6 +34,7 @@ typedef struct {
   int (*rm) (inode_t, char*);
   int (*mkfile) (inode_t, char*, int);
   int (*ioctl) (inode_t, int, int);
+  int (*resize) (inode_t, int);
 } inode_operations_t;
 
 
@@ -85,6 +86,7 @@ typedef struct {
  */
 void 		vfs_setup();
 inode_t 	vfs_path_to_inode(inode_t* root, char *path);
+inode_t 	vfs_mknod(inode_t base, char* name, mode_t mode, dev_t dev);
 char* 		vfs_inode_to_path(inode_t inode, char* buf, size_t cnt);
 void 		vfs_mount(superblock_t* sb, char* path);
 int 		vfs_fwrite	(inode_t fd, char* buffer, int size, int position);

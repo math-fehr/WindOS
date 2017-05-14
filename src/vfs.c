@@ -128,6 +128,7 @@ char* vfs_inode_to_path(inode_t base, char* buf, size_t size) {
  * Can raise a 'No such file or directory'
  */
 inode_t vfs_path_to_inode(inode_t* base, char *path_) {
+	errno = 0;
   	char* path = malloc(strlen(path_)+1);
   	strcpy(path, path_);
 
@@ -199,6 +200,28 @@ inode_t vfs_path_to_inode(inode_t* base, char *path_) {
 	return position;
 }
 
+inode_t vfs_mknod(inode_t base, char* name, mode_t mode, dev_t dev) {
+	(void) dev;
+	inode_t d;
+
+	if (strlen(name) == 0 || (strchr(name, '/') != NULL)) {
+		errno = -EINVAL;
+		return d;
+	}
+
+	if (S_ISDIR(mode)) {
+		if (base.op->mkdir != NULL) {
+			base.op->mkdir(base, name, mode);
+		}
+		return vfs_path_to_inode(&base, name);
+	} else {
+		if (base.op->mkfile != NULL) {
+			base.op->mkfile(base, name, mode);
+		}
+		return vfs_path_to_inode(&base, name);
+	}
+}
+
 int vfs_fwrite(inode_t fd, char* buffer, int length, int offset) {
     if (S_ISDIR(fd.st.st_mode)) {
         kernel_printf("vfs_fwrite: whoa there.. this a directory..\n");
@@ -222,7 +245,7 @@ int vfs_fread(inode_t fd, char* buffer, int length, int offset) {
   if (offset > fd.st.st_size) {
       offset = fd.st.st_size;
   }
-  
+
   return fd.op->read(fd, buffer, length, offset);
 }
 
@@ -250,7 +273,7 @@ int vfs_mkdir(char* path, char* name, int permissions) {
   if (errno == 0) {
 	  vfs_dir_list_t* ls = position.op->read_dir(position);
 	  vfs_dir_list_t* ls_start = ls;
-	  if ((int32_t)ls == -1) {
+	  if ((intptr_t)ls == -1) {
 		  return 0;
 	  }
 
@@ -286,7 +309,7 @@ int vfs_mkfile(char* path, char* name, int permissions) {
   if (errno == 0) {
 	  vfs_dir_list_t* ls = position.op->read_dir(position);
 	  vfs_dir_list_t* ls_start = ls;
-	  if ((int32_t)ls == -1) {
+	  if ((intptr_t)ls == -1) {
 		  return 0;
 	  }
 

@@ -2,6 +2,7 @@
 #include "errno.h"
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 extern unsigned int __ram_size;
 
@@ -25,6 +26,8 @@ uint32_t svc_exit() {
 	kdebug(D_SYSCALL, 2, "Next process: %d\n", get_current_process_id());
 	return current_process_id;
 }
+
+
 
 int svc_ioctl(int fd, int cmd, int arg) {
 	kdebug(D_IRQ, 2, "IOCTL %d %d %d \n", fd, cmd, arg);
@@ -150,8 +153,11 @@ uint32_t svc_chdir(char* path) {
 	}
 	errno = 0;
 	inode_t res = vfs_path_to_inode(&p->cwd, path);
+
 	if (errno > 0) {
 		return -errno;
+	} else if (!S_ISDIR(res.st.st_mode)) {
+		return -ENOTDIR;
 	} else {
 		p->cwd = res;
 	}
@@ -299,7 +305,7 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 
 	fd_t* fd_ = &(get_current_process()->fd[fd]);
 	if (fd_->position >= 0) {
-		int n = vfs_fwrite(*fd_->inode, buf, cnt, 0);
+		int n = vfs_fwrite(*fd_->inode, buf, cnt, fd_->position);
 		kdebug(D_SYSCALL, 2, "WRITE => %d\n",n);
 		if (S_ISREG(fd_->inode->st.st_mode)) {
 			fd_->position += n;
@@ -427,9 +433,15 @@ uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 	}
 }
 
-int svc_open(char* path, int flags) {
+int svc_openat(int dirfd, char* path_c, int flags) {
+
 	process* p = get_current_process();
-    (void)flags;
+	if (!his_own(p, path_c)) {
+		return -EFAULT;
+	}
+
+	char* path = malloc(strlen(path_c)+1);
+	strcpy(path,path_c);
 	int i=0;
 	for (;(p->fd[i].position != -1) && (i<MAX_OPEN_FILES);i++);
 
@@ -437,20 +449,171 @@ int svc_open(char* path, int flags) {
 		return -ENFILE;
 	}
 
-	if (!his_own(p, path)) {
+
+	inode_t* base;
+	if (dirfd == AT_FDCWD) {
+		base = &p->cwd;
+	} else {
+		if ((dirfd >= 0 && dirfd < MAX_OPEN_FILES)
+		 	&& p->fd[dirfd].position >= 0) {
+			if (S_ISDIR(p->fd[dirfd].inode->st.st_mode)) {
+				base = p->fd[dirfd].inode;
+			} else {
+				return -ENOTDIR;
+			}
+		} else {
+			return -EBADF;
+		}
+	}
+	inode_t ino = vfs_path_to_inode(base, path);
+
+	if (errno > 0) {
+		if (flags & O_CREAT) {
+			char* last = path;
+			while (strchr(last+1, '/') != NULL) {
+				last = strchr(last+1, '/');
+			}
+
+			if (last[0] == '/') {
+				last[0] = 0;
+				inode_t dir = vfs_path_to_inode(base, path);
+				if (errno > 0) {
+					return -errno;
+				}
+
+				ino = vfs_mknod(dir, last+1, S_IFREG, 0);
+				if (errno > 0) {
+					return -errno;
+				}
+			} else {
+				ino = vfs_mknod(*base, last, S_IFREG, 0);
+
+				if (errno > 0)  {
+					free(path);
+					return -errno;
+				}
+			}
+			kdebug(D_SYSCALL, 1, "Created the file as it doesn't exist.\n");
+		} else {
+			free(path);
+			return -errno;
+		}
+	}
+
+	p->fd[i].position = 0;
+	p->fd[i].dir_entry = NULL;
+	p->fd[i].inode = malloc(sizeof(inode_t));
+	*p->fd[i].inode = ino;
+	free(path);
+
+	p->fd[i].flags = flags;
+
+	if (flags & O_APPEND) {
+		p->fd[i].position = ino.st.st_size;
+	}
+
+	if ((flags & O_TRUNC) && S_ISREG(ino.st.st_mode)) {
+		p->fd[i].inode->op->resize(*p->fd[i].inode, 0);
+		p->fd[i].inode->st.st_size = 0;
+	}
+
+	kdebug(D_SYSCALL,5, "OPEN => %d\n", i);
+	return i;
+}
+
+
+int svc_unlinkat(int dirfd, const char* name, int flag) {
+	inode_t* base;
+	process* p = get_current_process();
+	if (!his_own(p, name)) {
 		return -EFAULT;
 	}
 
-	inode_t ino = vfs_path_to_inode(&p->cwd, path);
-	kdebug(D_SYSCALL, 2, "OPEN => %s %d\n", path, ino.st.st_size);
+	if (dirfd == AT_FDCWD) {
+		base = &p->cwd;
+	} else {
+		if ((dirfd >= 0 && dirfd < MAX_OPEN_FILES)
+		 	&& p->fd[dirfd].position >= 0) {
+			if (S_ISDIR(p->fd[dirfd].inode->st.st_mode)) {
+				base = p->fd[dirfd].inode;
+			} else {
+				return -ENOTDIR;
+			}
+		} else {
+			return -EBADF;
+		}
+	}
 
+	inode_t dir = vfs_path_to_inode(base, dirname(name));
 	if (errno > 0) {
 		return -errno;
-	} else {
-		p->fd[i].position = 0;
-		p->fd[i].dir_entry = NULL;
-		p->fd[i].inode = malloc(sizeof(inode_t));
-		*p->fd[i].inode = ino;
 	}
-	return i;
+	inode_t file = vfs_path_to_inode(base, name);
+	if (errno > 0) {
+		return -errno;
+	}
+
+	char* target = basename(name);
+	dir.op->rm(dir, target);
+	return -errno;
+}
+
+int svc_mknodat(int dirfd, char* pathname, mode_t mode, dev_t dev) {
+	inode_t* base;
+	process* p = get_current_process();
+	if (!his_own(p, pathname)) {
+		return -EFAULT;
+	}
+
+	if (dirfd == AT_FDCWD) {
+		base = &p->cwd;
+	} else {
+		if ((dirfd >= 0 && dirfd < MAX_OPEN_FILES)
+		 	&& p->fd[dirfd].position >= 0) {
+			if (S_ISDIR(p->fd[dirfd].inode->st.st_mode)) {
+				base = p->fd[dirfd].inode;
+			} else {
+				return -ENOTDIR;
+			}
+		} else {
+			return -EBADF;
+		}
+	}
+
+	inode_t test = vfs_path_to_inode(base, pathname);
+	if (errno == 0) {
+		if (S_ISDIR(test.st.st_mode)) {
+			return 0;
+		} else {
+			return -EEXIST;
+		}
+	}
+
+	char* path = malloc(strlen(pathname)+1);
+	strcpy(path, pathname);
+	char* last = path;
+	while (strchr(last+1, '/') != NULL) {
+		last = strchr(last+1, '/');
+	}
+
+	if (last[0] == '/') {
+		last[0] = 0;
+		inode_t dir = vfs_path_to_inode(base, path);
+		if (errno > 0) {
+			return -errno;
+		}
+
+		vfs_mknod(dir, last+1, mode, dev);
+		if (errno > 0) {
+			return -errno;
+		}
+	} else {
+		vfs_mknod(*base, last, mode, dev);
+
+		if (errno > 0)  {
+			free(path);
+			return -errno;
+		}
+	}
+	return 0;
 }

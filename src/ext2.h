@@ -137,6 +137,9 @@ int ext2_rm (
 	inode_t, char*);
 int ext2_mkfile (
 	inode_t, char*, int);
+int ext2_resize (
+	inode_t, int);
+
 
 
 struct stat ext2_inode_to_stat(
@@ -166,7 +169,6 @@ bool ext2_free_inode(
 	superblock_t* fs, int inode);
 bool ext2_free_block(
 	superblock_t* fs, int number);
-
 void ext2_free_inode_blocks(
 	superblock_t* fs, int inode);
 

@@ -13,8 +13,13 @@
 #include "mmu.h"
 #include "malloc.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <libgen.h>
+
 #include "../include/dirent.h"
- 
+
 uint32_t svc_exit();
 uint32_t svc_sbrk(uint32_t ofs);
 uint32_t svc_fork();
@@ -28,7 +33,9 @@ pid_t 	 svc_waitpid(pid_t pid, int* wstatus, int options);
 char* 	 svc_getcwd(char* buf, size_t cnt);
 uint32_t svc_chdir(char* path);
 off_t 	 svc_lseek(int fd, off_t offset, int whence);
-int 	 svc_open(char* path, int flags);
+int 	 svc_openat(int dirfd, char* path, int flags);
+int 	 svc_mknodat(int dirfd, char* path, mode_t mode, dev_t flags);
+int 	 svc_unlinkat(int dfd, const char* name, int flag);
 int 	 svc_ioctl(int fd, int cmd, int arg);
 
 // balek c'est pas standard

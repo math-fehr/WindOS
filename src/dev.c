@@ -79,7 +79,7 @@ vfs_dir_list_t* dev_lsdir(inode_t from) {
         res = dev_append_elem(r, "..", res);
         return res;
     } else {
-		kernel_printf("This is illegal.\n");
+		kernel_printf("ls on a dev file.\n");
 	}
 	errno = ENOENT;
     return NULL;

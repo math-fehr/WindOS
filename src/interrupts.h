@@ -42,7 +42,6 @@
 #define     SVC_FORK        0x02
 #define     SVC_READ        0x03
 #define     SVC_WRITE       0x04
-#define 	SVC_OPEN 		0x05
 #define     SVC_CLOSE       0x06
 #define 	SVC_WAITPID		0x07
 #define 	SVC_EXECVE 		0x0b
@@ -54,6 +53,9 @@
 #define 	SVC_IOCTL 		0x36
 #define 	SVC_GETCWD 		0xb7
 #define 	SVC_GETDENTS 	78
+#define 	SVC_OPENAT 		0x127
+#define 	SVC_MKNODAT 	0x129
+#define 	SVC_UNLINKAT	0x12d
 
 #define RPI_INTERRUPT_CONTROLLER_BASE (PERIPHERALS_BASE + 0xB200UL)
 
