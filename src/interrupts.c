@@ -376,7 +376,7 @@ void callInterruptHandlers() {
 
 
 void enable_interrupts(void) {
-    kdebug(D_IRQ, 1, "Enabling interrupts.\n");
+    /*kdebug(D_IRQ, 1, "Enabling interrupts.\n");
     cleanDataCache();
     dsb();
 
@@ -398,6 +398,8 @@ void enable_interrupts(void) {
 
     dmb();
 
+    asm volatile("cpsie i");*/
+    RPI_GetIRQController()->Enable_Basic_IRQs = 1;
     asm volatile("cpsie i");
 }
 

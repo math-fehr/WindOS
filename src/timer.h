@@ -79,15 +79,10 @@ void Timer_Setup();
 
 /**
  * Enable the timer
- * The function Timer_SetLoad or SetReload must have been called
- * to change the frequency of the clock
+ * The function Timer_Setup must have been called before
  */
 void Timer_Enable();
 
-/**
- * Enable the interrupts
- */
-void Timer_Enable_Interrupts();
 
 /**
  * Disable the interrupts
