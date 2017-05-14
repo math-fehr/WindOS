@@ -107,17 +107,12 @@ void kernel_main(uint32_t memory) {
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
 	Timer_Setup();
-	Timer_SetLoad(5000000);
-    Timer_SetReload(500000);
+	Timer_SetLoad(250000);
+    Timer_SetReload(250000);
     Timer_Enable();
     Timer_Enable_Interrupts();
 
-    /*if(USPiInitialize()) {
-        kernel_printf("Uspi is correctly initialized\n");
-    }
-    else {
-        kernel_printf("Uspi failed\n");
-        }*/
+    //USPiInitialize();
 
 
 	storage_driver memorydisk;
@@ -127,10 +122,12 @@ void kernel_main(uint32_t memory) {
 
 	superblock_t* fsroot = ext2fs_initialize(&memorydisk);
 	if (fsroot == NULL) {
+        kernel_printf("Error while initializing fsroot\n");
 		while(1) {}
 	}
     superblock_t* devroot = dev_initialize(10);
 	if (devroot == NULL) {
+        kernel_printf("Error while initializing devroot\n");
 		while(1) {}
 	}
 
@@ -143,10 +140,10 @@ void kernel_main(uint32_t memory) {
     vfs_mount(devroot,"/dev");
 
 
-	const char* param[] = {"/bin/test",0};
-    const char* env[] = {"a","b",NULL};
+	const char* param[] = {"/bin/wesh",0};
+    const char* env[] = {NULL};
 
-	process* p = process_load("/bin/test", vfs_path_to_inode(NULL, "/"), param, NULL); // init program
+	process* p = process_load("/bin/wesh", vfs_path_to_inode(NULL, "/"), param, env); // init program
 	p->fd[0].inode      = malloc(sizeof(inode_t));
 	*p->fd[0].inode 	= vfs_path_to_inode(NULL, "/dev/serial");
 	p->fd[0].position   = 0;
@@ -162,6 +159,7 @@ void kernel_main(uint32_t memory) {
 					 "msr cpsr_c,r0\n");*/
 
 		sheduler_add_process(p);
+        get_next_process();
 
 	    RPI_GetIRQController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
 		dmb();
@@ -171,7 +169,6 @@ void kernel_main(uint32_t memory) {
 		kernel_printf("%p\n", p);
 		kernel_printf("%p %p\n", p->ttb_address, mmu_vir2phy(p->ttb_address));
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
-        //while(1);
 		asm volatile(
 			"mov 	r0, %0\n"
 			"ldmfd 	r0!, {r1, lr}\n"
