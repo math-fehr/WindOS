@@ -132,6 +132,7 @@ int _execve(const char *filename, char *const argv[],
                   char *const envp[]) {
 	int res;
 	asm volatile(
+		"push {r7}\n"
 		"mov r7, #0x0b\n"
 		"ldr r0, %1\n"
 		"ldr r1, %2\n"
@@ -149,6 +150,7 @@ int _execve(const char *filename, char *const argv[],
 int _chdir(char* path) {
 	int res;
 	asm volatile(
+		"push {r7}\n"
 		"mov r7, #0x0c\n"
 		"ldr r0, %1\n"
 		"svc #0\n"
