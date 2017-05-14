@@ -23,7 +23,7 @@ const char sources[N_SOURCES][9]= { "KERNEL", "SERIAL", "WESH",
 const int enable_source[N_SOURCES] = { 5,5,5,
                                        5,8,5,
 									   5,5,5,
-									   5,5,5,
+									   5,5,10,
                                        6,5};
 
 

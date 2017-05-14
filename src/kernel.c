@@ -106,9 +106,14 @@ void kernel_main(uint32_t memory) {
     kernel_printf("Mac address : %X:%X:%X:%X:%X:%X\n",
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
+
+  	asm volatile("mrs r0,cpsr\n"
+  				 "orr r0,r0,#0x80\n"
+  				 "msr cpsr_c,r0\n");
+
 	Timer_Setup();
-	Timer_SetLoad(5000);
-    Timer_SetReload(5000);
+	Timer_SetLoad(500);
+    Timer_SetReload(500);
     Timer_Enable();
     Timer_Enable_Interrupts();
 
@@ -157,9 +162,6 @@ void kernel_main(uint32_t memory) {
 
 
 	if (p != NULL) {
-		/*asm volatile("mrs r0,cpsr\n"
-					 "orr r0,r0,#0x80\n"
-					 "msr cpsr_c,r0\n");*/
 
 		sheduler_add_process(p);
 

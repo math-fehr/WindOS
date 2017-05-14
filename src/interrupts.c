@@ -33,12 +33,12 @@ static bool status;
 
 
 
-void print_context(int level, user_context_t* ctx) {
-    kdebug(D_IRQ, level, "r0 :%#010x r1:%#010x r2 :%#010x r3 :%#010x\n", ctx->r[0], ctx->r[1], ctx->r[2], ctx->r[3]);
-    kdebug(D_IRQ, level, "r4 :%#010x r5:%#010x r6 :%#010x r7 :%#010x\n", ctx->r[4], ctx->r[5], ctx->r[6], ctx->r[7]);
-    kdebug(D_IRQ, level, "r8 :%#010x r9:%#010x r10:%#010x r11:%#010x\n", ctx->r[8], ctx->r[9], ctx->r[10], ctx->r[11]);
-    kdebug(D_IRQ, level, "fp :%#010x sp:%#010x lr :%#010x pc :%#010x\n", ctx->r[12], ctx->r[13], ctx->r[14], ctx->pc);
-    kdebug(D_IRQ, level, "CPSR: %#010x\n", ctx->cpsr);
+void print_context(int id, int level, user_context_t* ctx) {
+    kdebug(id, level, "r0 :%#010x r1:%#010x r2 :%#010x r3 :%#010x\n", ctx->r[0], ctx->r[1], ctx->r[2], ctx->r[3]);
+    kdebug(id, level, "r4 :%#010x r5:%#010x r6 :%#010x r7 :%#010x\n", ctx->r[4], ctx->r[5], ctx->r[6], ctx->r[7]);
+    kdebug(id, level, "r8 :%#010x r9:%#010x r10:%#010x r11:%#010x\n", ctx->r[8], ctx->r[9], ctx->r[10], ctx->r[11]);
+    kdebug(id, level, "fp :%#010x sp:%#010x lr :%#010x pc :%#010x\n", ctx->r[12], ctx->r[13], ctx->r[14], ctx->pc);
+    kdebug(id, level, "CPSR: %#010x\n", ctx->cpsr);
 }
 
 uint32_t software_interrupt_vector(void* user_context);
@@ -57,7 +57,7 @@ void interrupt_vector(void* user_context) {
     if(p != NULL) {
         p->ctx.pc -= 4;
         p->ctx = *(user_context_t*)user_context; // Save current program context.
-        print_context(5, user_context);
+        print_context(D_IRQ,5, user_context);
     }
 
     dmb();
@@ -100,7 +100,7 @@ void interrupt_vector(void* user_context) {
 	}
 
     kdebug(D_IRQ, 7, "<= %d.\n", get_current_process_id());
-	print_context(2, user_context);
+	print_context(D_IRQ, 2, user_context);
 }
 
 
@@ -111,51 +111,54 @@ uint32_t software_interrupt_vector(void* user_context) {
 	//if (0xfeff726b == ctx->r[12]) {
 	//	while(1) {}
 	//}
-    kdebug(D_IRQ, 5, "S=> %d.\n", get_current_process_id());
-
-	print_context(5, ctx);
+	if (ctx->r[7] != SVC_READ) {
+	    kdebug(D_SYSCALL, 5, "S=> %d.\n", get_current_process_id());
+		print_context(D_SYSCALL, 5, ctx);
+	}
 	process* p;
 swi_beg:
 	p = get_current_process();
 	p->ctx = *ctx;
 	uint32_t res;
 
+	int r_bef = ctx->r[7];
+
     switch(ctx->r[7]) {
 		case SVC_IOCTL:
-            kdebug(D_IRQ,5,"ENTREEIOCTL\n");
+            kdebug(D_SYSCALL,5,"ENTREEIOCTL\n");
 			res = svc_ioctl(ctx->r[0],ctx->r[1],ctx->r[2]);
 			break;
         case SVC_EXIT:
-            kdebug(D_IRQ,5,"ENTREEEXIT\n");
+            kdebug(D_SYSCALL,5,"ENTREEEXIT\n");
 			res = svc_exit();
 			break;
         case SVC_SBRK:
-            kdebug(D_IRQ,5,"ENTREESBRK\n");
+            kdebug(D_SYSCALL,5,"ENTREESBRK\n");
 			res = svc_sbrk(ctx->r[0]);
 			break;
 		case SVC_FORK:
-            kdebug(D_IRQ,5,"ENTREEFORK\n");
+            kdebug(D_SYSCALL,5,"ENTREEFORK\n");
 			res = svc_fork();
 			break;
         case SVC_WRITE:
-            kdebug(D_IRQ,5,"ENTREEWRITE\n");
+            kdebug(D_SYSCALL,5,"ENTREEWRITE\n");
             res = svc_write(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
             kdebug(D_IRQ,5,"SORTIEWRITE\n");
 			break;
         case SVC_CLOSE:
-            kdebug(D_IRQ,5,"ENTREECLOSE\n");
+            kdebug(D_SYSCALL,5,"ENTREECLOSE\n");
             res = svc_close(ctx->r[0]);
 			break;
 		case SVC_WAITPID:
-            kdebug(D_IRQ,5,"ENTREEWAITPID\n");
+            kdebug(D_SYSCALL,5,"ENTREEWAITPID\n");
 			res = svc_waitpid(ctx->r[0],(int*) ctx->r[1], ctx->r[2]);
 			break;
         case SVC_FSTAT:
-            kdebug(D_IRQ,5,"ENTREEFSTAT\n");
+            kdebug(D_SYSCALL,5,"ENTREEFSTAT\n");
             res = svc_fstat(ctx->r[0],(struct stat*)ctx->r[1]);
 			break;
         case SVC_LSEEK:
-            kdebug(D_IRQ,5,"ENTREELSEEK\n");
+            kdebug(D_SYSCALL,5,"ENTREELSEEK\n");
 			res = svc_lseek(ctx->r[0],ctx->r[1],ctx->r[2]);
             break;
         case SVC_READ:
@@ -172,28 +175,28 @@ swi_beg:
 			}
 			break;
 		case SVC_TIME:
-            kdebug(D_IRQ,5,"ENTREETIME\n");
+            kdebug(D_SYSCALL,5,"ENTREETIME\n");
 			res = svc_time((time_t*)ctx->r[0]);
 			break;
 		case SVC_EXECVE:
-            kdebug(D_IRQ,5,"ENTREEEXECVE\n");
+            kdebug(D_SYSCALL,5,"ENTREEEXECVE\n");
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
             kdebug(D_IRQ,5,"SORTIEEXECVE\n");
 			break;
 		case SVC_GETCWD:
-            kdebug(D_IRQ,5,"ENTREEGETCWD\n");
+            kdebug(D_SYSCALL,5,"ENTREEGETCWD\n");
 			res = (uint32_t)svc_getcwd((char*)ctx->r[0],ctx->r[1]);
 			break;
 		case SVC_CHDIR:
-            kdebug(D_IRQ,5,"ENTREECHDIR\n");
+            kdebug(D_SYSCALL,5,"ENTREECHDIR\n");
 			res = svc_chdir((char*)ctx->r[0]);
 			break;
 		case SVC_GETDENTS:
-            kdebug(D_IRQ,5,"ENTREEGETENTS\n");
+            kdebug(D_SYSCALL,5,"ENTREEGETENTS\n");
 			res = svc_getdents(ctx->r[0], (struct dirent *)ctx->r[1]);
 			break;
 		case SVC_OPEN:
-            kdebug(D_IRQ,5,"ENTREEOPEN\n");
+            kdebug(D_SYSCALL,5,"ENTREEOPEN\n");
 			res = svc_open((char*) ctx->r[0], ctx->r[1]);
 			break;
         default:
@@ -216,8 +219,10 @@ swi_beg:
 		ctx->r[0] = res; // let's return the result in r0
 	}
 
-	print_context(5, ctx);
-    kdebug(D_IRQ, 5, "Sortie SWI : <= %d.\n", get_current_process_id());
+	if (r_bef != SVC_READ) {
+		print_context(D_SYSCALL, 5, ctx);
+	    kdebug(D_SYSCALL, 5, "Sortie SWI : <= %d.\n", get_current_process_id());
+	}
 	return 0;
 }
 
@@ -267,7 +272,7 @@ void kern_debug() {
 void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
 	kdebug(D_IRQ, 10, "PREFETCH ABORT at instruction %#010x.\n", ctx->pc-8);
-	print_context(10, ctx);
+	print_context(D_IRQ,10, ctx);
 
 	uint32_t reg = mrc(p15, 0, c5, c0, 1);
 	uint32_t status = reg & 0xF;
@@ -283,7 +288,7 @@ void data_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
 	if ((ctx->cpsr & 0x1F) == 0x10) {
 		kdebug(D_IRQ, 10, "USER DATA ABORT of process %d at instruction %#010x.\n", get_current_process_id(), ctx->pc-8);
-		print_context(10, ctx);
+		print_context(D_IRQ,10, ctx);
 		uint32_t reg = mrc(p15, 0, c5, c0, 0);
 		uint32_t status = reg & 0xF;
 		uint32_t domain = (reg & 0xF0) >> 4;
@@ -303,7 +308,7 @@ void data_abort_vector(void* data) {
 		*ctx = p->ctx; // Copy next process ctx
 	} else {
 		kdebug(D_IRQ, 10, "KERNEL DATA ABORT at instruction %#010x.\n", ctx->pc-8);
-		print_context(10, ctx);
+		print_context(D_IRQ,10, ctx);
 		uint32_t reg = mrc(p15, 0, c5, c0, 0);
 		uint32_t status = reg & 0xF;
 		uint32_t domain = (reg & 0xF0) >> 4;
