@@ -38,12 +38,18 @@ void setup_scheduler() {
 
 
 process* get_next_process() {
-    current_process_id++;
-    if(current_process_id >= number_active_processes) {
-        current_process_id = 0;
-    }
     if(number_active_processes == 0) {
         return NULL;
+    }
+
+    if(current_process_id < 0) {
+        current_process_id = 0;
+    }
+    else {
+        current_process_id++;
+    }
+    if(current_process_id >= number_active_processes) {
+        current_process_id = 0;
     }
 	process_list[active_processes[current_process_id]]->dummy++;
 
@@ -177,10 +183,6 @@ int sheduler_add_process(process* p) {
     process_list[new_process_id] = p;
     p->asid = new_process_id;
 
-    //If there was no running process, we set this as current
-    if(current_process_id == -1) {
-        current_process_id = 0;
-    }
     return new_process_id;
 }
 

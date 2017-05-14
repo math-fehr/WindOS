@@ -59,12 +59,13 @@ int GetMACAddress(unsigned char buffer[6]) {
 }
 
 void LogWrite (const char *pSource, unsigned Severity, const char *pMessage, ...) {
-    kernel_printf("[USPI][%s][%s]",pSource,Severity);
+    kernel_printf("[USPI][%s][%d] ",pSource,Severity);
 
     va_list args;
     va_start(args,pMessage);
     vkernel_printf(pMessage,args);
     va_end(args);
+    kernel_printf("\n");
 }
 
 
