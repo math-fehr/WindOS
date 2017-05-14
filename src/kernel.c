@@ -107,8 +107,8 @@ void kernel_main(uint32_t memory) {
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
 	Timer_Setup();
-	Timer_SetLoad(5000000);
-    Timer_SetReload(500000);
+	Timer_SetLoad(5000);
+    Timer_SetReload(5000);
     Timer_Enable();
     Timer_Enable_Interrupts();
 
@@ -143,10 +143,10 @@ void kernel_main(uint32_t memory) {
     vfs_mount(devroot,"/dev");
 
 
-	const char* param[] = {"/bin/test",0};
+	const char* param[] = {"/bin/init",0};
     const char* env[] = {"a","b",NULL};
 
-	process* p = process_load("/bin/test", vfs_path_to_inode(NULL, "/"), param, NULL); // init program
+	process* p = process_load("/bin/init", vfs_path_to_inode(NULL, "/"), param, env); // init program
 	p->fd[0].inode      = malloc(sizeof(inode_t));
 	*p->fd[0].inode 	= vfs_path_to_inode(NULL, "/dev/serial");
 	p->fd[0].position   = 0;

@@ -113,6 +113,7 @@ _data_abort_vector:
 
 .globl _interrupt_vector
 _interrupt_vector:
+	sub 	lr, lr, #4
   	stmfd	sp, {r0-r14}^
 	sub 	sp, sp, #15*4
 	mrs 	r1, spsr

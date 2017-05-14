@@ -47,7 +47,7 @@ process* get_next_process() {
     }
 	process_list[active_processes[current_process_id]]->dummy++;
 
-	kernel_printf("\033[s\033[%d;%dH%d\033[u", 1, 1, active_processes[current_process_id]);
+//kernel_printf("\033[s\033[%d;%dH%d\033[u", 1, 1, active_processes[current_process_id]);
     return process_list[active_processes[current_process_id]];
 }
 
