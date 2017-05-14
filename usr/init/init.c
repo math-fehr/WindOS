@@ -20,13 +20,13 @@ int main () {
 			pid_t res = _wait(&status);
 			printf("[INIT] Process %d exited with status %d.\n", res, status);
 			if (pid == res) {
-				printf("[INIT] The shell is dead. Restarting..\n");
+				printf("[INIT] The shell is dead. Long life the shell..\n");
 				main();
 			}
 		}
 	} else {
 		pid = _fork();
-		if (pid != 0) {
+		if (pid == 0) {
 			while (1) {}
 		} else {
 			char* argv_wesh[] = {"/bin/wesh", NULL};

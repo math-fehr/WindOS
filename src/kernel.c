@@ -113,9 +113,7 @@ void kernel_main(uint32_t memory) {
 
 	Timer_Setup();
 	Timer_SetLoad(500);
-    Timer_SetReload(500);
     Timer_Enable();
-    Timer_Enable_Interrupts();
 
     //USPiInitialize();
 

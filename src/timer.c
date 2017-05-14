@@ -16,20 +16,10 @@ void Timer_Enable() {
   dmb();
   rpiArmTimer->control |= TIMER_CTRL_FREERUNNING_COUNTER;
   rpiArmTimer->control |= TIMER_CTRL_ENABLE_BIT;
-  rpiArmTimer->control |= TIMER_CTRL_COUNTER_23BITS;
-  dmb();
-}
-
-void Timer_Enable_Interrupts() {
-  dmb();
   rpiArmTimer->control |= TIMER_CTRL_INTERRUPT_BIT;
+  rpiArmTimer->irq_clear = 0;
   dmb();
-}
 
-void Timer_Disable_Interrupts() {
-  dmb();
-  rpiArmTimer->control &= ~TIMER_CTRL_INTERRUPT_BIT;
-  dmb();
 }
 
 void Timer_Disable() {
@@ -184,15 +174,15 @@ uint32_t timer_get_posix_time() {
 
 void Timer_Setup() {
     dmb();
-    rpiArmTimer->control = 0;
-    rpiArmTimer->control |= (249 << 16);
-    rpiArmTimer->control |= TIMER_CTRL_COUNTER_23BITS;
-    rpiArmTimer->control |= TIMER_CTRL_PRESCALE_1;
-    rpiArmTimer->control |= TIMER_CTRL_HALT_STOP;
+    rpiArmTimer->control = (62 << 16)
+                           | TIMER_CTRL_COUNTER_23BITS
+                           | TIMER_CTRL_PRESCALE_1;
     rpiArmTimer->pre_divider = 249; // Gives a 1MHz timer.
+    rpiArmTimer->irq_clear = 0;
     dmb();
     RPI_GetIRQController()->Enable_Basic_IRQs |= RPI_BASIC_ARM_TIMER_IRQ;
     dmb();
+
     nextHandlerTrigger = 0xFFFFFFFF;
     nextHandlerOverflow = 0xFFFFFFFF;
     lastTimeCheckedHandlers = Timer_GetTime();
