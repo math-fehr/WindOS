@@ -37,11 +37,13 @@ int copy(int fromfd, char* frompath, int destfd, char* destpath, bool recursive)
 	if (S_ISREG(fs_from.st_mode) && S_ISREG(fs_dest.st_mode)) {
 		char copy_buffer[1024];
 		int n;
+		printf(">%s\n", frompath);
 		while ((n = _read(from, copy_buffer, 1024)) > 0) {
 			_write(dest, copy_buffer, n);
 		}
 	} else if (S_ISREG(fs_from.st_mode)) {
 		int new_file;
+		printf(">%s\n", frompath);
 		if (dest_exists) {
 			new_file = _openat(dest, basename(frompath), O_CREAT | O_WRONLY);
 		} else {

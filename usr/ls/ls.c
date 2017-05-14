@@ -12,6 +12,11 @@ extern int argc;
 extern char** argv;
 
 int main() {
+	int r, c;
+	r=40;
+	c=80;
+	//term_get_size(&r, &c);
+
 	int fd;
 
 	char* target = ".";
@@ -57,8 +62,6 @@ int main() {
 		perror("ls");
 		return 1;
 	} else {
-		int r, c;
-		term_get_size(&r, &c);
 
 		struct dirent* entry = malloc(sizeof(struct dirent));
 		int max_size 	= 0;

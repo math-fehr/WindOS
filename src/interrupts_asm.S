@@ -25,9 +25,13 @@ _software_interrupt_vector:
 	mrs 	r1, spsr
 	stmfd 	sp!, {r1, lr}
 	mov 	r0, sp
+	and 	r4, sp, #4
+	sub 	sp, sp, r4
+	dmb
 	ldr 	r1, =software_interrupt_vector
 	blx 	r1
-
+	dmb
+	add 	sp, sp, r4
 	ldmfd 	sp!, {r1, lr}
 	msr 	spsr, r1
 	ldmfd  	sp, {r0-r14}^ // Restore registers
