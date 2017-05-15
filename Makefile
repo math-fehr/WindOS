@@ -35,7 +35,7 @@ USPI_INCLUDE_DIR  = uspi/include
 
 CLIBS = -L$(LIB_USPI_DIR) -luspi
 
-CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu11 $(INCLUDE_C) -mno-unaligned-access -fno-omit-frame-pointer $(CLIBS) -I $(USPI_INCLUDE_DIR)
+CFLAGS = -O2 -Wall -Wextra -nostdlib -lgcc -std=gnu11 $(INCLUDE_C) -mno-unaligned-access -fno-omit-frame-pointer $(CLIBS) -I $(USPI_INCLUDE_DIR) #-g
 
 HARDWARE_FLAGS = -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=soft \
 								 -mtune=cortex-a7
@@ -44,7 +44,7 @@ RPI_FLAG_S = --defsym RPI2=1
 
 SFLAGS = $(INCLUDE_C)
 
-QEMU = qemu-fvm/arm-softmmu/fvm-arm
+QEMU = qemu-fvm/arm-softmmu/fvm-arm #-s -S
 
 SD_NAPPY = /media/nappy/boot/
 SD_NAPPY2 = /media/nappy/OUI/
@@ -143,7 +143,7 @@ $(LIB_USPI_CFG):
 
 # Userspace environment build.
 $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
-	@$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) $(HARDWARE_FLAGS) -std=gnu11 -static -o $@
+	@$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) $(HARDWARE_FLAGS) -std=gnu11 -static -o $@  #-g
 
 
 
