@@ -1,9 +1,14 @@
 #include "dev.h"
 
-#include "stdlib.h"
-#include "errno.h"
+/** \file dev.c
+  * \brief A mountable device pseudo-filesystem
+  * These functions offers a filesystem interface to device features such as the
+  * serial port.
+  */
 
-
+/**	\var static inode_operations_t dev_inode_operations
+ *	Functions providing the inode interface with the VFS.
+ */
 static inode_operations_t dev_inode_operations = {
   .read_dir = dev_lsdir,
   .read = dev_fread,
@@ -14,7 +19,12 @@ static inode_operations_t dev_inode_operations = {
   .ioctl = dev_ioctl,
 };
 
-superblock_t* dev_initialize(int id) {
+/**	\fn superblock_t* dev_initialize(int fd)
+ *	\brief Builds a superblock, being the main interface object with the VFS.
+ *	\param id The id of the newly created superblock.
+ * 	\return A newly malloc'd superblock representing devices.
+ */
+superblock_t* dev_initialize (int id) {
     superblock_t* res = malloc(sizeof(superblock_t));
     res->id = id;
     res->root.st.st_ino    = DEV_ROOT;
@@ -26,7 +36,33 @@ superblock_t* dev_initialize(int id) {
     return res;
 }
 
-vfs_dir_list_t* dev_append_elem(inode_t inode, char* name, vfs_dir_list_t* lst) {
+
+/** \fn int dev_ioctl (inode_t from, int cmd, int arg)
+ * 	\brief Modifies the attributes of a device.
+ *	\param from The inode representing the device.
+ * 	\param cmd The control command.
+ *	\param arg The control command parameter.
+ * 	\return 0 on success, -1 on fail.
+ */
+int dev_ioctl (inode_t from, int cmd, int arg) {
+	if (from.st.st_ino == DEV_SERIAL) {
+		if (cmd == 0) { // 0 is the set mode command.
+			serial_setmode(arg);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+/**	\fn vfs_dir_list_t* dev_append_elem
+ *			(inode_t inode, char* name, vfs_dir_list_t* lst)
+ *	\brief Helper function to build a directory field list.
+ *	\param inode Inode to add in the list
+ * 	\param name Entry name in the directory
+ * 	\param lst Current list.
+ *	\return A pointer to the first element of the list.
+ */
+vfs_dir_list_t* dev_append_elem (inode_t inode, char* name, vfs_dir_list_t* lst) {
     vfs_dir_list_t* res = malloc(sizeof(vfs_dir_list_t));
     res->name = malloc(strlen(name)+1);
     strcpy(res->name, name);
@@ -35,17 +71,13 @@ vfs_dir_list_t* dev_append_elem(inode_t inode, char* name, vfs_dir_list_t* lst) 
     return res;
 }
 
-int dev_ioctl(inode_t from, int cmd, int arg) {
-	if (from.st.st_ino == DEV_SERIAL) {
-		if (cmd == 0) { // set mode
-			serial_setmode(arg);
-		}
-	}
-
-	return 0;
-}
-
-vfs_dir_list_t* dev_lsdir(inode_t from) {
+/**	\fn vfs_dir_list_t* dev_lsdir (inode_t from)
+ *	\brief List the content of a directory.
+ *	\param from The explored inode.
+ *	\return On success: a pointer to the first element of the list.
+ *			On fail: a NULL pointer, with errno set to the appropriate value.
+ */
+vfs_dir_list_t* dev_lsdir (inode_t from) {
     if (from.st.st_ino == DEV_ROOT) {
         vfs_dir_list_t* res = NULL;
 
@@ -85,7 +117,16 @@ vfs_dir_list_t* dev_lsdir(inode_t from) {
     return NULL;
 }
 
-int dev_fread(inode_t from, char* buf, int size, int pos) {
+/**	\fn int dev_fread (inode_t from, char* buf, int size, int pos)
+ *	\brief Read the inode from offset 'position', maximum size fixed, into 'buf'.
+ *	\param from The read inode.
+ *	\param buf Destination buffer.
+ *	\param size Buffer maximum size.
+ *	\param pos File read offset.
+ *	\return On success: the number of bytes read.
+ *			On fail: -1, with errno set to the appropriate value.
+ */
+int dev_fread (inode_t from, char* buf, int size, int pos) {
     (void)pos;
     switch (from.st.st_ino) {
         case DEV_NULL:
@@ -99,12 +140,21 @@ int dev_fread(inode_t from, char* buf, int size, int pos) {
             //TODO: RNG
             return size;
         case DEV_SERIAL:
-
             return serial_readline(buf, size);
     }
+	errno = EINVAL;
     return -1;
 }
 
+/**	\fn int dev_fwrite (inode_t from, char* buf, int size, int pos)
+ *	\brief Write the inode from offset 'position', maximum size fixed, from 'buf'.
+ *	\param from The written inode.
+ *	\param buf Source buffer.
+ *	\param size Buffer maximum size.
+ *	\param pos File read offset.
+ *	\return On success: the number of bytes written.
+ *			On fail: -1, with errno set to the appropriate value.
+ */
 int dev_fwrite(inode_t from, char* buf, int size, int pos) {
     (void)pos;
     switch (from.st.st_ino) {
@@ -114,6 +164,7 @@ int dev_fwrite(inode_t from, char* buf, int size, int pos) {
             }
             return size;
         default:
+			errno = EINVAL;
             return -1;
     }
 }

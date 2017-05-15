@@ -1,27 +1,35 @@
 #include "gpio.h"
 #include "timer.h"
 
-
-/**
- * Flags for pins pull
+/** \file gpio.c
+ * 	\brief Driver to communicate with the GPIO hardware.
+ * 	The raspberry pi is shipped with a GPIO (General Purpose Input/Output).
+ * 	These functions allows us to exploit some of these feature.
  */
-#define NO_PULL 0b00
-#define PULL_DOWN 0b01
-#define PULL_UP 0b10
 
-
+// The data memory barrier instruction, useful to ensure synchronisation.
 extern void dmb();
 
-static volatile rpi_gpio_controller_t* GPIOController =
+/** \var volatile rpi_gpio_controller_t* GPIOController
+  *	Structure of the GPIO controller registers.
+  */
+volatile rpi_gpio_controller_t* GPIOController =
   (rpi_gpio_controller_t*) GPIO_BASE;
 
-
-volatile rpi_gpio_controller_t* getGPIOController(void) {
+/** \fn volatile rpi_gpio_controller_t*t getGPIOController (void)
+ * 	\brief A getter function for the GPIO controller.
+ * 	\return A pointer to the previously defined structure.
+ */
+volatile rpi_gpio_controller_t* getGPIOController (void) {
     return GPIOController;
 }
 
-
-void GPIO_setPinFunction(int pin, int function) {
+/** \fn void GPIO_setPinFunction (int pin, int function)
+ *	\brief Sets the function of a specified pin.
+ *	\param pin The pin to configure.
+ * 	\param function The function to set (as defined in gpio.h).
+ */
+void GPIO_setPinFunction (int pin, int function) {
   kdebug(D_GPIO, 1, "Set pin %d to function %d\n", pin, function);
   int reg = pin/10;
   int ofs = pin%10;
@@ -34,17 +42,30 @@ void GPIO_setPinFunction(int pin, int function) {
   dmb(); //this too
 }
 
-
-void GPIO_setOutputPin(int pin) {
+/** \fn void GPIO_setOutputPin (int pin)
+ *	\brief Sets a pin to the output mode.
+ * 	\param pin The updated pin.
+ */
+void GPIO_setOutputPin (int pin) {
   GPIO_setPinFunction(pin, PIN_OUTPUT);
 }
 
-void GPIO_setInputPin(int pin) {
+/** \fn void GPIO_setInputPin (int pin)
+ *	\brief Sets a pin to the input mode.
+ * 	\param pin The updated pin.
+ */
+void GPIO_setInputPin (int pin) {
     GPIO_setPinFunction(pin, PIN_INPUT);
 }
 
-
-void GPIO_setPinValue(int pin, bool value) {
+/** \fn void GPIO_setPinValue (int pin, bool value)
+ *	\brief Sets the value of a pin.
+ * 	\param pin The updated pin.
+ * 	\param value The pin value.
+ * 	\warning The pin should be in output mode.
+ * 	\warning Between the raspberry pi 1 and 2 the value yields opposite result for the LED.
+ */
+void GPIO_setPinValue (int pin, bool value) {
   kdebug(D_GPIO, 1, "Set pin %d to value %d\n", pin, value);
   int set = 0;
   if (pin >= 32) {
@@ -60,7 +81,12 @@ void GPIO_setPinValue(int pin, bool value) {
   dmb(); //this too
 }
 
-static void GPIO_setPull(int pin, int pull) {
+/** \fn void GPIO_setPull (int pin, bool pull)
+ *	\brief Sets the resistor pull mode of a pin.
+ * 	\param pin The updated pin.
+ * 	\param pull The pull mode as defined in gpio.h.
+ */
+static void GPIO_setPull (int pin, int pull) {
     dmb();
     getGPIOController()->GPPUD = pull;
     Timer_WaitCycles(300);
@@ -84,18 +110,35 @@ static void GPIO_setPull(int pin, int pull) {
     }
 }
 
+/** \fn void GPIO_setPullUp(int pin)
+ *	\brief Resistor pull up on specified pin
+ * 	\param pin The updated pin.
+ */
 void GPIO_setPullUp(int pin) {
     GPIO_setPull(pin,PULL_UP);
 }
 
+/** \fn void GPIO_setPullDown(int pin)
+ *	\brief Resistor pull down on specified pin
+ * 	\param pin The updated pin.
+ */
 void GPIO_setPullDown(int pin) {
     GPIO_setPull(pin,PULL_DOWN);
 }
 
+/** \fn void GPIO_resetPull(int pin)
+ *	\brief Resistor pull reset on specified pin
+ * 	\param pin The updated pin.
+ */
 void GPIO_resetPull(int pin) {
     GPIO_setPull(pin,NO_PULL);
 }
 
+/** \fn void GPIO_enableHighDetect(int pin)
+ *	\brief Enable the high detection feature on this pin.
+ * 	\param pin The updated pin.
+ * 	High detect set a bit in GPED when a high level on pin is detected.
+ */
 void GPIO_enableHighDetect(int pin) {
     dmb();
     int n = pin < 32 ? 0 : 1;
@@ -104,6 +147,10 @@ void GPIO_enableHighDetect(int pin) {
     dmb();
 }
 
+/** \fn void GPIO_disableHighDetect(int pin)
+ *	\brief Disable the high detection feature on this pin.
+ * 	\param pin The updated pin.
+ */
 void GPIO_disableHighDetect(int pin) {
     dmb();
     int n = pin < 32 ? 0 : 1;
@@ -112,6 +159,12 @@ void GPIO_disableHighDetect(int pin) {
     dmb();
 }
 
+/** \fn void GPIO_getPinValue(int pin)
+ *	\brief Reads the value of the pin.
+ * 	\param pin The updated pin.
+ * 	\return true if the pin is high, false if it's low.
+ *	\warning The pin must be in input mode.
+ */
 bool GPIO_getPinValue(int pin) {
     dmb();
     int n = pin < 32 ? 0 : 1;
@@ -120,6 +173,12 @@ bool GPIO_getPinValue(int pin) {
     return value != (uint32_t)0;
 }
 
+/** \fn void GPIO_hasDetectedEvent(int pin)
+ *	\brief Check if an edge has been detected on this pin.
+ * 	\param pin The check pin.
+ * 	\return true if an edge has been detected.
+ *	\warning The value is reset as soon a this call is done.
+ */
 bool GPIO_hasDetectedEvent(int pin) {
     dmb();
     int n = pin < 32 ? 0 : 1;

@@ -1,6 +1,14 @@
 #ifndef ARM_H
 #define ARM_H
 
+/** \file arm.h
+ *	\brief ARM specifically related code
+ *
+ * 	This file contains maintenance functions and methods to access ARM special
+ *	registers. 
+ */
+
+
 #include "stdint.h"
 
 #define SETWAY_LEVEL_SHIFT		1

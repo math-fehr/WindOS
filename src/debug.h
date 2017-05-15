@@ -1,19 +1,16 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include "stdbool.h"
-#include "stddef.h"
-#include "stdint.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdarg.h>
+
 #include "cstubs.h"
 #include "serial.h"
-#include "stdarg.h"
 
-/**
- * The functions and defines are here to debug more easily
- */
-
-/**
- * The pin holding the gpio led
+/** \def GPIO_LED_PIN
+ * 	The number of the pin holding the raspberry pi ACT LED.
  */
 #ifdef RPI2
 #define GPIO_LED_PIN 47
@@ -22,7 +19,7 @@
 #endif
 
 /**
- * The sources of debug log
+ * 	The sources of debug log
  */
 #define D_KERNEL  0
 #define D_SERIAL  1
@@ -39,29 +36,9 @@
 #define D_USPI    12
 #define D_MBX     13
 
-/**
- * Used in function kdebug.
- * Act the same as kernel_printf, but when the va_list is already set up
- */
+
 void vkernel_printf(const char* fmt, va_list args);
-
-/**
- * printf to serial
- * act like printf for parameters
- */
 void kernel_printf(const char* fmt, ...);
-
-/**
- * send debug message to serial
- * source is the source of bug
- * level is used to know when to output log.
- * If level is higher than enable_source[source], then the message is sent
- */
 void kdebug(int source, int level, const char* fmt, ...);
-
-/**
- * computes a^b
- */
-int ipow(int a, int b);
 
 #endif //DEBUG_H
