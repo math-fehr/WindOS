@@ -762,8 +762,7 @@ void ext2_append_file(superblock_t* fs, int inode, char* buffer, int size) {
 
   int n_blocks_to_create = (size - fill_blk + block_size - 1)/block_size;
   int last_block = ((int)data.size-1)/block_size;
-  kernel_printf("%d %d \n", n_blocks_to_create, last_block);
-
+  
   if (data.size == 0)
     last_block = -1;
 
@@ -771,8 +770,6 @@ void ext2_append_file(superblock_t* fs, int inode, char* buffer, int size) {
     uintptr_t last_block_address = ext2_get_block_address(fs, data, last_block);
     disk->write(last_block_address*block_size, buffer, fill_blk);
   }
-
-  kernel_printf("oui");
 
   int buf_pos = fill_blk; // position in the buffer.
 

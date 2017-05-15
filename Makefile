@@ -77,16 +77,16 @@ rpi2: all
 
 # Builds a 1MB filesystem
 $(BUILD)fs.img: $(RAMFS_OBJ)
-	genext2fs -b 20000 -i 256 -d $(RAMFS) $(BUILD)fs.tmp
+	genext2fs -b 32768 -N 8096 -d $(RAMFS) $(BUILD)fs.tmp
 	@$(ARMGNU)-ld -b binary -r -o $(BUILD)fs.ren $(BUILD)fs.tmp
 	@$(ARMGNU)-objcopy --rename-section .data=.fs \
 										--set-section-flags .data=alloc,code,load \
 										$(BUILD)fs.ren $(BUILD)fs.img
 
-run: $(TARGET_QEMU) $(USR_BIN)
+run: $(USR_BIN) $(TARGET_QEMU)
 	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty -serial pty
 
-runs: $(TARGET_QEMU) $(USR_BIN)
+runs: $(USR_BIN) $(TARGET_QEMU)
 	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -serial pty -serial stdio 2>/dev/null
 
 
@@ -143,6 +143,7 @@ $(LIB_USPI_CFG):
 
 # Userspace environment build.
 $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
+	@echo "Making $@"
 	@$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) $(HARDWARE_FLAGS) -std=gnu11 -static -o $@  #-g
 
 
@@ -159,6 +160,7 @@ copy_lortex_2: rpi
 clean:
 	@rm -fr $(BUILD)*
 	@rm -f $(TARGET)
+	@rm -f $(USR_BINDIR)*
 	@rm -f $(TARGET_QEMU)
 	make -C $(LIB_USPI_DIR) clean
 	rm -f $(LIB_USPI_CFG)
