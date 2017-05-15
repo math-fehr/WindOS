@@ -5,10 +5,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/** \struct storage_driver
+ *	\brief Functions implemented by any mass-storage driver.
+ */
 typedef struct {
-  // (address, buffer, size)
-  int (*read)   (uint32_t, void *, uint32_t);
-  int (*write)  (uint32_t, void *, uint32_t);
+  int (*read)   (uint32_t, void *, uint32_t); 	///< Read from the device (address, buffer, size), returns the number of byte read.
+  int (*write)  (uint32_t, void *, uint32_t);	///< Write to the device (address, buffer, size), returns the number of byte written.
 } storage_driver;
 
 

@@ -1,28 +1,43 @@
+/** \file serial.c
+ * 	\brief Serial communication interface.
+ */
+
 #include "serial.h"
 #include "string.h"
 #include "debug.h"
 
-#define SYS_FREQ 250000000
-
 static aux_t* auxiliary = (aux_t*)AUX_BASE;
 
-/**
- * Ensures that data comes in order when accessing the peripheral
- */
 extern void dmb();
 
+/**	\fn aux_t* serial_get_aux()
+ * 	\brief Return a pointer to the peripheral
+ */
 aux_t* serial_get_aux()
 {
   return auxiliary;
 }
 
-#define MAX_BUFFER 1024
-
+/** \var int read_buffer_index
+ * 	\brief Position in the read buffer.
+ */
 int read_buffer_index;
+
+/** \var char read_buffer[MAX_BUFFER]
+ *	\brief Serial port input buffer.
+ */
 char read_buffer[MAX_BUFFER];
+
+/** \var int mode
+ * 	\brief Serial read mode.
+ *
+ *	See serial_setmode for more informations.
+ */
 int mode;
 
-
+/** \fn void serial_init()
+ *	\brief Initialize the serial peripheral.
+ */
 void serial_init() {
 	volatile int i;
 	dmb();
@@ -77,6 +92,12 @@ void serial_init() {
 	mode = 1;
 }
 
+/** \fn void serial_putc(unsigned char data)
+ * 	\brief Put a single character on serial port.
+ *	\param data The character to write.
+ *
+ *	\warning If the character is \r, a \n is added to ensure correct output.
+ */
 void serial_putc(unsigned char data) {
   while((auxiliary->MU_LSR & AUX_MULSR_TX_EMPTY) == 0) {}
   dmb();
@@ -86,6 +107,12 @@ void serial_putc(unsigned char data) {
     serial_putc('\n');
   }
 }
+
+/**	\fn unsigned char serial_readc()
+ *	\brief Read a single character on serial port.
+ *	\return The read character.
+ * 	\warning This call is blocking.
+ */
 unsigned char serial_readc() {
   while((auxiliary->MU_LSR & AUX_MULSR_DATA_READY) == 0) {}
   char data = auxiliary->MU_IO;
@@ -93,22 +120,35 @@ unsigned char serial_readc() {
   return data;
 }
 
+/** \fn void serial_write(char* str)
+ * 	\brief Print a null-terminated string to serial port.
+ */
 void serial_write(char* str){
     while((*str) != '\0') {
         serial_putc(*(str++));
     }
 }
 
-void serial_newline() {
-    serial_putc('\n');
-}
-
+/** \fn void serial_setmode(int arg)
+ * 	\param arg Chosen mode.
+ *	\brief Sets the read mode for serial port.
+ *
+ *	Two modes are available:
+ *	- 1: canonical mode, bypassing control characters and pre-handling buffer.
+ *	- 2: raw mode, returns every read character.
+ */
 void serial_setmode(int arg) {
 	if (arg >= 0 && arg < 2) {
 		mode = arg;
 	}
 }
 
+/** \fn void serial_irq()
+ *	\brief Update serial read buffer.
+ *
+ *	The serial read_buffer is updated according to current mode and the content
+ *	of the RX FIFO.
+ */
 void serial_irq() {
 	//kernel_printf("fifo: %d\n", (auxiliary->MU_STAT & 0x000F0000) >> 16);
 	while(auxiliary->MU_LSR & AUX_MULSR_DATA_READY) {
@@ -140,8 +180,17 @@ void serial_irq() {
 	//kernel_printf("fifo>: %d\n", (auxiliary->MU_STAT & 0x000F0000) >> 16);
 }
 
-/*
- * this is not so safe (buffer overflow.)
+/** \fn int serial_readline(char* buffer, int buffer_size)
+ *	\brief Read serial buffer.
+ *	\param buffer The output buffer
+ *	\param buffer_size The output buffer size.
+ *	\return The number of read characters.
+ *
+ * 	The behavior depends on the mode:
+ *	- In canonical mode, returns zero until a newline symbol is found.
+ *	- In raw mode, returns every read character.
+ *
+ *	\bug Buffer overflow in canonical mode.
  */
 int serial_readline(char* buffer, int buffer_size) {
 	serial_irq();

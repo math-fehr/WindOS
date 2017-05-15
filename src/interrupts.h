@@ -1,43 +1,23 @@
 #ifndef INTERRUPTS_H
 #define INTERRUPTS_H
 
-#include "stdbool.h"
-#include "stddef.h"
-#include "stdint.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <errno.h>
+#include <stdio.h>
+
 #include "kernel.h"
-#include "errno.h"
 #include "mmu.h"
 #include "debug.h"
 #include "scheduler.h"
 #include "syscalls.h"
-
+#include "memalloc.h"
 #include "arm.h"
 
 /**
- * Theses functions handle interrupts made by the processor
+ *	List of syscall indices.
  */
-
-
-#define ALIGNMENT_FAULT 		0b0001
-#define DEBUG_EVENT 			0b0010
-#define ACCESS_FAULT_SEC 		0b0011
-#define INSTR_CACHE_FAULT 		0b0100
-#define TRANSLATION_FAULT_SEC 	0b0101
-#define ACCESS_FAULT_PAGE  		0b0110
-#define TRANSLATION_FAULT_PAGE	0b0111
-#define SYNC_EXT_ABORT 			0b1000
-#define DOMAIN_FAULT_SEC 		0b1001
-#define DOMAIN_FAULT_PAGE 		0b1011
-#define SYNC_EXT_ABORT_TBL_1 	0b1100
-#define PERMISSION_FAULT_SEC	0b1101
-#define SYNC_EXT_ABORT_TBL_2 	0b1110
-#define PERMISSION_FAULT_PAGE 	0b1111
-
-
-/**
- * The base adress of the interrupt controller
- */
-
 #define     SVC_EXIT        0x01
 #define     SVC_FORK        0x02
 #define     SVC_READ        0x03
@@ -52,40 +32,54 @@
 #define     SVC_SBRK        0x2d
 #define 	SVC_IOCTL 		0x36
 #define 	SVC_GETCWD 		0xb7
-#define 	SVC_GETDENTS 	78
+#define 	SVC_GETDENTS 	0x4e
 #define 	SVC_OPENAT 		0x127
 #define 	SVC_MKNODAT 	0x129
 #define 	SVC_UNLINKAT	0x12d
 
+/** \def RPI_INTERRUPT_CONTROLLER_BASE
+ * 	The base adress of the interrupt controller.
+ */
 #define RPI_INTERRUPT_CONTROLLER_BASE (PERIPHERALS_BASE + 0xB200UL)
 
-/**
- * The structure of the interrupt controller
+/**	\struct rpi_irq_controller_t
+ *	\brief Memory representation of ARM IRQ controller.
  */
 typedef struct {
-  volatile uint32_t IRQ_basic_pending;
-  volatile uint32_t IRQ_pending_1;
-  volatile uint32_t IRQ_pending_2;
-  volatile uint32_t FIQ_control;
-  volatile uint32_t Enable_IRQs_1;
-  volatile uint32_t Enable_IRQs_2;
-  volatile uint32_t Enable_Basic_IRQs;
-  volatile uint32_t Disable_IRQs_1;
-  volatile uint32_t Disable_IRQs_2;
-  volatile uint32_t Disable_Basic_IRQs;
+  volatile uint32_t IRQ_basic_pending; ///< A bit is set there when a basic IRQ is pending.
+  volatile uint32_t IRQ_pending_1; ///< A bit is set when a general IRQ between 0 and 31 is pending.
+  volatile uint32_t IRQ_pending_2; ///< A bit is set when a general IRQ between 32 and 63 is pending.
+  volatile uint32_t FIQ_control; ///< Enable Fast Interrupt Mode for an interrupt.
+  volatile uint32_t Enable_IRQs_1; ///< General IRQ enable bit 0 to 31.
+  volatile uint32_t Enable_IRQs_2; ///< General IRQ enable bit 32 to 63.
+  volatile uint32_t Enable_Basic_IRQs; ///< Basic IRQ enable bit.
+  volatile uint32_t Disable_IRQs_1; ///< General IRQ disable bit 0 to 31.
+  volatile uint32_t Disable_IRQs_2; ///< General IRQ disable bit 32 to 63.
+  volatile uint32_t Disable_Basic_IRQs; ///< Basic IRQ disable bit.
 } rpi_irq_controller_t;
 
 
 /**
  * Types used for IRQ handling
  */
-typedef void interruptFunction (void*);
-#define NUMBER_IRQ_INTERRUPTS  64
-typedef struct interruptHandler {
-    interruptFunction* function;
-    void* param;
-} interruptHandler;
 
+/** \var void interruptFunction (void*)
+ *	\brief Type representing a function.
+ */
+typedef void interruptFunction (void*);
+
+/** \def NUMBER_IRQ_INTERRUPTS 64
+ * 	\brief Prints maximum index of a general interrupt.
+ */
+#define NUMBER_IRQ_INTERRUPTS  64
+
+/** \struct interruptHandler
+ * 	\brief Represents an interrupt handler.
+ */
+typedef struct interruptHandler {
+    interruptFunction* function; ///< The function to call.
+    void* param; ///< A pointer to the function parameter.
+} interruptHandler;
 
 /**
  * Bits in the Enable_Basic_IRQs register to enable various interrupts.
@@ -100,35 +94,12 @@ typedef struct interruptHandler {
 #define RPI_BASIC_ACCESS_ERROR_1_IRQ    (1 << 6)
 #define RPI_BASIC_ACCESS_ERROR_0_IRQ    (1 << 7)
 
-/**
- * Return a pointer to the interrupt controller
- */
+
 rpi_irq_controller_t* RPI_GetIRQController(void);
-
-
-/**
- * Initialize the IRQ interrupt handlers table
- */
 void init_irq_interruptHandlers(void);
-
-/**
- * Connect a function to an IRQ interrupt
- */
 void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* param);
-
-/**
- * Call all handled function that needs to be called
- */
 void callInterruptHandlers();
-
-/**
- * enable interrupts
- */
 void enable_interrupts(void);
-
-/**
- * disable interrupts
- */
 void disable_interrupts(void);
 
 #endif //INTERRUPTS_H

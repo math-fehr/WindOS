@@ -1,9 +1,16 @@
+/** \file vfs.c
+ *	\brief Virtual File System feature.
+ *
+ *	This code provides an abstraction of the notion of filesystem.
+ *	It is the interface between filesystem drivers and the rest of the kernel.
+ *
+ *  Inspiration: https://fr.wikipedia.org/wiki/Virtual_File_System
+ */
+
 #include "vfs.h"
 #include <stdlib.h>
 #include <errno.h>
 
-#define MAX_MNT 20
-#define MAX_ID 1024
 inode_t root_inode;
 mount_point_t mount_points[MAX_MNT];
 int dev_to_mnt[MAX_ID];

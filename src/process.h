@@ -9,56 +9,63 @@
 #include "stdlib.h"
 #include "kernel.h"
 
+/** \struct user_context_t
+ *	\brief User process data on a context switch.
+ */
 typedef struct {
-	uint32_t cpsr;
-	uint32_t pc;
-	uint32_t r[15];
+	uint32_t cpsr; ///< Current program status register.
+	uint32_t pc; ///< Return address.
+	uint32_t r[15]; ///< Process registers.
 } user_context_t;
 
-/**
- * Represent an active process
+/** \def MAX_OPEN_FILES
+ * 	\brief Number of file descriptor that a process can open.
  */
-
 #define MAX_OPEN_FILES 64
 
+/** \struct fd_t
+ * 	\brief File descriptor structure.
+ */
 typedef struct {
-    inode_t* inode;
-    int position;
-	vfs_dir_list_t* dir_entry;
-	int flags;
+    inode_t* inode; ///< Open file inode.
+    int position; ///< Cursor position in the file.
+	vfs_dir_list_t* dir_entry; ///< If the inode is a directory, store it's entries.
+	int flags; ///< Open flags.
 } fd_t;
 
-/**
- * status of a process
+/** \enum status_process
+ * 	\brief Describes status of a process
  */
 typedef enum {
-    status_active,
-    status_wait,
-    status_zombie,
-	status_blocked_svc
+    status_active, ///< The process is running/runnable.
+    status_wait, ///< The process is waiting for a child event.
+    status_zombie, ///< Zombie mode for a killed process.
+	status_blocked_svc ///< Waiting for a service call to return.
 } status_process;
 
-
-typedef struct {
-	pid_t 	pid;
-	int*  	wstatus;
-} wait_parameters_t;
-
-/**
- * A process (running or not)
+/** \struct wait_parameters_t
+ * 	\brief Options when a parent waits for its children.
  */
 typedef struct {
-    status_process status;
-    int dummy; //Temp value for debug
-    uintptr_t ttb_address;
-    pid_t asid; // Address Space ID
-	pid_t parent_id;
-    int brk; // Program break.
-    int brk_page; // Number of pages allocated for program break
-    fd_t fd[MAX_OPEN_FILES];
-	user_context_t ctx;
-	wait_parameters_t wait; // coherent values only in wait status.
-	inode_t cwd;
+	pid_t 	pid; ///< The pid for the waited process. (-1 for any child)
+	int*  	wstatus; ///< The pointer where we should write to on return.
+} wait_parameters_t;
+
+/** \struct process
+ *	\brief All the data representing a process.
+ */
+typedef struct {
+    status_process status; ///< Execution status.
+    int dummy; ///< Number of context switch to this process.
+    uintptr_t ttb_address; ///< Address of process' translation table.
+    pid_t asid; ///< Program ID
+	pid_t parent_id; ///< Parent ID
+    int brk; ///< Program break.
+    int brk_page; ///< Number of pages allocated for program break
+    fd_t fd[MAX_OPEN_FILES]; ///< Process' file descriptors
+	user_context_t ctx; ///< Process' execution context.
+	wait_parameters_t wait; ///< When in wait status, wait parameters. When in zombie status, stores exit code.
+	inode_t cwd; ///< Current working directory.
 } process;
 
 #define ELF_ABI_SYSTEMV 0
@@ -73,8 +80,11 @@ typedef struct {
 #define ELF_FORMAT_32BIT 1
 #define ELF_FORMAT_64BIT 2
 
-//https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
-
+/** \struct elf_header_t
+ *	\brief ELF Header structure
+ *
+ * 	https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
+ */
 typedef struct {
   char magic_number[4];
   char format;
@@ -98,6 +108,9 @@ typedef struct {
   uint16_t sh_str_ndx;
 } elf_header_t;
 
+/** \struct ph_entry_t
+ *	\brief Program header entry.
+ */
 typedef struct {
   uint32_t type;
   uint32_t offset;
@@ -109,6 +122,9 @@ typedef struct {
   uint32_t align;
 } ph_entry_t;
 
+/** \struct sh_entry_t
+ *	\brief Section header entry. 
+ */
 typedef struct {
   uint32_t name;
   uint32_t type;

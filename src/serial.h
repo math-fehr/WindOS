@@ -7,20 +7,29 @@
 #include "gpio.h"
 #include "timer.h"
 
-/**
- * base adress of the peripheral
-
-#ifdef RPI2
-#define AUX_BASE 0x3f215000
-#else
-#define AUX_BASE 0x20215000
-#endif
-*/
-
+/** \def AUX_BASE
+ * 	\brief Base address of AUX registers.
+ */
 #define AUX_BASE (PERIPHERALS_BASE + 0x215000)
 
-/**
- * Structure of the peripheral
+/** \def SYS_FREQ
+ * 	\brief System clock frequency.
+ */
+#define SYS_FREQ 250000000
+
+/** \def MAX_BUFFER
+ * 	\brief Maximum serial buffer size.
+ */
+#define MAX_BUFFER 1024
+
+/** \struct aux_t
+ * 	\brief AUX registers
+ *
+ *	AUX registers contains feature to control several peripherals:
+ *	- SPI
+ * 	- Mini UART
+ *
+ *	We use mini-UART for serial communications.
  */
 typedef struct {
   volatile unsigned int IRQ;
@@ -58,33 +67,12 @@ typedef struct {
 } aux_t;
 
 
-/**
- * Return a pointer to the peripheral
- */
+
 aux_t* serial_get_aux();
-
-
 void serial_setmode(int arg);
-
-/**
- * Initialize the serial
- */
 void serial_init();
-
-/**
- * Output a single character
- */
 void serial_putc(unsigned char data);
-
-/**
- * Output a string
- */
 void serial_write(char* str);
-
-/**
- * Print a new line
- */
-void serial_newline();
 
 /**
  * Read a character from the serial
