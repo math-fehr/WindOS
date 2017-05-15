@@ -162,7 +162,7 @@ uint32_t Timer_GetTime();
 
 /**
  * Return the posix time
- *
+ */
  uint32_t timer_get_posix_time();
 
 #endif //TIMER_H
