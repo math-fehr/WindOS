@@ -9,47 +9,56 @@
 
 #include "sys/stat.h"
 
-// https://fr.wikipedia.org/wiki/Virtual_File_System
+/** \def MAX_MNT
+ *	\brief Number of mount points limit.
+ */
+#define MAX_MNT 20
+
+/** \def MAX_ID
+ * 	\brief Device ID upper bound.
+ */
+#define MAX_ID 1024
+
 struct superblock_t;
 typedef struct superblock_t superblock_t;
 typedef struct inode_t inode_t;
 
-typedef struct {
-} super_operations_t;
 
 typedef struct vfs_dir_list_t vfs_dir_list_t;
 
 
-/*
- * These structures are the interface between the virtual file system and
- * real filesystems such as EXT2.
+/** \struct inode_operations_t
+ * 	\brief Available operations on a given inode.
  *
- * On fail, returns -1 and set the appropriate errno.
+ * 	These structures are the interface between the virtual file system and
+ * 	real filesystems such as EXT2.
+ *
+ * 	On fail, returns -1 and set the appropriate errno.
  */
 typedef struct {
-  vfs_dir_list_t* (*read_dir) (inode_t);
-  int (*read) (inode_t, char*, int, int);
-  int (*write) (inode_t, char*, int, int);
-  int (*mkdir) (inode_t, char*, int);
-  int (*rm) (inode_t, char*);
-  int (*mkfile) (inode_t, char*, int);
-  int (*ioctl) (inode_t, int, int);
-  int (*resize) (inode_t, int);
+  vfs_dir_list_t* (*read_dir) (inode_t); ///< Dir: Read a directory.
+  int (*read) (inode_t, char*, int, int); ///< File: Read a file.
+  int (*write) (inode_t, char*, int, int); ///< File: Write a file.
+  int (*mkdir) (inode_t, char*, int); ///< Dir: Create a directory.
+  int (*rm) (inode_t, char*); ///< Dir: Remove entry.
+  int (*mkfile) (inode_t, char*, int); ///< Dir: Create a file.
+  int (*ioctl) (inode_t, int, int); ///< File: send control commands to device.
+  int (*resize) (inode_t, int); ///< File: resize file content.
 } inode_operations_t;
 
-
-// Represents an inode.
+/**	\struct inode_t
+ *	\brief Inode interface.
+ */
 struct inode_t {
-  superblock_t* sb;
-  inode_operations_t* op;
+  superblock_t* sb; ///< Inode's superblock.
+  inode_operations_t* op; ///<
   struct stat st;
 };
 
 
 struct superblock_t {
-  int id;                  // device ID
-  inode_t root;           // root node
-  super_operations_t* op;  // superblock methods
+  int id;                  	// device ID
+  inode_t root;           	// root node
 };
 
 

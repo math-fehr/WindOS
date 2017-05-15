@@ -1,3 +1,11 @@
+/** \file syscalls.c
+ * 	\brief System calls
+ *
+ * 	\warning These functions are not documented as the follow the unix system
+ *	call convention.
+ */
+
+
 #include "syscalls.h"
 #include "errno.h"
 #include <sys/types.h>
@@ -6,8 +14,14 @@
 
 extern unsigned int __ram_size;
 
-/*
- * check if the pointer effectively points to the process' allowed userspace.
+/** \fn bool his_own(process *p, void* pointer)
+ * 	\brief Check if the pointer effectively points to the process' allowed userspace.
+ *	\param p Checked process.
+ *	\param pointer Checked pointer.
+ *	\return True if this pointer refers to process' userspace, false otherwise.
+ *
+ *	\warning This is not fully implemented.
+ *	\bug If the pointer is on a boundary, illegal access could be made as the size isn't checked.
  */
 bool his_own(process *p, void* pointer) {
     (void)p;
@@ -396,6 +410,12 @@ uint32_t svc_time(time_t *tloc) {
 	}
 }
 
+/** \fn uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry)
+ * 	\brief Explore the directory described by fd.
+ *	\param fd A directory file descriptor.
+ *	\param user_entry Where the entry should be written to.
+ *	\return Zero on success, -errno on error.
+ */
 uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 	process* p = get_current_process();
 	if (!his_own(p, user_entry)) {

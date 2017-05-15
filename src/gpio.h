@@ -9,14 +9,15 @@
 
 /**
  * The base adress of the GPIO
-
-#ifdef RPI2
-#define GPIO_BASE (0x3F200000UL + 0x80000000UL)
-#else
-#define GPIO_BASE (0x20200000UL + 0x80000000UL)
-#endif
-*/
+ */
 #define GPIO_BASE (PERIPHERALS_BASE + 0x200000)
+
+/**
+* Flags for pins pull
+*/
+#define NO_PULL 0b00
+#define PULL_DOWN 0b01
+#define PULL_UP 0b10
 
 /**
  * The flags identifying the functions of the pins
@@ -31,109 +32,51 @@
 #define PIN_FUN5    0b010
 
 
-/**
- * The structure of the GPIO in memory
+/** \struct rpi_gpio_controller_t
+ * 	\brief The memory structure of GPIO control registers.
+ *  Found in page 89 of BCM2835 ARM Peripherals.
  */
 typedef struct {
-  volatile uint32_t GPFSEL[6];
+  volatile uint32_t GPFSEL[6]; 	//!< Function Select
   volatile uint32_t GP_Reserved_0;
-  volatile uint32_t GPSET[2];
+  volatile uint32_t GPSET[2];	//!< Pin output set
   volatile uint32_t GP_Reserved_1;
-  volatile uint32_t GPCLR[2];
+  volatile uint32_t GPCLR[2];	//!< Pin output clear
   volatile uint32_t GP_Reserved_2;
-  volatile uint32_t GPLEV[2];
+  volatile uint32_t GPLEV[2];	//!< Pin level
   volatile uint32_t GP_Reserved_3;
-  volatile uint32_t GPEDS[2];
+  volatile uint32_t GPEDS[2];	//!< Pin event detect status
   volatile uint32_t GP_Reserved_4;
-  volatile uint32_t GPREN[2];
+  volatile uint32_t GPREN[2];	//!< Pin rising edge detect enable
   volatile uint32_t GP_Reserved_5;
-  volatile uint32_t GPFEN[2];
+  volatile uint32_t GPFEN[2];	//!< Pin falling edge detect enable
   volatile uint32_t GP_Reserved_6;
-  volatile uint32_t GPHEN[2];
+  volatile uint32_t GPHEN[2];	//!< Pin high detect enable
   volatile uint32_t GP_Reserved_7;
-  volatile uint32_t GPLEN[2];
+  volatile uint32_t GPLEN[2];	//!< Pin low detect enable
   volatile uint32_t GP_Reserved_8;
-  volatile uint32_t GPAREN[2];
+  volatile uint32_t GPAREN[2];	//!< Pin async rising edge detect
   volatile uint32_t GP_Reserved_9;
-  volatile uint32_t GPAFEN[2];
+  volatile uint32_t GPAFEN[2]; 	//!< Pin async falling edge detect
   volatile uint32_t GP_Reserved_10;
-  volatile uint32_t GPPUD;
-  volatile uint32_t GPPUDCLK0;
-  volatile uint32_t GPPUDCLK1;
+  volatile uint32_t GPPUD;		//!< Pin pull-up/down enable
+  volatile uint32_t GPPUDCLK0;	//!< Pin pull-up/down enable clock 0
+  volatile uint32_t GPPUDCLK1;	//!< Pin pull-up/down enable clock 1
 } rpi_gpio_controller_t;
 
 
-/**
- * Return a pointer to the GPIO
- */
 volatile rpi_gpio_controller_t* getGPIOController(void);
-
-
-/**
- * Set a function to a pin
- */
-void GPIO_setPinFunction(int pin, int function) ;
-
-
-/**
- * Set a pin in output mode
- */
-void GPIO_setOutputPin(int pin);
-
-/**
- * Set a pin in input mode
- */
-void GPIO_setInputPin(int pin);
-
-/**
- * Set a value to a pin
- * true for activee and false for inactive
- */
-void GPIO_setPinValue(int pin, bool value);
-
-
-/**
- * Pull Up the resistor on pin
- */
-void GPIO_setPullUp(int pin);
-
-
-/**
- * Pull Down the resistor on pin
- */
-void GPIO_setPullDown(int pin);
-
-
-/**
- * Reset the pull of the resistor on pin
- */
-void GPIO_resetPull(int pin);
-
-
-/**
- * A high level on the pin set a bit in GPED
- */
-void GPIO_enableHighDetect(int pin);
-
-
-/**
- * A high level on the pin do not set a bit in GPED anymore
- */
-void GPIO_disableHighDetect(int pin);
-
-
-/**
- * Return the actual value of the pin
- * true is for high, false is for low
- */
-bool GPIO_getPinValue(int pin);
-
-
-/**
- * Return true if an edge has been detected in the pin
- * Note that the value has to be reset
- */
-bool GPIO_hasDetectedEvent(int pin);
+void GPIO_setPinFunction 	(int pin, int function);
+void GPIO_setOutputPin 		(int pin);
+void GPIO_setInputPin 		(int pin);
+void GPIO_setPinValue 		(int pin, bool value);
+void GPIO_setPullUp 		(int pin);
+void GPIO_setPullDown 		(int pin);
+void GPIO_resetPull 		(int pin);
+void GPIO_enableHighDetect 	(int pin);
+void GPIO_disableHighDetect (int pin);
+bool GPIO_getPinValue 		(int pin);
+bool GPIO_hasDetectedEvent 	(int pin);
 
 
 #endif

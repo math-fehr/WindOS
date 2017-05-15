@@ -1,6 +1,9 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
+/** \def PERIPHERALS_BASE
+ * 	\brief Virtual base address for Raspberry Pi peripherals
+ */
 #define PERIPHERALS_BASE  0xbf000000
 #define GPU_IO_BASE       0x7E000000
 #define GPU_CACHED_BASE   0x40000000
@@ -16,10 +19,15 @@
   #endif
 #endif
 
+/** \def TTBCR_ALIGN
+ * 	\brief Defines the frontier between user and kernel address space.
+ *
+ *	Here we choose 1GB/3GB split.
+ */
 #define TTBCR_ALIGN TTBCR_ALIGN_4K
 
-/**
- * Maximum number of processes that can be handled
+/**	\def MAX_PROCESSES
+ * 	\brief Maximum number of processes that can be handled
  */
 #define MAX_PROCESSES 500
 

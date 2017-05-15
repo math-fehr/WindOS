@@ -1,38 +1,54 @@
-#include "interrupts.h"
-
-#include "arm.h"
-#include "memalloc.h"
-#include "stdio.h"
-
-/**
- * function used to make sure data is sent in order to GPIO
+/** \file interrupts.c
+ *	\brief Interrupt handling features.
+ *
+ *	This code is called by interrupts_asm.S to handle ARM interupts.
  */
 
-static rpi_irq_controller_t* rpiIRQController =
+#include "interrupts.h"
+
+
+/** \var volatile rpi_irq_controller_t* rpiIRQController
+ *  \brief This structure controls the hardware registers ot the interrupt
+ * 	controller.
+ */
+volatile rpi_irq_controller_t* rpiIRQController =
   (rpi_irq_controller_t*) RPI_INTERRUPT_CONTROLLER_BASE;
 
+/** \var static interruptHandler IRQInterruptHandlers[NUMBER_IRQ_INTERRUPTS]
+ * 	\brief Contains the handler for ARM interrupts.
+ */
 static interruptHandler IRQInterruptHandlers[NUMBER_IRQ_INTERRUPTS];
 
+/** \var rpi_irq_controller_t* RPI_GetIRQController(void)
+ *	\brief A getter function for the IRQ controller.
+ */
 rpi_irq_controller_t* RPI_GetIRQController(void) {
   return rpiIRQController;
 }
 
-// In UNDEF mode
+/** \fn void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector (void)
+ * 	\brief Handler called when the instruction parsing failed.
+ */
 void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector(void) {
   kdebug(D_IRQ, 5, "UNDEFINED INSTRUCTION.\n");
   while(1);
 }
 
-// In IRQ mode
+/** \fn void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector (void)
+ * 	\brief Handler called on fast interrupt. Not used in our context.
+ */
 void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
   kdebug(D_IRQ, 0, "FIQ.\n");
   while(1);
 }
 
-static bool status;
 
-
-
+/** \var print_context(int id, int level, user_context_t* ctx)
+ * 	\brief Prints the context of usermode before the interrupt.
+ *	\param id Debug source id.
+ * 	\param level Debug severity.
+ * 	\param user_context_t* Pointer to the context to print.
+ */
 void print_context(int id, int level, user_context_t* ctx) {
     kdebug(id, level, "r0 :%#010x r1:%#010x r2 :%#010x r3 :%#010x\n", ctx->r[0], ctx->r[1], ctx->r[2], ctx->r[3]);
     kdebug(id, level, "r4 :%#010x r5:%#010x r6 :%#010x r7 :%#010x\n", ctx->r[4], ctx->r[5], ctx->r[6], ctx->r[7]);
@@ -43,10 +59,30 @@ void print_context(int id, int level, user_context_t* ctx) {
 
 uint32_t software_interrupt_vector(void* user_context);
 
+/** \var static bool status
+ * 	\brief LED status.
+ *
+ * 	The ACT LED should blink every 100 interrupts.
+ */
+static bool status;
+
+/** \var static int count
+ * 	\brief LED status count.
+ */
 int count;
 
 
-// In IRQ mode - r0 => SP
+/**	\fn void interrupt_vector(void* user_context)
+ *	\brief Hardware interrupt handler.
+ * 	\param void* Pointer to the usermode context.
+ *
+ * 	The usermode context is gathered by interrupts_asm.S
+ * 	It should be saved on the current process data.
+ *
+ * 	If the interruption is triggered by the Timer, it performs a process switch.
+ * 	The scheduler choses a new process and updates user_context to this new
+ *	process' context. When this function returns, the context is restored.
+ */
 void interrupt_vector(void* user_context) {
     callInterruptHandlers();
 
@@ -104,9 +140,20 @@ void interrupt_vector(void* user_context) {
 }
 
 
-// In SVC mode
+
+/**	\var uint32_t software_interrupt_vector(void* user_context)
+ *	\brief Software interrupt handler.
+ * 	\param void* Pointer to the usermode context.
+ * 	The usermode context is gathered by interrupts_asm.S
+ * 	It should be saved on the current process data.
+ *
+ * 	Here the process called for a kernel feature.
+ *	This function decodes the call, and branches to the functions of syscalls.c.
+ *	Some system calls can cause a process switch, these are handler the same way
+ *	as in interrupt_vector().
+ */
 uint32_t software_interrupt_vector(void* user_context) {
-    kdebug(D_IRQ,5, "ENTREESWI. %p \n", user_context);
+    kdebug(D_IRQ, 5, "ENTREESWI. %p \n", user_context);
 	user_context_t* ctx = (user_context_t*) user_context;
 	//if (0xfeff726b == ctx->r[12]) {
 	//	while(1) {}
@@ -233,7 +280,9 @@ swi_beg:
 	return 0;
 }
 
-
+/** \var static char* messages[]
+ * 	\brief Messages triggered during a data abort
+ */
 static char* messages[] =
 {
 	"",
@@ -256,6 +305,11 @@ static char* messages[] =
 
 extern uint32_t __ram_size;
 
+/** \fn void kern_debug()
+ *	\brief Memory inspection function, when everything crashed.
+ * 	This is an infinite loop that allows us to inspect memory when an abort
+ *	occured.
+ */
 void kern_debug() {
 	char buf[1024];
 	serial_setmode(1);
@@ -275,7 +329,9 @@ void kern_debug() {
 	}
 }
 
-// In ABORT mode
+/** \fn void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data)
+ *	\brief Prefetch abort interrupt handler.
+ */
 void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
 	kdebug(D_IRQ, 10, "PREFETCH ABORT at instruction %#010x.\n", ctx->pc-8);
@@ -290,7 +346,13 @@ void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
     while(1);
 }
 
-// In ABORT mode
+/** \fn void data_abort_vector(void* data)
+ *	\brief Data abort interrupt handler.
+ *
+ * 	When the MMU signals a data abort, check if it caused by the kernel or a
+ * 	process. In case of a process, kill it. If this is the kernel, branch into
+ * 	the last resort debug tool.
+ */
 void data_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
 	if ((ctx->cpsr & 0x1F) == 0x10) {
@@ -323,13 +385,13 @@ void data_abort_vector(void* data) {
 
 		kdebug(D_IRQ, 10, "\"%s\" occured on domain %d. (w=%d)\n", messages[status], domain, wnr);
 		kern_debug();
-
 	    while(1);
 	}
 }
 
-
-
+/*	\fn void init_irq_interruptHandlers(void)
+ *	\brief Initialize general interrupt handlers.
+ */
 void init_irq_interruptHandlers(void) {
     for(int i = 0; i<NUMBER_IRQ_INTERRUPTS; i++) {
         IRQInterruptHandlers[i].function = NULL;
@@ -338,6 +400,9 @@ void init_irq_interruptHandlers(void) {
 }
 
 
+/**	\fn void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* param)
+ *	\brief Connects a general interrupt to a particular handler.
+ */
 void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* param) {
     IRQInterruptHandlers[irqID].function = function;
     IRQInterruptHandlers[irqID].param = param;
@@ -350,6 +415,9 @@ void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* 
     }
 }
 
+/**	\fn void callInterruptHandlers()
+ *	\brief When an interruption is set, choose which handler to execute.
+ */
 void callInterruptHandlers() {
     dmb();
     for(uint32_t i = 0; i<NUMBER_IRQ_INTERRUPTS; i++) {
@@ -381,7 +449,9 @@ void callInterruptHandlers() {
     dmb();
 }
 
-
+/** \fn void enable_interrupts(void)
+ *	\brief Enable interrupts
+ */
 void enable_interrupts(void) {
     /*kdebug(D_IRQ, 1, "Enabling interrupts.\n");
     cleanDataCache();
@@ -410,6 +480,9 @@ void enable_interrupts(void) {
     asm volatile("cpsie i");
 }
 
+/** \fn void disable_interrupts(void)
+ *	\brief Disable interrupts
+ */
 void disable_interrupts(void) {
     kdebug(D_IRQ, 1, "Disabling interrupts.\n");
     asm volatile("cpsid i");

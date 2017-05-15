@@ -9,10 +9,14 @@
 #include "mmu.h"
 
 typedef struct page_list_t page_list_t;
+
+/** \struct page_list_t
+ * 	\brief A structure representing a set of pages.
+ */
 struct page_list_t {
-  page_list_t* next;
-  int size; // in number of pages.
-  int address; // page-aligned
+  page_list_t* next; ///< Next page set
+  int size; ///< Size of page chunk, in number of pages.
+  int address; ///< Offset of page chunk.
 };
 
 void paging_print_status();

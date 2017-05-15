@@ -1,18 +1,17 @@
 #ifndef CSTUBS_H
 #define CSTUBS_H
 
-/**
- * Theses functions are basic function called to makes code more readable
- */
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <string.h>
 
-/**
- * Computes the minimum
- */
+#include "memalloc.h"
+#include "mmu.h"
+
 int min(int const a, int const b);
-
-/**
- * Computes the maximum
- */
 int max(int const a, int const b);
+int ipow(int a, int b);
 
 #endif  //CSTUBS_H

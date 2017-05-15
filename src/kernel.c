@@ -1,9 +1,17 @@
-#include "stdbool.h"
-#include "stddef.h"
-#include "stdint.h"
-#include "stdlib.h"
-#include "string.h"
-#include "stdio.h"
+/** \file kernel.c
+ *	\brief Kernel entry point
+ *
+ * 	One goal: set up devices and peripherals before launching the first program. 
+ */
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <malloc.h>
+
 #include "serial.h"
 #include "timer.h"
 #include "interrupts.h"
@@ -19,15 +27,20 @@
 #include "mailbox.h"
 #include "kernel.h"
 
-#include "malloc.h"
 #include "uspi.h"
 #include "uspibind.h"
 
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
+/** \var extern uint32_t __ramfs_start
+ * 	\brief Start of the in-RAM filesystem, as defined by the linker script.
+ */
 extern uint32_t __ramfs_start;
 
-volatile unsigned int tim;
+/** \var volatile uint32_t __ram_size
+ * 	\brief Total available RAM
+ * 	This is set up in initsys.c by reading the ATAGS.
+ */
 volatile uint32_t __ram_size;
 
 extern char __kernel_bss_start;
@@ -35,7 +48,13 @@ extern char __kernel_bss_end;
 
 extern int __kernel_phy_end;
 
-
+/**	\fn int memory_read(uint32_t address, void* buffer, uint32_t size)
+ *	\brief Read driver for the in-memory filesystem.
+ *	\param address Ramdisk offset to read.
+ * 	\param buffer Destination buffer.
+ *	\param size Size to read.
+ *	\return 0
+ */
 int memory_read(uint32_t address, void* buffer, uint32_t size) {
     kdebug(D_KERNEL, 0, "Disk read  request at address %p of size %d to %p\n", address, size, buffer);
 
@@ -46,6 +65,13 @@ int memory_read(uint32_t address, void* buffer, uint32_t size) {
     return 0;
 }
 
+/**	\fn int memory_write(uint32_t address, void* buffer, uint32_t size)
+ *	\brief Write driver for the in-memory filesystem.
+ *	\param address Ramdisk offset to write.
+ * 	\param buffer Source buffer.
+ *	\param size Size to write.
+ *	\return 0
+ */
 int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	intptr_t base = (intptr_t)&__ramfs_start;
     kdebug(D_KERNEL, 0, "Disk write request at address %#08x of size %d\n", address, size);
@@ -54,7 +80,10 @@ int memory_write(uint32_t address, void* buffer, uint32_t size) {
 	return 0;
 }
 
-
+/** \fn void blink(int n)
+ * 	\brief ACT LED blinking
+ *	\param n The number of blinks.
+ */
 void blink(int n) {
 	GPIO_setPinValue(GPIO_LED_PIN, true);
 	Timer_WaitCycles(1000000);
@@ -70,6 +99,18 @@ void blink(int n) {
 	GPIO_setPinValue(GPIO_LED_PIN, true);
 }
 
+/** \fn void kernel_main(uint32_t memory)
+ * 	\brief Kernel main function.
+ *
+ *	Called by initsys.c, this function initialize high level kernel features.
+ * 	It:
+ * 	- clears the BSS segment.
+ *	- Remove the linear mapping on kernel's TTB.
+ * 	- Initialize serial output, scheduler, page allocation, USPi library.
+ *	- Initialize filesystem features.
+ *  - Set up the timer.
+ *	- Load the 'init' process and context switch.
+ */
 void kernel_main(uint32_t memory) {
 	// Initialize BSS segment
 	for (char* val = (char*)&__kernel_bss_start; val < (char*)&__kernel_bss_end; val++) {

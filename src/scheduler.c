@@ -1,29 +1,56 @@
-#include "scheduler.h"
+/** \file scheduler.c
+ *	\brief Scheduling features.
+ */
 
+#include "scheduler.h"
 #include "serial.h"
 #include "debug.h"
 #include "string.h"
 
-//The list of possible processes (not all are active)
+/** \var process* process_list[MAX_PROCESSES]
+ *	\brief List of possible processes (not all are active)
+ */
 static process* process_list[MAX_PROCESSES];
-//The list of active processes (only the first number_active_processes are active)
+
+/** \var int active_processes[MAX_PROCESSES]
+ *	\brief List of active processes (only the first number_active_processes)
+ */
 static int active_processes[MAX_PROCESSES];
-//The list of free processes (only the first number_free_processes are active)
+
+/** \var int free_processes[MAX_PROCESSES];
+ * 	\brief List of free processes (only the first number_free_processes)
+ */
 static int free_processes[MAX_PROCESSES];
-//Zombie processes
+
+/** \var int zombie_processes[MAX_PROCESSES];
+ * 	\brief List of zombie processes (only the first number_zombie_processes)
+ */
 static int zombie_processes[MAX_PROCESSES];
 
-//The current process running in active_processes
+/** \var int current_process_id
+ * 	\brief Index of current process in active_processes.
+ */
 static int current_process_id;
 
-//The number of active processes
+/** \var int number_active_processes
+ * 	\brief Active processes count.
+ */
 static int number_active_processes;
-//The number of free processes
+
+/** \var int number_free_processes
+ * 	\brief Free processes count.
+ */
 static int number_free_processes;
-// Zombie count
+
+/** \var int number_zombie_processes
+ * 	\brief Zombie processes count.
+ */
 static int number_zombie_processes;
 
 
+/** \fn void setup_scheduler()
+ *	\brief Initialize scheduler global variables.
+ */
 void setup_scheduler() {
     kernel_printf("[SHED] Scheduler set up!\n");
     current_process_id = -1;
@@ -36,7 +63,10 @@ void setup_scheduler() {
     }
 }
 
-
+/** \fn process* get_next_process()
+ * 	\brief Find the next process in the execution list.
+ *	\return A pointer to the next process on succes. NULL pointer on fail.
+ */
 process* get_next_process() {
     if(number_active_processes == 0) {
         return NULL;
@@ -59,6 +89,10 @@ process* get_next_process() {
 
 extern uint32_t __ram_size;
 
+/**	\fn void free_process_data (process* p)
+ *	\param p The process data to free.
+ *	\brief Free all the allocated memory of a process.
+ */
 void free_process_data(process* p) {
 	// Free program break.
 	int n_allocated_pages = p->brk_page;
@@ -75,6 +109,17 @@ void free_process_data(process* p) {
 	free(p);
 }
 
+/** \fn int kill_process(int const process_id, int wstatus)
+ *	\brief Kill a process.
+ *	\param process_id PID to kill.
+ * 	\param wstatus Kill status.
+ * 	\return 0 on success. -1 on failure.
+ *
+ *	When killing a process, two things can happen:
+ * 	- if the parent was waiting for his death, the process is immediately freed,
+ *	and the parent is notified.
+ *	- if the parent isn't, the process is put in zombie mode.
+ */
 int kill_process(int const process_id, int wstatus) {
 	if (process_id >= MAX_PROCESSES || process_id < 0 || process_list[process_id] == NULL) {
 		return -1;
@@ -115,6 +160,16 @@ int kill_process(int const process_id, int wstatus) {
     return 0;
 }
 
+/** \fn int wait_process(int const process_id, int target_pid, int* wstatus)
+ *	\brief Wait for a process.
+ *	\param process_id The waiting process.
+ *	\param target_pid The waited process.
+ *	\param wstatus Target pointer to return exit status.
+ *
+ *	When waiting for a process, two things can happen:
+ *	- if a zombie child is found, free him and return immediately to parent.
+ *	- if not, put the parent in wait status.
+ */
 int wait_process(int const process_id, int target_pid, int* wstatus) {
 	if (process_id >= MAX_PROCESSES || process_id < 0 || process_list[process_id] == NULL) {
 		return -1;
@@ -172,6 +227,11 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 	return -1;
 }
 
+/** \fn int sheduler_add_process(process* p)
+ *  \brief Put a process in the scheduling structure.
+ *	\param p The process to add.
+ *	\return The id given to this process.
+ */
 int sheduler_add_process(process* p) {
     if (number_free_processes == 0) {
         return -1;
@@ -189,7 +249,6 @@ int sheduler_add_process(process* p) {
 int get_number_active_processes() {
     return number_active_processes;
 }
-
 
 process** get_process_list() {
     return process_list;

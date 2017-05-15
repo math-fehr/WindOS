@@ -1,15 +1,37 @@
+/** \file memalloc.c
+ * 	\brief Memory allocation features
+ *
+ *	Here we cut memory into 'pages', the pages here being sections (1MiB).
+ * 	These are memory allocation functions.
+ */
+
 #include "memalloc.h"
 #include "stdlib.h"
 #include "malloc.h"
 
 
+/** \var page_list_t* free_list
+ *	\brief List of available pages.
+ */
 page_list_t* free_list;
 
+/** \var int tot_pages
+ * 	\brief Total amount of pages counter.
+ */
 int tot_pages;
+
+/** \var int used_pages
+ * 	\brief Total amount of allocated pages counter.
+ */
 int used_pages;
 
-// sort by increasing address.
-// TODO: merge consecutive page blocks.
+
+/** \fn page_list_t* insertion(page_list_t* elem, page_list_t* list)
+ *	\brief Inserts an element in a list, sorting by ascending address.
+ * 	\param elem The element to insert.
+ *	\param list The destination list.
+ * 	\return The new list.
+ */
 page_list_t* insertion(page_list_t* elem, page_list_t* list) {
 	if (list == NULL) {
 		return elem;
@@ -33,6 +55,11 @@ page_list_t* insertion(page_list_t* elem, page_list_t* list) {
  	}
 }
 
+/**	\fn void paging_init(int n_total_pages, int n_reserved_pages)
+ *	\brief Initialize paging structure.
+ *	\param n_total_pages The amount of pages in the memory.
+ *	\param n_reserved_pages The amount of pages reserved for kernel code/data.
+ */
 void paging_init(int n_total_pages, int n_reserved_pages) {
 	tot_pages = n_total_pages;
 	used_pages = n_reserved_pages;
@@ -42,6 +69,9 @@ void paging_init(int n_total_pages, int n_reserved_pages) {
 	free_list->address = n_reserved_pages;
 }
 
+/** \fn paging_print_start()
+ * 	\brief Draw a character representation of memory.
+ */
 void paging_print_status() {
 	char* bitmap = malloc(tot_pages+1);
 	for(int i=0;i<tot_pages;i++) {
@@ -59,6 +89,16 @@ void paging_print_status() {
 	kdebug(D_KERNEL,1,"%s\n", bitmap);
 }
 
+/**	\fn page_list_t* paging_allocate(int n_pages)
+ *	\brief Allocates the request number of page.
+ *	\param n_pages The number of pages to allocate.
+ *	\return On success, a list of allocated pages. On fail, NULL pointer.
+ *
+ *	A greedy algorithm is used to find pages.
+ *
+ * 	\bug If the kernel sbrk call this function, a loop creates as this function
+ *	uses malloc.
+ */
 page_list_t* paging_allocate(int n_pages) {
 	page_list_t* result = NULL;
 	page_list_t* pointer = free_list;
@@ -112,7 +152,13 @@ page_list_t* paging_allocate(int n_pages) {
 	return result;
 }
 
-
+/**	\fn void paging_free(int n_pages, int address)
+ * 	\brief Free pages.
+ * 	\param n_pages The number of consecutive pages to free.
+ *	\param address The address of the first page to free.
+ *
+ *	\warning No checks are done during the free.
+ */
 void paging_free(int n_pages, int address) {
 	kdebug(D_KERNEL, 1, "free %d %d.\n", n_pages, address);
 	page_list_t* elem = malloc(sizeof(page_list_t));
@@ -127,6 +173,16 @@ void paging_free(int n_pages, int address) {
 	paging_print_status();
 }
 
+
+/** \fn int memalloc(uint32_t ttb_address, uintptr_t address, size_t size)
+ *	\brief Allocates memory and update the translation table.
+ *	\param ttb_address Translation table address.
+ *	\param address Virtual address where we want to allocate pages.
+ *	\param size The amount of requested memory allocation.
+ *	\return 0
+ *
+ * 	\warning Works when the paging is set up for 4kb pages.
+ */
 int memalloc(uint32_t ttb_address, uintptr_t address, size_t size) {
     //We need the data to be aligned
     size = size + (address & 0xFFF) + 0xFFF;
