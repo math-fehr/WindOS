@@ -37,7 +37,7 @@
 Les sources du projet sont clonables via github, à l'addresse
 \href{https://github.com/Nappy-san/WindOS.git}{https://github.com/Nappy-san/WindOS.git}\\
 
-Une \href{../doc/index.html}{documentation Doxygen} a été compilé avec le projet, pour le rendre plus
+Une \href{../doc/index.html}{documentation Doxygen} a été compilée avec le projet, pour le rendre plus
 lisible. Il se situe dans le dossier doc/.
 
 \subsection{Modules utilisés et dépendances}
@@ -60,7 +60,7 @@ commandes \verb!./configure --target-list=arm-softmmu! et \verb!make! dans qemu-
 
 Pour compiler le projet, il faut lancer \verb!make all!, qui compilera le kernel,
 et les programmes utilisateurs. Ensuite, pour lancer le kernel sur qemu, il
-suffit d'executer \verb!make runs!.\\
+suffit d'exécuter \verb!make runs!.\\
 
 Pour lancer le kernel sur raspberry pi 2 (le
 kernel ne marchant pas sur raspberry pi 1), il faut copier les fichiers contenus
@@ -116,7 +116,7 @@ pour représenter les fichiers en mémoire.
 Au lieu de brancher directement Ext2 aux appels systèmes et autres fonctionnalités
 noyau, une interface a été développée afin de faire abstraction entre le driver
 et le reste du kernel. \\
-Ainsi chaque système de fichiers développé implemente des fonctions définies
+Ainsi chaque système de fichiers développé implémente des fonctions définies
 par le VFS (Virtual File System) ce qui permet au VFS de traiter indifféremment
 chaque système de fichier. Cela permet en plus de pouvoir monter un système de
 fichier sur un autre, et ainsi accéder à plusieurs systèmes fichiers à partir de
@@ -135,7 +135,7 @@ Deux drivers de systèmes de fichiers ont été implémentés:
 La mailbox est ce qui permet la communication entre le VideoCore (le GPU) et le
 processeur. Cela permet au processeur de demander des informations au GPU, ou
 de demander au GPU d'effectuer des actions, comme alimenter en énergie un
-périphérique. La mailbox est bien expliqué sur la page
+périphérique. La mailbox est bien expliquée sur la page
 https://github.com/raspberrypi/firmware/wiki/Mailboxes, mais reste très mal
 documentée sinon.\\
 
@@ -187,14 +187,14 @@ listant tout les id libres, et un contenant tout les id correspondant à des
 processus actifs (et qui de plus ne sont pas dans un wait), et un tableau
 contenant les processus zombies.
 
-Pour récupérer les processus à executer, il suffit donc de parcourir la liste
+Pour récupérer les processus à exécuter, il suffit donc de parcourir la liste
 des processus actif de gauche à droite, puis recommencer.
 
 \subsection{Appels systèmes}
 L'objectif initial était de faire un système s'apparentant à un noyau Linux.
 Ainsi les appels systèmes développés suivent les mêmes spécifications.
 L'encodage des erreurs se fait via la variable errno, que l'on transmet au
-processus en renvoyant -ernno, une valeur négative étant signe d'erreur, ce qui
+processus en renvoyant -errno, une valeur négative étant signe d'erreur, ce qui
 est décodé dans la bibliothèque utilisateur.
 
 \section{Séquence de boot}
@@ -210,7 +210,7 @@ qui va lui-même lire le fichier start.elf, qui va s'occuper de lire le fichier 
 ensuite trouver le fichier image à exécuter, qui est \verb!kernel.img! dans notre
 cas.
 C'est donc l'image kernel.img que nous devons compiler pour le noyau. La
-première instruction qui va être executée est à l'addresse 0x8000 pour le
+première instruction qui va être exécutée est à l'addresse 0x8000 pour le
 raspberry pi, et 0x10000 pour QEMU.
 
 \subsection{Mise en place des interruptions et du MMU}
@@ -240,7 +240,7 @@ utilisateur, en démarrant dans ce programme.
 	\item pico: un éditeur de fichiers minimaliste.
 	\item pwd: affiche le dossier courant.
 	\item rm: supprime un fichier ou un dossier en mode récursif (-r)
-	\item show: affiche un fichier au format bitmap (base résolution de préférence).
+	\item show: affiche un fichier au format bitmap (basse résolution de préférence).
 	\item touch: créer un fichier.
 	\item wesh: WindOS Experimental Shell, l'invite de commande lancé au démarrage de l'OS.
 \end{itemize}
@@ -264,7 +264,7 @@ de temps pour remarquer ça, puisque c'était très mal documenté).
 Un autre problème était le manque flagrant de documentation pour raspberry pi 2.
 Tandis qu'il y a beaucoup de documentations sur la carte BCM2835 pour le
 raspberry pi 1, il n'y a que 20 pauvres pages pour le BCM2836. En général, les
-instructions processeurs étaient bien documentés, mais les périphériques
+instructions processeurs étaient bien documentées, mais les périphériques
 l'étaient très mal (par exemple, nous n'avons toujours pas trouvé les pins du
 GPIO permettant d'alimenter la carte SD, via le controleur EMMC).
 
@@ -278,7 +278,7 @@ s'initialiser pour une raison inconnue, et plante au démarrage. Relancer le
 noyau règle le problème.\\
 
 Le second est plus cryptique. Le frame pointer (fp ou r12) possède parfois une
-valeur abérante, ce qui fait planter le programme utilisateur. On a remarqué en
+valeur abérrante, ce qui fait planter le programme utilisateur. On a remarqué en
 général que des registres prenaient parfois des valeurs inconnues (comme par
 exemple, quand on a l'instruction \verb!mov r0,r5!, mais que 3 instructions plus
 tard, alors qu'il n'y avait pas d'interruptions, r0 != r5).
