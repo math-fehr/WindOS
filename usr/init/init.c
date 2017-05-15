@@ -7,6 +7,8 @@
 #include "unistd.h"
 #include "sys/wait.h"
 
+#include "../../include/syscalls.h"
+
 extern int argc;
 extern char** argv;
 extern char** envp;

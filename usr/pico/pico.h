@@ -6,6 +6,7 @@
 #include "stdlib.h"
 
 #include "../../include/termfeatures.h"
+#include "../../include/syscalls.h"
 
 void topbar_draw();
 void editor_delete();

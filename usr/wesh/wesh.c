@@ -9,6 +9,7 @@
 #include "string.h"
 
 #include "../../include/termfeatures.h"
+#include "../../include/syscalls.h"
 
 extern int argc;
 extern char** argv;

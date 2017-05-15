@@ -95,7 +95,7 @@ typedef struct interruptHandler {
 #define RPI_BASIC_ACCESS_ERROR_0_IRQ    (1 << 7)
 
 
-rpi_irq_controller_t* RPI_GetIRQController(void);
+volatile rpi_irq_controller_t* RPI_GetIRQController(void);
 void init_irq_interruptHandlers(void);
 void connectIRQInterrupt(unsigned int irqID, interruptFunction* function, void* param);
 void callInterruptHandlers();

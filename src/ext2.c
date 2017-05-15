@@ -14,7 +14,7 @@ static inode_operations_t ext2_inode_operations = {
   .mkdir = ext2_mkdir,
   .rm = ext2_rm,
   .mkfile = ext2_mkfile,
-  .resize = ext2_resize
+  .resize = ext2_resize,
 };
 
 /*
@@ -388,46 +388,6 @@ int ext2_mkdir (inode_t inode, char* name, int perm) {
 
 	ext2_add_dir_entry(inode.sb, inode.st.st_ino, new_dir, name);
 	return 1;
-}
-
-
-int ext2_resize(inode_t inode, int new_size) {
-	superblock_t* fs = inode.sb;
-	ext2_superblock_t* sb = devices[fs->id].sb;
-	storage_driver* disk = devices[fs->id].disk;
-	int block_size = 1024 << sb->log_block_size;
-
-	if (new_size < 0) {
-		errno = EINVAL;
-		return -1;
-	}
-
-
-
-	ext2_inode_t inode_desc = ext2_get_inode_descriptor(fs, inode.st.st_ino);
-	int old_size = inode_desc.size;
-	if (old_size > 12*block_size) {
-		kernel_printf("Critical error: base size is too large. Not implemented.");
-		return -1;
-	}
-
-	if (new_size > old_size) {
-		char* buf = malloc(new_size-old_size);
-		if (buf != 0) {
-			ext2_fwrite(inode, buf, new_size-old_size, old_size);
-			return new_size;
-		} else {
-			return -1;
-		}
-	} else if (new_size < old_size) {
-		int new_block_base = (new_size+block_size-1)/block_size;
-		for (int i=new_block_base+1;i<(old_size+block_size-1)/block_size;i++) {
-			recursive_block_delete(fs, inode_desc.direct_block_ptr[i], 0);
-			inode_desc.direct_block_ptr[i] = 0;
-		}
-		inode_desc.size = new_size;
-	}
-	ext2_update_inode_data(fs, inode.st.st_ino, inode_desc);
 }
 
 
@@ -852,6 +812,45 @@ void recursive_block_delete(superblock_t* fs, int block_address, int level) {
     }
   }
   ext2_free_block(fs, block_address);
+}
+
+
+
+int ext2_resize(inode_t inode, int new_size) {
+	superblock_t* fs = inode.sb;
+	ext2_superblock_t* sb = devices[fs->id].sb;
+	int block_size = 1024 << sb->log_block_size;
+
+	if (new_size < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	ext2_inode_t inode_desc = ext2_get_inode_descriptor(fs, inode.st.st_ino);
+	int old_size = inode_desc.size;
+	if (old_size > 12*block_size) {
+		kernel_printf("Critical error: base size is too large. Not implemented.");
+		return -1;
+	}
+
+	if (new_size > old_size) {
+		char* buf = malloc(new_size-old_size);
+		if (buf != 0) {
+			ext2_fwrite(inode, buf, new_size-old_size, old_size);
+			return new_size;
+		} else {
+			return -1;
+		}
+	} else if (new_size < old_size) {
+		int new_block_base = (new_size+block_size-1)/block_size;
+		for (int i=new_block_base+1;i<(old_size+block_size-1)/block_size;i++) {
+			recursive_block_delete(fs, inode_desc.direct_block_ptr[i], 0);
+			inode_desc.direct_block_ptr[i] = 0;
+		}
+		inode_desc.size = new_size;
+	}
+	ext2_update_inode_data(fs, inode.st.st_ino, inode_desc);
+	return new_size;
 }
 
 void ext2_free_inode_blocks(superblock_t* fs, int inode){

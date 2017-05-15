@@ -542,10 +542,11 @@ int svc_openat(int dirfd, char* path_c, int flags) {
 }
 
 
-int svc_unlinkat(int dirfd, const char* name, int flag) {
+int svc_unlinkat(int dirfd, char* name, int flag) {
+	(void) flag;
 	inode_t* base;
 	process* p = get_current_process();
-	if (!his_own(p, name)) {
+	if (!his_own(p, (void*)name)) {
 		return -EFAULT;
 	}
 
@@ -568,7 +569,8 @@ int svc_unlinkat(int dirfd, const char* name, int flag) {
 	if (errno > 0) {
 		return -errno;
 	}
-	inode_t file = vfs_path_to_inode(base, name);
+
+	vfs_path_to_inode(base, name);
 	if (errno > 0) {
 		return -errno;
 	}

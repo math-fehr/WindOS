@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-int argc;
-char* argv[];
+#include "../../include/syscalls.h"
+
+extern int argc;
+extern char* argv[];
 
 int main() {
 	if (argc > 1) {

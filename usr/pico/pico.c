@@ -108,7 +108,7 @@ int main() {
 			term_clear();
 			term_move_cursor(1, 1);
 			term_raw_enable(false);
-			return;
+			return 0;
 		} else { // basic char
 			editor_putc(c);
 		}

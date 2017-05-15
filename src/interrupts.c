@@ -22,11 +22,11 @@ static interruptHandler IRQInterruptHandlers[NUMBER_IRQ_INTERRUPTS];
 /** \var rpi_irq_controller_t* RPI_GetIRQController(void)
  *	\brief A getter function for the IRQ controller.
  */
-rpi_irq_controller_t* RPI_GetIRQController(void) {
+volatile rpi_irq_controller_t* RPI_GetIRQController(void) {
   return rpiIRQController;
 }
 
-/** \fn void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector (void)
+/** \fn void undefined_instruction_vector (void)
  * 	\brief Handler called when the instruction parsing failed.
  */
 void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector(void) {
@@ -34,7 +34,7 @@ void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector(void) {
   while(1);
 }
 
-/** \fn void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector (void)
+/** \fn void fast_interrupt_vector (void)
  * 	\brief Handler called on fast interrupt. Not used in our context.
  */
 void __attribute__ ((interrupt("FIQ"))) fast_interrupt_vector(void) {
@@ -329,7 +329,7 @@ void kern_debug() {
 	}
 }
 
-/** \fn void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data)
+/** \fn void prefetch_abort_vector(void* data)
  *	\brief Prefetch abort interrupt handler.
  */
 void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {

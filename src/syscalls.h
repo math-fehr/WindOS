@@ -35,7 +35,7 @@ uint32_t svc_chdir(char* path);
 off_t 	 svc_lseek(int fd, off_t offset, int whence);
 int 	 svc_openat(int dirfd, char* path, int flags);
 int 	 svc_mknodat(int dirfd, char* path, mode_t mode, dev_t flags);
-int 	 svc_unlinkat(int dfd, const char* name, int flag);
+int 	 svc_unlinkat(int dfd, char* name, int flag);
 int 	 svc_ioctl(int fd, int cmd, int arg);
 
 uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry);

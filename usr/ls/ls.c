@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "../../include/dirent.h"
 #include "../../include/termfeatures.h"
+#include "../../include/syscalls.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -6,7 +6,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 #include "../../include/dirent.h"
+#include "../../include/syscalls.h"
 
 extern int argc;
 extern char** argv;
@@ -62,7 +64,7 @@ int copy(int fromfd, char* frompath, int destfd, char* destpath, bool recursive)
 			perror("cp");
 		} else {
 			// target is a dir.
-			_mknodat(dest, basename(destpath), S_IFDIR);
+			_mknodat(dest, basename(destpath), S_IFDIR,0);
 			dest = _openat(destfd, destpath, O_RDONLY);
 
 			struct dirent entry;
@@ -82,6 +84,7 @@ int copy(int fromfd, char* frompath, int destfd, char* destpath, bool recursive)
 	} else if (dest >= 0) {
 		_close(dest);
 	}
+	return 0;
 }
 
 int main() {
