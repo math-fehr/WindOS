@@ -26,13 +26,6 @@ volatile rpi_irq_controller_t* RPI_GetIRQController(void) {
   return rpiIRQController;
 }
 
-/** \fn void undefined_instruction_vector (void)
- * 	\brief Handler called when the instruction parsing failed.
- */
-void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector(void) {
-  kdebug(D_IRQ, 5, "UNDEFINED INSTRUCTION.\n");
-  while(1);
-}
 
 /** \fn void fast_interrupt_vector (void)
  * 	\brief Handler called on fast interrupt. Not used in our context.
@@ -95,6 +88,7 @@ void interrupt_vector(void* user_context) {
         print_context(D_IRQ,5, user_context);
     }
 
+	//kernel_printf("T=> %d PC: %p\n", get_current_process_id(), get_current_process()->ctx.pc);
     dmb();
 
 	uint32_t irq = RPI_GetIRQController()->IRQ_basic_pending;
@@ -110,7 +104,6 @@ void interrupt_vector(void* user_context) {
 		count++;
 		//kernel_printf("timer\n");
 		dmb();
-		Timer_ClearInterrupt();
 
 		if (count == 100) {
 			count = 0;
@@ -137,6 +130,11 @@ void interrupt_vector(void* user_context) {
     kdebug(D_IRQ, 5, "<= %d.\n", get_current_process_id());
     kdebug(D_IRQ,5,"SORTIEIRQ\n");
 	print_context(D_IRQ, 2, user_context);
+
+	//kernel_printf("T<= %d PC: %p\n", get_current_process_id(), get_current_process()->ctx.pc);
+
+	Timer_ClearInterrupt();
+	Timer_SetLoad(TIMER_LOAD);
 }
 
 
@@ -153,6 +151,7 @@ void interrupt_vector(void* user_context) {
  *	as in interrupt_vector().
  */
 uint32_t software_interrupt_vector(void* user_context) {
+	//kernel_printf("S=> %d PC: %p\n", get_current_process_id(), get_current_process()->ctx.pc);
     kdebug(D_IRQ, 5, "ENTREESWI. %p \n", user_context);
 	user_context_t* ctx = (user_context_t*) user_context;
 	//if (0xfeff726b == ctx->r[12]) {
@@ -277,6 +276,7 @@ swi_beg:
 		print_context(D_SYSCALL, 5, ctx);
 	    kdebug(D_SYSCALL, 5, "Sortie SWI : <= %d.\n", get_current_process_id());
 	}
+	//kernel_printf("S<= %d PC: %p\n", get_current_process_id(), get_current_process()->ctx.pc);
 	return 0;
 }
 
@@ -329,11 +329,57 @@ void kern_debug() {
 	}
 }
 
+
+/** \fn void undefined_instruction_vector (void)
+ * 	\brief Handler called when the instruction parsing failed.
+ */
+void __attribute__ ((interrupt("UNDEF"))) undefined_instruction_vector(void* data) {
+	user_context_t* ctx = (user_context_t*) data;
+
+	int ttb;
+
+	asm("mrc p15, 0, %0, c2, c0, 0\n"
+		: "=r" (ttb)
+		:
+		:);
+	ttb = ttb & (~((1 << (14-TTBCR_ALIGN)) - 1));
+	kernel_printf("TTB0: %p\n", ttb);
+	asm("mrc p15, 0, %0, c2, c0, 1\n"
+		: "=r" (ttb)
+		:
+		:);
+	ttb = ttb & (~((1 << (14-TTBCR_ALIGN)) - 1));
+	kernel_printf("TTB1: %p\n", ttb);
+
+	kdebug(D_IRQ, 10, "UNDEFINED at instruction %#010x.\n", ctx->pc-8);
+	print_context(D_IRQ,10, ctx);
+	kern_debug();
+
+	while(1);
+}
+
+
 /** \fn void prefetch_abort_vector(void* data)
  *	\brief Prefetch abort interrupt handler.
  */
 void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
+
+	int ttb;
+
+	asm("mrc p15, 0, %0, c2, c0, 0\n"
+		: "=r" (ttb)
+		:
+		:);
+	ttb = ttb & (~((1 << (14-TTBCR_ALIGN)) - 1));
+	kernel_printf("TTB0: %p\n", ttb);
+	asm("mrc p15, 0, %0, c2, c0, 1\n"
+		: "=r" (ttb)
+		:
+		:);
+	ttb = ttb & (~((1 << (14-TTBCR_ALIGN)) - 1));
+	kernel_printf("TTB1: %p\n", ttb);
+
 	kdebug(D_IRQ, 10, "PREFETCH ABORT at instruction %#010x.\n", ctx->pc-8);
 	print_context(D_IRQ,10, ctx);
 
@@ -355,6 +401,22 @@ void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
  */
 void data_abort_vector(void* data) {
 	user_context_t* ctx = (user_context_t*) data;
+
+	uint32_t ttb;
+
+	asm("mrc p15, 0, %0, c2, c0, 0\n"
+		: "=r" (ttb)
+		:
+		:);
+	ttb = ttb & (~((1 << (14-TTBCR_ALIGN)) - 1));
+	kernel_printf("TTB0: %p\n", ttb);
+	asm("mrc p15, 0, %0, c2, c0, 1\n"
+		: "=r" (ttb)
+		:
+		:);
+	ttb = ttb & (~((1 << (14-TTBCR_ALIGN)) - 1));
+	kernel_printf("TTB1: %p\n", ttb);
+
 	if ((ctx->cpsr & 0x1F) == 0x10) {
 		kdebug(D_IRQ, 10, "USER DATA ABORT of process %d at instruction %#010x.\n", get_current_process_id(), ctx->pc-8);
 		print_context(D_IRQ,10, ctx);

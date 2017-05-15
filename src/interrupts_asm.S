@@ -15,7 +15,15 @@
 
 .globl _undefined_instruction_vector // TODO: put some stack for this handler
 _undefined_instruction_vector:
-    b _undefined_instruction_vector
+	mov 	sp, #0x85000000
+	stmfd	sp, {r0-r14}^
+	sub 	sp, sp, #15*4
+	mrs 	r1, spsr
+	stmfd 	sp!, {r1, lr}
+	mov 	r0, sp
+	and 	r4, sp, #4
+	sub 	sp, sp, r4
+	dmb
 	ldr pc, =undefined_instruction_vector
 
 .globl _software_interrupt_vector
@@ -71,6 +79,9 @@ _data_abort_vector:
 
 .globl _interrupt_vector
 _interrupt_vector:
+	dmb
+	isb
+	dsb
 	sub 	lr, lr, #4
   	stmfd	sp, {r0-r14}^
 	sub 	sp, sp, #15*4

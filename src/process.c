@@ -5,7 +5,8 @@
 
 extern unsigned int __ram_size;
 
-/** \fn process* process_load(char* path, inode_t cwd, const char* argv[], const char* envp[])
+/** \fn process*
+(char* path, inode_t cwd, const char* argv[], const char* envp[])
  * 	\brief Loads a process into memory and creates its data structure.
  *	\param path Path to load.
  * 	\param cwd If the path is relative, it is relative to cwd.
@@ -17,7 +18,7 @@ extern unsigned int __ram_size;
  *	- find the file.
  * 	- parse ELF header.
  *  - allocate memory for the process and set up program's translation table.
- * 	- allocate and fill process data structure. 
+ * 	- allocate and fill process data structure.
  */
 process* process_load(char* path, inode_t cwd, const char* argv[], const char* envp[]) {
     inode_t fd = vfs_path_to_inode(&cwd, path);

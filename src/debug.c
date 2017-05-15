@@ -33,9 +33,9 @@ const char sources[N_SOURCES][9]= { "KERNEL", "SERIAL", "WESH",
  * 	- 8-9: Feature call error.
  * 	- 10: Critical error, probably leading to a kernel crash.
  */
-const int enable_source[N_SOURCES] = { 5,5,5,
+const int enable_source[N_SOURCES] = { 6,5,5,
                                        5,8,5,
-									   5,5,5,
+									   8,10,6,
 									   5,5,6,
                                        6,5};
 

@@ -97,9 +97,9 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 
 	kdebug(D_SYSCALL, 2, "EXECVE => %s\n", path);
 
-	if (!his_own(p, path)
-	|| (!his_own(p, argv) && argv != NULL)
-	|| (!his_own(p, envp) && envp != NULL)) {
+	if ((!(his_own(p, path) && path != NULL))
+	|| (!(his_own(p, argv) && argv != NULL))
+	|| (!(his_own(p, envp) && envp != NULL))) {
 		p->ctx.r[0] = -EFAULT;
 		return p->asid;
 	}
@@ -115,13 +115,19 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 	// Free program break.
 	int n_allocated_pages = p->brk_page;
 	for (int i=n_allocated_pages;i>0;i--) {
-		int phy_page = mmu_vir2phy(i*PAGE_SECTION) / PAGE_SECTION; // let's hope GCC optimizes this
+		int phy_page = mmu_vir2phy_ttb(i*PAGE_SECTION, p->ttb_address) / PAGE_SECTION; // let's hope GCC optimizes this
 		paging_free(1,phy_page);
 	}
 
 	// free stack and program code
-	paging_free(1,mmu_vir2phy(0)/PAGE_SECTION);
-	paging_free(1,mmu_vir2phy(__ram_size-PAGE_SECTION)/PAGE_SECTION);
+	paging_free(1,mmu_vir2phy_ttb(0, p->ttb_address)/PAGE_SECTION);
+	paging_free(1,mmu_vir2phy_ttb(__ram_size-PAGE_SECTION, p->ttb_address)/PAGE_SECTION);
+
+
+	for (int i=0;i<64;i++) {
+		new_p->fd[i].position = -1;
+		new_p->fd[i].dir_entry = NULL;
+	}
 
 	new_p->asid 			= p->asid;
 	new_p->parent_id 		= p->parent_id;
@@ -139,6 +145,7 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 	*new_p->fd[2].inode      = vfs_path_to_inode(NULL, "/dev/serial");
 	new_p->fd[2].position   = 0;
 	new_p->fd[2].dir_entry 	= NULL;
+
 
 	get_process_list()[new_p->asid] = new_p;
 
@@ -241,8 +248,9 @@ uint32_t svc_fork() {
 
 		mmu_add_section(copy->ttb_address, i*PAGE_SECTION, res->address*PAGE_SECTION, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
 		// This is possible as the forked program memory space is still accessible.
+		dmb();
 		memcpy((void*)(intptr_t)(0x80000000 + res->address*PAGE_SECTION), (void*)(intptr_t)(i*PAGE_SECTION), PAGE_SECTION);
-
+		dmb();
 		res->size--;
 		res->address++;
 	}
@@ -251,7 +259,9 @@ uint32_t svc_fork() {
 		free(prev);
 	}
 	mmu_add_section(copy->ttb_address, __ram_size-PAGE_SECTION, res->address*PAGE_SECTION, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
+	dmb();
 	memcpy((void*)(intptr_t)(0x80000000 + res->address*PAGE_SECTION), (void*)(intptr_t)(__ram_size-PAGE_SECTION), PAGE_SECTION);
+	dmb();
 	free(res);
 
 	// Now all the data is copied..
@@ -263,6 +273,7 @@ uint32_t svc_fork() {
 			copy->fd[i].inode = malloc(sizeof(inode_t));
 			copy->fd[i].dir_entry = NULL;
 			*copy->fd[i].inode = *p->fd[i].inode;
+			copy->fd[i].flags = p->fd[i].flags;
 		} else {
 			copy->fd[i].dir_entry = NULL;
 			copy->fd[i].inode = NULL;

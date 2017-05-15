@@ -20,7 +20,7 @@ int main () {
 		int status;
 		while(1) {
 			pid_t res = _wait(&status);
-			printf("[INIT] Process %d exited with status %d.\n", res, status);
+			//printf("[INIT] Process %d exited with status %d.\n", res, status);
 			if (pid == res) {
 				printf("[INIT] The shell is dead. Long live the shell..\n");
 				main();

@@ -122,6 +122,7 @@ int main() {
 		} while (val <= max_inode || val <= max_fsz);
 
 		char fmt[128];
+		fmt[0] = 0;
 		char fmt_dir[128];
 
 		int pos = 0;
