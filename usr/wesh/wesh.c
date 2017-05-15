@@ -35,6 +35,7 @@ char wesh_history[MAX_HISTORY][MAX_BUF];
 int hist_top; // first free slot.
 int hist_bot; // first occupied slot.
 
+
 void autocomplete(char* currentBuffer, int* pos) {
     char* last = strrchr(currentBuffer, ' ');
 
@@ -77,6 +78,7 @@ void autocomplete(char* currentBuffer, int* pos) {
     }
     return;
 }
+
 
 void wesh_readline(char* buffer) {
 
@@ -166,6 +168,26 @@ int main() {
 		hist_top++;
 		if (hist_top == MAX_HISTORY)
 			hist_top = 0;
+
+        /*char* base_command = strtok(buf," ");
+        char* input = NULL;
+        char* output = NULL;
+        char* temp = strtok(NULL," ");
+        bool next_input = false;
+        bool next_output = false;
+
+        while(temp != NULL) {
+            if(*(temp-1) == '<') {
+                strcpy(input,temp);
+            } else {
+                strcpy(output,temp);
+            }
+            char* base_command2 = strtok(NULL,"<>");
+            strcat(base_command,base_command2);
+            temp = strtok(NULL," ");
+        }
+
+        printf("\n%s\n %s\n %s\n",base_command,input,output);*/
 
 		char* token = strtok(buf," ");
 		char* params[32];
