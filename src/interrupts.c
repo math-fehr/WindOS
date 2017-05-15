@@ -50,9 +50,8 @@ int count;
 void interrupt_vector(void* user_context) {
     callInterruptHandlers();
 
-	user_context_t* uc = user_context;
     kdebug(D_IRQ,5,"ENTREEIRQ\n");
-	kdebug(D_IRQ,5,"fp: %p\n", uc->r[12]);
+    kdebug(D_IRQ, 5, "=> %d.\n", get_current_process_id());
 	process* p = get_current_process();
     if(p != NULL) {
         p->ctx.pc -= 4;
@@ -99,7 +98,8 @@ void interrupt_vector(void* user_context) {
 		}
 	}
 
-    kdebug(D_IRQ, 7, "<= %d.\n", get_current_process_id());
+    kdebug(D_IRQ, 5, "<= %d.\n", get_current_process_id());
+    kdebug(D_IRQ,5,"SORTIEIRQ\n");
 	print_context(D_IRQ, 2, user_context);
 }
 

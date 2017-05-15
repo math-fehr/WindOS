@@ -25,8 +25,14 @@ _software_interrupt_vector:
 	mrs 	r1, spsr
 	stmfd 	sp!, {r1, lr}
 	mov 	r0, sp
+
+	and     r4, sp, #4   //sp must be 8-aligne before a c call
+	sub     sp, sp, r4
+
 	ldr 	r1, =software_interrupt_vector
 	blx 	r1
+
+    add     sp, sp, r4
 
 	ldmfd 	sp!, {r1, lr}
 	msr 	spsr, r1
@@ -102,8 +108,14 @@ _data_abort_vector:
 	mrs 	r1, spsr
 	stmfd 	sp!, {r1, lr}
 	mov 	r0, sp
+
+    and     r4, sp, #4   //sp must be 8-aligned before a c call
+	sub     sp, sp, r4
+
 	ldr 	r1, =data_abort_vector
 	blx 	r1
+
+    add     sp, sp, r4
 
 	ldmfd 	sp!, {r1, lr}
 	msr 	spsr, r1
@@ -119,8 +131,14 @@ _interrupt_vector:
 	mrs 	r1, spsr
 	stmfd 	sp!, {r1, lr}
 	mov 	r0, sp
+
+  	and     r4, sp, #4   //sp must be 8-aligned before a c call
+	sub     sp, sp, r4
+
 	ldr 	r1, =interrupt_vector
 	blx 	r1
+
+    add     sp, sp, r4
 
 	ldmfd 	sp!, {r1, lr}
 	msr 	spsr, r1
