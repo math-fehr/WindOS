@@ -1,4 +1,5 @@
 #include "pico.h"
+
 extern int argc;
 extern char** argv;
 extern char* environ[];
@@ -7,7 +8,6 @@ extern char* environ[];
 char** 	file;
 char* 	path;
 int 	nlines;
-FILE* 	fd;
 
 int 	row;
 int 	col;
@@ -16,7 +16,7 @@ int 	cursor_row;
 int 	cursor_col;
 
 bool 	open_buffer(char* new_path) {
-	fd = fopen(new_path, "rb");
+	FILE* fd = fopen(new_path, "rb");
 	if (fd == NULL) {
 		return false;
 	}
@@ -37,6 +37,9 @@ bool 	open_buffer(char* new_path) {
 		if (buf[i] == '\n') {
 			nlines++;
 		}
+        if(i==size-1) {
+            nlines--;
+        }
 	}
 
 	nlines++;
@@ -57,9 +60,27 @@ bool 	open_buffer(char* new_path) {
 	file[position] = malloc(size-1-dep+1);
 	memcpy(file[position], &buf[dep], size-dep);
 	file[position][size-dep] = 0;
-	file[position+1] = 0;
+ 	file[position+1] = 0;
 	free(buf);
 }
+
+
+
+bool save_buffer() {
+    if(path == NULL) {
+        return false;
+    }
+    FILE* fd = fopen(path, "w+");
+    char* jump_line = "\n";
+    for(int i = 0; i<nlines; i++) {
+        fwrite(file[i],1,strlen(file[i]),fd);
+        fwrite(jump_line,1,1,fd);
+    }
+    fclose(fd);
+    return true;
+}
+
+
 
 int main() {
 	term_clear();
@@ -109,7 +130,9 @@ int main() {
 			term_move_cursor(1, 1);
 			term_raw_enable(false);
 			return 0;
-		} else { // basic char
+		} else if (c == 0x13) { // ctrl-S
+            save_buffer();
+        }else { // basic char
 			editor_putc(c);
 		}
 	}
