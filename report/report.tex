@@ -8,6 +8,7 @@
 \usepackage{enumitem}
 \usepackage{relsize}
 \usepackage{graphicx}
+\usepackage{hyperref}
 \usepackage[margin=1.0in]{geometry}
 
 
@@ -33,22 +34,16 @@
 \section{Téléchargement et compilation du projet}
 \subsection{Sources et documentation}
 
-Les sources du projet sont clonables via github, à l'addresse https://github.com/Nappy-san/WindOS.git.\\
+Les sources du projet sont clonables via github, à l'addresse
+\href{https://github.com/Nappy-san/WindOS.git}{https://github.com/Nappy-san/WindOS.git}\\
 
-Une documentation Doxygen a été compilé avec le projet, pour le rendre plus lisible.
-% TODO  ajouter la documentation dans le makefile ou dans un dossier
-% TODO finir subsection
+Une \href{../doc/index.html}{documentation Doxygen} a été compilé avec le projet, pour le rendre plus
+lisible. Il se situe dans le dossier doc/.
 
 \subsection{Modules utilisés et dépendances}
 
-Le dépôt contient un sous-module:
-\begin{itemize}
-\item qemu-fvm, qui est un fork de qemu permettant d'émuler le raspberry pi 2.
-\end{itemize}
-% TODO voir si
-% demander de faire un git submodule init/update
-% ou de le mettre dans le makefile
-\ \\
+Le dépôt contient un sous-module qemu-fvm, qui est un fork de qemu permettant d'émuler le raspberry pi 2.
+
 D'autres dépendances sont nécessaire pour pouvoir faire tourner l'OS:
 \begin{itemize}
 \item genext2fs, qui permet de créer un système de fichier qui sera chargé en RAM.
@@ -59,21 +54,21 @@ l'architecture ARM.
 
 \subsection{Compilation du projet}
 
-% TODO Ajouter un make init pour initialiser les submodules et copier les
-% fichiers pour USPi
-% TODO voir readme
-%TODO changer make all en gras type commande
-Pour compiler le projet, il faut lancer ``make all'', qui compilera le kernel,
+Pour récupérer les submodules, il faut utiliser la commande \verb!git submodule init!
+puis\verb!git submodule update!. Pour configurer QEMU, il faut utiliser les
+commandes \verb!./configure --target-list=arm-softmmu! et \verb!make! dans qemu-fvm.\\
+
+Pour compiler le projet, il faut lancer \verb!make all!, qui compilera le kernel,
 et les programmes utilisateurs. Ensuite, pour lancer le kernel sur qemu, il
-suffit d'executer ``make runs''.\\
+suffit d'executer \verb!make runs!.\\
 
 Pour lancer le kernel sur raspberry pi 2 (le
 kernel ne marchant pas sur raspberry pi 1), il faut copier les fichiers contenus
-dans le dossier ``img'', et les copier dans la première partition fat de la
+dans le dossier \verb!img!, et les copier dans la première partition fat de la
 carte SD inséré dans le raspberry pi. Pour pouvoir afficher dans un terminal la
 sortie du raspberry pi, il faut brancher sur les pins connectés au controller
 uart un cable USBTTL, puis lancer minicom sur un terminal (avec la commande
-``sudo minicom -c on -b 115200 -D dev/ttyUSB0'' si la sortie est située dans
+\verb!sudo minicom -c on -b 115200 -D dev/ttyUSB0! si la sortie est située dans
 ttyUSB0).
 
 
@@ -212,8 +207,8 @@ classique. C'est le GPU qui démarre le CPU, et qui facilite la tâche du boot.
 Pour booter le Raspberry Pi, le GPU cherche, dans la première partition FAT de la
 carte SD, un fichier nommé bootcode.bin (firmware fourni par l'organisation Raspberry Pi),
 qui va lui-même lire le fichier start.elf, qui va s'occuper de lire le fichier CONFIG.TXT, pour
-ensuite trouver le fichier image à exécuter, qui est ``kernel.img'' dans notre
-cas. %TODO kernel.img mieux formatter
+ensuite trouver le fichier image à exécuter, qui est \verb!kernel.img! dans notre
+cas.
 C'est donc l'image kernel.img que nous devons compiler pour le noyau. La
 première instruction qui va être executée est à l'addresse 0x8000 pour le
 raspberry pi, et 0x10000 pour QEMU.
@@ -251,11 +246,41 @@ utilisateur, en démarrant dans ce programme.
 \end{itemize}
 
 \section{Difficultés rencontrées}
-On plante sur une instruction, 3 instruction avant on a r0=r5, mais quand ça
-plante on a plus r0=r5
-Port série qui dit nope parfois
-fp wtf parfois
-hypervisor mode lol bug
 
+\subsection{De la simulation à la réalité}
+
+La plus grande difficulté que nous avons rencontré est sans conteste le passage
+de la simulation à la réalité. Le kernel plante toujours de manière aléatoire
+sur le raspberry pi 2, et ne termine pas de loader sur raspberry pi 1.\\
+
+De plus, QEMU n'émule pas exactement le raspberry pi, ce qui fait que certains
+programmes marchent sur QEMU, tandis qu'ils ne marche absolument pas sur le
+raspberry pi. Par exemple, QEMU démarre le raspberry pi en mode superviseur,
+alors que le raspberry pi démarre en mode hyperviseur (il nous a fallu beaucoup
+de temps pour remarquer ça, puisque c'était très mal documenté).
+
+\subsection{Un gros manque de documentation}
+
+Un autre problème était le manque flagrant de documentation pour raspberry pi 2.
+Tandis qu'il y a beaucoup de documentations sur la carte BCM2835 pour le
+raspberry pi 1, il n'y a que 20 pauvres pages pour le BCM2836. En général, les
+instructions processeurs étaient bien documentés, mais les périphériques
+l'étaient très mal (par exemple, nous n'avons toujours pas trouvé les pins du
+GPIO permettant d'alimenter la carte SD, via le controleur EMMC).
+
+\subsection{Des bugs non résolus sur le RPi2}
+
+Il reste encore deux grands bugs qui font que le kernel est inutilisable sur le
+raspberry pi 2, mais qui marche sur QEMU :\\
+
+Le premier vient du fait que le port série décide parfois de ne pas
+s'initialiser pour une raison inconnue, et plante au démarrage. Relancer le
+noyau règle le problème.\\
+
+Le second est plus cryptique. Le frame pointer (fp ou r12) possède parfois une
+valeur abérante, ce qui fait planter le programme utilisateur. On a remarqué en
+général que des registres prenaient parfois des valeurs inconnues (comme par
+exemple, quand on a l'instruction \verb!mov r0,r5!, mais que 3 instructions plus
+tard, alors qu'il n'y avait pas d'interruptions, r0 != r5).
 
 \end{document}
