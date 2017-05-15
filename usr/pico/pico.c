@@ -1,4 +1,5 @@
 #include "pico.h"
+
 extern int argc;
 extern char** argv;
 extern char* environ[];
@@ -61,6 +62,20 @@ bool 	open_buffer(char* new_path) {
 	free(buf);
 }
 
+
+
+bool save_buffer() {
+    if(fd == NULL || path == NULL) {
+        return false;
+    }
+    for(int i = 0; i<nlines; i++) {
+        fwrite(file[i],1,strlen(file[i]),fd);
+    }
+    return true;
+}
+
+
+
 int main() {
 	term_clear();
 	fflush(stdout);
@@ -108,8 +123,10 @@ int main() {
 			term_clear();
 			term_move_cursor(1, 1);
 			term_raw_enable(false);
-			return;
-		} else { // basic char
+			return 0;
+		} else if (c == 0x13) {
+            save_buffer();
+        }else { // basic char
 			editor_putc(c);
 		}
 	}
