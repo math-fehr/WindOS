@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "../../include/syscalls.h"
 
 extern int argc;
 extern char** argv;

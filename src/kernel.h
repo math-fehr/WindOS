@@ -19,6 +19,8 @@
   #endif
 #endif
 
+#define TIMER_LOAD 500
+
 /** \def TTBCR_ALIGN
  * 	\brief Defines the frontier between user and kernel address space.
  *

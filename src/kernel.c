@@ -1,7 +1,7 @@
 /** \file kernel.c
  *	\brief Kernel entry point
  *
- * 	One goal: set up devices and peripherals before launching the first program. 
+ * 	One goal: set up devices and peripherals before launching the first program.
  */
 
 #include <stdbool.h>
@@ -151,7 +151,7 @@ void kernel_main(uint32_t memory) {
   				 "msr cpsr_c,r0\n");
 
 	Timer_Setup();
-	Timer_SetLoad(500);
+	Timer_SetLoad(TIMER_LOAD);
     Timer_Enable();
 
     //USPiInitialize();

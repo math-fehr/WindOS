@@ -11,17 +11,33 @@
 #include <stdlib.h>
 #include <errno.h>
 
+/**	\var inode_t root_inode
+ *	\brief The base inode, representng /.
+ */
 inode_t root_inode;
+/** \var mount_point_t mount_points[MAX_MNT]
+ * 	\brief Filesystem mount points.
+ */
 mount_point_t mount_points[MAX_MNT];
+/** \var int dev_to_mnt[MAX_ID]
+ *	\brief Helper table to translate a device id to it's index in the mount table.
+ */
 int dev_to_mnt[MAX_ID];
 
+/** \var int nmounted
+ *	The number of mounted filesystems.
+ */
 int nmounted = 0;
 
 
 void vfs_setup() {}
 
-/**
- * Mounts a superblock into the VFS.
+/** \fn void vfs_mount(superblock_t* sb, char* path)
+ * 	\brief Mounts a filesystem into the VFS.
+ *	\param sb Superblock representing the FS.
+ *	\param path Directory in which the FS should be mounted.
+ *
+ *	\warning No checks are made, path should refer to an existing directory.
  */
 void vfs_mount(superblock_t* sb, char* path) {
   if (nmounted == 0) {
@@ -42,8 +58,8 @@ void vfs_mount(superblock_t* sb, char* path) {
   }
 }
 
-/**
- *  Free an allocated vfs_dir_list.
+/** \fn void free_vfs_dir_list(vfs_dir_list_t* lst)
+ *  \param Free a malloc'd vfs_dir_list.
  */
 void free_vfs_dir_list(vfs_dir_list_t* lst) {
 	vfs_dir_list_t* prec;
@@ -55,9 +71,15 @@ void free_vfs_dir_list(vfs_dir_list_t* lst) {
 	}
 }
 
-/**
- * Helper function: returns the parent of base.
- * and writes into writebuf the name of ancestor.
+/** \fn inode_t vfs_parent(inode_t base, int* ancestor, char* writebuf)
+ * 	\brief Returns the parent of an inode.
+ *	\param base The base inode.
+ *	\param ancestor A pointer to the base inode's children which we want to retrieve the name.
+ *	\param writebuf If ancestor is not NULL, and found during the exploration, writes its name to writebuf.
+ *	\return Parent inode of base.
+ *
+ *	This function is a helper function for vfs_inode_to_path. It finds the parent
+ *	of an inode, and by the way finds the name of one of it's children.
  */
 inode_t vfs_parent(inode_t base, int* ancestor, char* writebuf) {
 	inode_t mnt_root = mount_points[dev_to_mnt[base.sb->id]].fs->root;
@@ -92,8 +114,14 @@ inode_t vfs_parent(inode_t base, int* ancestor, char* writebuf) {
 	return res;
 }
 
-/**
- * Finds the path, given an inode.
+/** \fn char* vfs_inode_to_path(inode_t base, char* buf, size_t size)
+ * 	\brief Finds the path, given an inode.
+ *	\param base The starting inode.
+ *	\param buf Buffer where we write the path.
+ *	\param size Size of this buffer.
+ *	\return buf
+ *
+ *	\bug Size is not used, buffer overflow can occur.
  */
 char* vfs_inode_to_path(inode_t base, char* buf, size_t size) {
 	int i=size-2;
@@ -130,9 +158,13 @@ char* vfs_inode_to_path(inode_t base, char* buf, size_t size) {
 	return buf;
 }
 
-/**
- * Given a path, gives the inode.
- * Can raise a 'No such file or directory'
+/** \fn inode_t vfs_path_to_inode(inode_t* base, char *path_)
+ * 	\brief Given a path, gives the inode.
+ *	\param base If the path is relative, it is relative to base.
+ * 	\param path_ Access path.
+ * 	\return The inode refered by this path (can be relative to base).
+ *
+ *	\warning If it fails, sets the errno accordingly.
  */
 inode_t vfs_path_to_inode(inode_t* base, char *path_) {
 	errno = 0;
@@ -207,10 +239,20 @@ inode_t vfs_path_to_inode(inode_t* base, char *path_) {
 	return position;
 }
 
+/** \fn inode_t vfs_mknod(inode_t base, char* name, mode_t mode, dev_t dev)
+ *	\brief Creates a node in the filesystem.
+ *	\param base Base inode.
+ *	\param name Path to create.
+ *	\param mode Mode of the created inode.
+ *	\param dev Device mode for device inodes.
+ *	\return The newly created inode.
+ *
+ *	\warning On fail, sets errno accordingly.
+ */
 inode_t vfs_mknod(inode_t base, char* name, mode_t mode, dev_t dev) {
 	(void) dev;
 	inode_t d;
-
+	errno = 0;
 	if (strlen(name) == 0 || (strchr(name, '/') != NULL)) {
 		errno = -EINVAL;
 		return d;
@@ -229,10 +271,18 @@ inode_t vfs_mknod(inode_t base, char* name, mode_t mode, dev_t dev) {
 	}
 }
 
+/** \fn int vfs_fwrite(inode_t fd, char* buffer, int length, int offset)
+ *	\brief Writes to a file.
+ *	\param fd File inode
+ *	\param buffer Buffer to write.
+ *	\param length Number of bytes to write.
+ *	\param offset Position in the file to write.
+ *	\return Number of bytes written on success. -1 on error with errno set.
+ */
 int vfs_fwrite(inode_t fd, char* buffer, int length, int offset) {
     if (S_ISDIR(fd.st.st_mode)) {
-        kernel_printf("vfs_fwrite: whoa there.. this a directory..\n");
-        return 0;
+		errno = EISDIR;
+        return -1;
     }
 
     if (offset > fd.st.st_size) {
@@ -242,11 +292,19 @@ int vfs_fwrite(inode_t fd, char* buffer, int length, int offset) {
     return fd.op->write(fd, buffer, length, offset);
 }
 
+/** \fn int vfs_fread(inode_t fd, char* buffer, int length, int offset)
+ * 	\brief Read a file.
+ *	\param fd File inode.
+ *	\param buffer Destination buffer.
+ *  \param length Number of bytes to read.
+ * 	\param offset Position in the file to read.
+ *	\return Number of bytes read on success. -1 on error with errno set.
+ */
 int vfs_fread(inode_t fd, char* buffer, int length, int offset) {
-  if (S_ISDIR(fd.st.st_mode)) {
-    kernel_printf("vfs_fread: whoa there.. this a directory..\n");
-    return 0;
-  }
+	if (S_ISDIR(fd.st.st_mode)) {
+	  	errno = EISDIR;
+	  	return -1;
+	}
 
 
   if (offset > fd.st.st_size) {
@@ -256,16 +314,31 @@ int vfs_fread(inode_t fd, char* buffer, int length, int offset) {
   return fd.op->read(fd, buffer, length, offset);
 }
 
+/** \fn vfs_dir_list_t* vfs_readdir(char* path)
+ * 	\brief Read a directory.
+ *	\param path Absolute position of the directory.
+ *	\return A directory entry list on success. NULL on error, with errno set.
+ */
 vfs_dir_list_t* vfs_readdir(char* path) {
-    inode_t position = vfs_path_to_inode(NULL, path);
-    if (errno == 0) {
-        vfs_dir_list_t* r = position.op->read_dir(position);
-        return r;
-    } else {
-        return NULL;
-    }
+	inode_t position = vfs_path_to_inode(NULL, path);
+	if (errno == 0) {
+		if (S_ISDIR(position.st.st_mode)) {
+			vfs_dir_list_t* r = position.op->read_dir(position);
+		    return r;
+		} else {
+			errno = ENOTDIR;
+			return NULL;
+		}
+	} else {
+	    return NULL;
+	}
 }
 
+/** \fn int vfs_attr(char* path)
+ * 	\brief Finds the attributes of an inode.
+ *	\param path Absolute position of the inode.
+ *	\return The requested attributes.
+ */
 int vfs_attr(char* path) {
   inode_t result = vfs_path_to_inode(NULL,path);
   if (errno > 0) {
@@ -336,40 +409,4 @@ int vfs_mkfile(char* path, char* name, int permissions) {
   } else {
       return 0;
   }
-}
-
-perm_str_t vfs_permission_string(int attr) {
-  perm_str_t r;
-  r.str[10] = 0;
-  for (int i=0;i<10;i++)
-    r.str[i] = '-';
-
-  if (S_ISDIR(attr))
-    r.str[0] = 'd';
-  if (S_ISCHR(attr))
-    r.str[0] = 'c';
-  if (S_ISBLK(attr))
-    r.str[0] = 'b';
-
-  if (attr & S_IRUSR)
-    r.str[1] = 'r';
-  if (attr & S_IWUSR)
-    r.str[2] = 'w';
-  if (attr & S_IXUSR)
-    r.str[3] = 'x';
-
-  if (attr & S_IRGRP)
-    r.str[4] = 'r';
-  if (attr & S_IWGRP)
-    r.str[5] = 'w';
-  if (attr & S_IXGRP)
-    r.str[6] = 'x';
-
-  if (attr & S_IROTH)
-    r.str[7] = 'r';
-  if (attr & S_IWOTH)
-    r.str[8] = 'w';
-  if (attr & S_IXOTH)
-    r.str[9] = 'x';
-  return r;
 }

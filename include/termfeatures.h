@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "syscalls.h"
+
 #define IOCTL_TERMMODE	0
 
 #define TERMMODE_RAW	0
@@ -20,5 +22,7 @@ void term_raw_enable(bool enable);
 void term_save_cursor();
 void term_restore_cursor();
 void term_default_colors();
+
+void get_permission_string(mode_t attr, char* buf);
 
 #endif

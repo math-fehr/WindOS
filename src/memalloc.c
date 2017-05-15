@@ -86,7 +86,7 @@ void paging_print_status() {
 		fl = fl->next;
 	}
 	bitmap[tot_pages] = 0;
-	kdebug(D_KERNEL,1,"%s\n", bitmap);
+	kdebug(D_KERNEL,3,"%s\n", bitmap);
 }
 
 /**	\fn page_list_t* paging_allocate(int n_pages)

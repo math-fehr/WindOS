@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "../../include/dirent.h"
 #include "../../include/termfeatures.h"
+#include "../../include/syscalls.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -121,6 +122,7 @@ int main() {
 		} while (val <= max_inode || val <= max_fsz);
 
 		char fmt[128];
+		fmt[0] = 0;
 		char fmt_dir[128];
 
 		int pos = 0;

@@ -97,13 +97,20 @@ void free_process_data(process* p) {
 	// Free program break.
 	int n_allocated_pages = p->brk_page;
 	for (int i=n_allocated_pages;i>0;i--) {
-		int phy_page = mmu_vir2phy(i*PAGE_SECTION) / PAGE_SECTION; // let's hope GCC optimizes this
+		int phy_page = mmu_vir2phy_ttb(i*PAGE_SECTION, p->ttb_address) / PAGE_SECTION; // let's hope GCC optimizes this
 		paging_free(1,phy_page);
 	}
 
 	// free stack and program code
-	paging_free(1,mmu_vir2phy(0)/PAGE_SECTION);
-	paging_free(1,mmu_vir2phy(__ram_size-PAGE_SECTION)/PAGE_SECTION);
+	paging_free(1,mmu_vir2phy_ttb(0, p->ttb_address)/PAGE_SECTION);
+	paging_free(1,mmu_vir2phy_ttb(__ram_size-PAGE_SECTION, p->ttb_address)/PAGE_SECTION);
+
+	for (int i=0;i<64;i++) {
+		if (p->fd[i].position >= 0) {
+			free_vfs_dir_list(p->fd[i].dir_entry);
+			free(p->fd[i].inode);
+		}
+	}
 
 	free((void*)p->ttb_address);
 	free(p);
@@ -127,6 +134,36 @@ int kill_process(int const process_id, int wstatus) {
 
 	process* child  = process_list[process_id];
 	process* parent = process_list[child->parent_id];
+	for (int i=0;i<MAX_PROCESSES;i++) {
+		if ((process_list[i] != NULL) && (process_list[i]->parent_id == process_id)) {
+			process_list[i]->parent_id = 0;
+
+/*			if (process_list[i]->status == status_zombie &&  (process_list[0]->wait.pid == -1 || process_list[0]->wait.pid == process_list[i]->asid)) {
+				kernel_printf("Reaped by init.\n");
+				process_list[0]->status 		= status_active;
+				process_list[0]->ctx.r[0] 		= process_list[i]->asid;
+				if (process_list[0]->wait.wstatus != NULL) {
+					int* phy_addr = (int*)(0x80000000+mmu_vir2phy_ttb((intptr_t)process_list[0]->wait.wstatus, process_list[0]->ttb_address));
+					*phy_addr = wstatus;
+				}
+
+				int j=0;
+				for(;zombie_processes[j] != i;j++) {}
+
+				zombie_processes[j] = zombie_processes[number_zombie_processes-1];
+				number_zombie_processes--;
+
+				active_processes[number_active_processes] = 0;
+				number_active_processes++;
+
+				free_processes[number_free_processes] = process_list[i]->asid; // add it into the free list
+				number_free_processes++;
+
+				free_process_data(process_list[i]);
+				process_list[process_list[i]->asid] = NULL;
+			}*/
+		}
+	}
 
 	if (parent->status == status_wait && (parent->wait.pid == -1 || parent->wait.pid == process_id)) {
 		// parent was waiting for his death, free the process and notify parent.
@@ -184,13 +221,14 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 			if (child->parent_id == process_id) {
 				// we found one.
 				int child_pid = child->asid;
-				zombie_processes[i] = zombie_processes[number_zombie_processes];
+				zombie_processes[i] = zombie_processes[number_zombie_processes-1];
 				number_zombie_processes--;
 				free_processes[number_free_processes] = child_pid;
 				number_free_processes++;
 				process_list[child_pid] = 0;
 				if (wstatus != NULL)
 					*phy_addr = (int)child->wait.wstatus;
+
 				free_process_data(child);
 				return child_pid;
 			}
@@ -201,7 +239,7 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 			int i=0;
 			for (;zombie_processes[i] != target_pid;i++) {} // Danger
 
-			zombie_processes[i] = zombie_processes[number_zombie_processes];
+			zombie_processes[i] = zombie_processes[number_zombie_processes-1];
 			number_zombie_processes--;
 			free_processes[number_free_processes] = target_pid;
 			number_free_processes++;

@@ -6,7 +6,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 #include "../../include/dirent.h"
+#include "../../include/syscalls.h"
 
 extern int argc;
 extern char** argv;
@@ -42,6 +44,7 @@ int delete(int fd, char* path, bool recursive) {
 		perror("rm");
 		return -1;
 	}
+	return 0;
 }
 
 

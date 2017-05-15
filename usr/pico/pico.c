@@ -124,9 +124,13 @@ int main() {
 			term_move_cursor(1, 1);
 			term_raw_enable(false);
 			return 0;
+<<<<<<< HEAD
 		} else if (c == 0x13) {
             save_buffer();
         }else { // basic char
+=======
+		} else { // basic char
+>>>>>>> 63b99b2083a101535ccb6abe1943e73f44f21d61
 			editor_putc(c);
 		}
 	}
