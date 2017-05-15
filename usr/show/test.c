@@ -1,5 +1,7 @@
 #include "stdio.h"
 #include "stdlib.h"
+#include <unistd.h>
+#include "../../include/termfeatures.h"
 
 extern int argc;
 extern char** argv;
@@ -37,12 +39,11 @@ int main() {
 	for (int y=0;y<height;y++) {
 		fread(data, sizeof(unsigned char), row_padded, f);
 		for (int x=0;x<width;x++) {
-			printf("\033[%d;%dH",height-y,x);
+			printf("\033[%d;%dH ",height-y,x);
 			unsigned char r = data[3*x+2];
 			unsigned char g = data[3*x+1];
 			unsigned char b = data[3*x];
-
-			printf("\033[48;2;%d;%d;%dm ", r,g,b);
+			term_set_bg(r,g,b,false);
 		}
 	}
 

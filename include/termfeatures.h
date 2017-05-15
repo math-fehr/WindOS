@@ -11,7 +11,7 @@
 #define TERMMODE_CANON 	1
 
 
-void get_terminal_size(int *height, int *width);
+void term_get_size(int* row, int* cols);
 void term_clear();
 void term_move_cursor(int row, int column);
 void term_set_bg(int r, int g, int b, bool hq);

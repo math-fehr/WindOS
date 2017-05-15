@@ -1,7 +1,7 @@
 #include "pico.h"
 extern int argc;
 extern char** argv;
-extern char** environ;
+extern char* environ[];
 
 
 char** 	file;

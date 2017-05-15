@@ -195,9 +195,16 @@ swi_beg:
             kdebug(D_SYSCALL,5,"ENTREEGETENTS\n");
 			res = svc_getdents(ctx->r[0], (struct dirent *)ctx->r[1]);
 			break;
-		case SVC_OPEN:
-            kdebug(D_SYSCALL,5,"ENTREEOPEN\n");
-			res = svc_open((char*) ctx->r[0], ctx->r[1]);
+		case SVC_OPENAT:
+            kdebug(D_SYSCALL,5,"ENTREEOPENAT\n");
+			res = svc_openat(ctx->r[0], (char*) ctx->r[1], ctx->r[2]);
+			break;
+		case SVC_MKNODAT:
+			kdebug(D_SYSCALL,5,"ENTREEMKNODAT\n");
+			res = svc_mknodat(ctx->r[0], (char*) ctx->r[1], ctx->r[2], ctx->r[3]);
+			break;
+		case SVC_UNLINKAT:
+			res = svc_unlinkat(ctx->r[0], (char*) ctx->r[1], ctx->r[2]);
 			break;
         default:
         kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", ctx->r[7]);

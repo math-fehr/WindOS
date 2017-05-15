@@ -2,6 +2,7 @@
 #include "stdint.h"
 #include "sys/types.h"
 #include "sys/stat.h"
+#include <fcntl.h>
 #include "unistd.h"
 #include "stdio.h"
 #include "string.h"
@@ -13,6 +14,44 @@
 int argc;
 char **argv;
 char **environ;
+
+
+
+char *basename(char *path)
+{
+	char *p;
+	if( path == NULL || *path == '\0' )
+		return ".";
+	p = path + strlen(path) - 1;
+	while( *p == '/' ) {
+		if( p == path )
+			return path;
+		*p-- = '\0';
+	}
+	while( p >= path && *p != '/' )
+		p--;
+	return p + 1;
+}
+
+char *dirname(char *path)
+{
+	char *p;
+	if( path == NULL || *path == '\0' )
+		return ".";
+	p = path + strlen(path) - 1;
+	while( *p == '/' ) {
+		if( p == path )
+			return path;
+		*p-- = '\0';
+	}
+	while( p >= path && *p != '/' )
+		p--;
+	return
+		p < path ? "." :
+		p == path ? "/" :
+		(*p = '\0', path);
+}
+
 
 void software_init_hook() {
 	argv = 0;
@@ -85,25 +124,54 @@ pid_t _fork() {
 	return res;
 }
 
-// 0x05
-int _open(char* path, int flags) {
+// 0x127
+int _openat(int dirfd, char* path, int flags) {
 	int res;
 	asm volatile(
 					"push 	{r7}\n"
 					"ldr 	r0, %1\n"
 					"ldr 	r1, %2\n"
-					"mov 	r7, #0x05\n"
+					"ldr 	r2, %3\n"
+					"ldr 	r7, =#0x127\n"
 					"svc 	#0\n"
 					"pop 	{r7}\n"
 					"mov 	%0, r0\n"
 					: "=r" (res)
-					: "m" (path), "m" (flags)
+					: "m" (dirfd), "m" (path), "m" (flags)
 					:
 	);
 	if (res < 0) {
 		errno = -res;
+		return -1;
 	}
 	return res;
+}
+
+//0x129
+int _mknodat(int dirfd, char* path, mode_t mode, dev_t dev) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"ldr 	r2, %3\n"
+					"ldr 	r3, %4\n"
+					"ldr 	r7, =#0x129\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (dirfd), "m" (path), "m" (mode), "m" (dev)
+					:
+	);
+	if (res < 0) {
+		errno = -res;
+		return -1;
+	}
+	return 0;
+}
+int _open(char* path, int flags) {
+	return _openat(AT_FDCWD, path, flags);
 }
 
 // 78
@@ -161,6 +229,7 @@ int _chdir(char* path) {
 		:);
 	if (res < 0) {
 		errno = -res;
+		return -1;
 	}
 	return 0;
 }
@@ -319,6 +388,26 @@ off_t _lseek(int fd, off_t offset, int whence) {
 		res = -1;
 	}
     return res;
+}
+
+int _unlinkat(int dfd, const char* name, int flag) {
+	int res;
+	asm volatile(
+					"push {r7}\n"
+					"ldr r0, %1\n"
+					"ldr r1, %2\n"
+					"ldr r2, %3\n"
+					"ldr r7, =#0x12d\n"
+					"svc #0\n"
+					"pop {r7}\n"
+					"mov %0, r0\n"
+				:   "=r" (res)
+				:   "m" (dfd), "m" (name), "m" (flag)
+				:);
+	if (res < 0) {
+		errno = -res;
+	}
+	return res;
 }
 
 // 0x03

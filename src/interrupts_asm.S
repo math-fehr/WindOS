@@ -25,72 +25,18 @@ _software_interrupt_vector:
 	mrs 	r1, spsr
 	stmfd 	sp!, {r1, lr}
 	mov 	r0, sp
-
-	and     r4, sp, #4   //sp must be 8-aligne before a c call
-	sub     sp, sp, r4
-
+	and 	r4, sp, #4
+	sub 	sp, sp, r4
+	dmb
 	ldr 	r1, =software_interrupt_vector
 	blx 	r1
-
-    add     sp, sp, r4
-
+	dmb
+	add 	sp, sp, r4
 	ldmfd 	sp!, {r1, lr}
 	msr 	spsr, r1
 	ldmfd  	sp, {r0-r14}^ // Restore registers
 	add 	sp, sp, #15*4
 	movs 	pc, lr
-	/*stmfd 	sp, {r14}^
-	sub 	sp, sp, #4
-	stmfd 	sp, {r13}^
-	sub 	sp, sp, #4
-	stmfd 	sp, {r12}^
-	sub 	sp, sp, #4
-	stmfd 	sp!, {r11}
-	stmfd 	sp!, {r10}
-	stmfd 	sp!, {r9}
-	stmfd 	sp!, {r8}
-	stmfd 	sp!, {r7}
-	stmfd 	sp!, {r6}
-	stmfd 	sp!, {r5}
-	stmfd 	sp!, {r4}
-	stmfd 	sp!, {r3}
-	stmfd 	sp!, {r2}
-	stmfd 	sp!, {r1}
-	stmfd 	sp!, {r0}
-
-	mrs 	r1, spsr_all  // Get caller CPSR
-
-	stmfd 	sp!, {lr}
-	stmfd 	sp!, {r1} // Save CPSR and LR.
-	mov 	r0, sp
-
-	ldr 	r2, =software_interrupt_vector
-	blx		r2
-
-	ldmfd 	sp!, {r1}
-	msr 	spsr_all, r1
-	ldmfd 	sp!, {lr}
-
-	ldmfd 	sp!, {r0}
-	ldmfd 	sp!, {r1}
-	ldmfd 	sp!, {r2}
-	ldmfd 	sp!, {r3}
-	ldmfd 	sp!, {r4}
-	ldmfd 	sp!, {r5}
-	ldmfd 	sp!, {r6}
-	ldmfd 	sp!, {r7}
-	ldmfd 	sp!, {r8}
-	ldmfd 	sp!, {r9}
-	ldmfd 	sp!, {r10}
-	ldmfd 	sp!, {r11}
-	ldmfd 	sp, {r12}^
-	add 	sp, sp, #4
-	ldmfd 	sp, {r13}^
-	add 	sp, sp, #4
-	ldmfd 	sp, {r14}^
-	add 	sp, sp, #4
-
-	movs 	pc, lr // Context switch*/
 
 .globl _prefetch_abort_vector
 _prefetch_abort_vector:
@@ -145,62 +91,6 @@ _interrupt_vector:
 	ldmfd  	sp, {r0-r14}^ // Restore registers
 	add 	sp, sp, #15*4
 	movs 	pc, lr
-	/*stmfd 	sp, {r14}^
-	add 	sp, sp, #4
-	stmfd 	sp, {r13}^
-	add 	sp, sp, #4
-	stmfd 	sp, {r12}^
-	add 	sp, sp, #4
-	stmfd 	sp!, {r11}
-	stmfd 	sp!, {r10}
-	stmfd 	sp!, {r9}
-	stmfd 	sp!, {r8}
-	stmfd 	sp!, {r7}
-	stmfd 	sp!, {r6}
-	stmfd 	sp!, {r5}
-	stmfd 	sp!, {r4}
-	stmfd 	sp!, {r3}
-	stmfd 	sp!, {r2}
-	stmfd 	sp!, {r1}
-	stmfd 	sp!, {r0}
-
-	mrs 	r1, spsr_all  // Get caller CPSR
-
-	subs 	lr, lr, #4
-	stmfd 	sp!, {lr}
-	stmfd 	sp!, {r1} // Save CPSR and LR.
-	mov 	r0, sp
-
-
-	ldr 	r1, =interrupt_vector
-	blx		r1
-
-
-	ldmfd 	sp!, {r1}
-	msr 	spsr_all, r1
-
-	ldmfd 	sp!, {lr}
-
-	ldmfd 	sp!, {r0}
-	ldmfd 	sp!, {r1}
-	ldmfd 	sp!, {r2}
-	ldmfd 	sp!, {r3}
-	ldmfd 	sp!, {r4}
-	ldmfd 	sp!, {r5}
-	ldmfd 	sp!, {r6}
-	ldmfd 	sp!, {r7}
-	ldmfd 	sp!, {r8}
-	ldmfd 	sp!, {r9}
-	ldmfd 	sp!, {r10}
-	ldmfd 	sp!, {r11}
-	ldmfd 	sp, {r12}^
-	sub 	sp, sp, #4
-	ldmfd 	sp, {r13}^
-	sub 	sp, sp, #4
-	ldmfd 	sp, {r14}^
-	sub 	sp, sp, #4
-
-	movs 	pc, lr // Context switch*/
 
 .globl _fast_interrupt_vector
 _fast_interrupt_vector:
