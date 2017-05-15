@@ -5,11 +5,15 @@
 #include "../../include/syscalls.h"
 
 extern int argc;
-extern char* argv[];
+extern char** argv;
 
 int main() {
 	if (argc > 1) {
-		_close(_open(argv[1], O_CREAT));
+		int fd = _open(argv[1], O_CREAT);
+		if (fd < 0) {
+			perror("touch");
+		}
+		_close(fd);
 		return 0;
 	} else {
 		printf("touch: no file specified.\n");
