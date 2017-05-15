@@ -50,15 +50,17 @@ typedef struct {
  *	\brief Inode interface.
  */
 struct inode_t {
-  superblock_t* sb; ///< Inode's superblock.
-  inode_operations_t* op; ///<
-  struct stat st;
+  superblock_t* sb; ///< Pointer to superblock.
+  inode_operations_t* op; ///< Pointer to inode's operations.
+  struct stat st; ///< Inode descriptor data.
 };
 
-
+/** \struct superblock_t
+ *	\brief Filesystem interface.
+ */
 struct superblock_t {
-  int id;                  	// device ID
-  inode_t root;           	// root node
+  int id;                  	///< Device ID
+  inode_t root;           	///< Root node
 };
 
 
@@ -66,28 +68,21 @@ struct superblock_t {
  * Structures and methods that the kernel will use to work on the VFS.
  */
 
-// Represents an open file descriptor.
-typedef struct {
-  inode_t* inode;
-  int current_offset;
-} file_t;
-
-// Represents a directory listing.
+/** \struct vfs_dir_list_t
+ * 	\brief A directory listing.
+ */
 struct vfs_dir_list_t {
-  vfs_dir_list_t* next;
-  inode_t inode;
-  char* name;
+  vfs_dir_list_t* next; ///< Pointer to next entry.
+  inode_t inode; 		///< Current entry's inode.
+  char* name;			///< Current entry's name.
 };
 
-// Fixed length permission string
+/** \struct mount_point_t
+ *	\brief Mount point structure.
+ */
 typedef struct {
-  char str[11];
-} perm_str_t;
-
-// Internal structure representing mount points.
-typedef struct {
-  inode_t inode;
-  superblock_t* fs;
+  inode_t inode; ///< Inode on which the FS is mounted.
+  superblock_t* fs; ///< Mounted filesystem.
 } mount_point_t;
 
 /*
@@ -105,6 +100,5 @@ int 		vfs_attr	(char* path);
 int 		vfs_mkdir	(char* path, char* name, int permissions);
 int 		vfs_rm		(char* path, char* name);
 int 		vfs_mkfile	(char* path, char* name, int permissions);
-perm_str_t 	vfs_permission_string(int attr);
 void 		free_vfs_dir_list(vfs_dir_list_t*);
 #endif
