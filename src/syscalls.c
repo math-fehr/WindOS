@@ -146,7 +146,6 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 	new_p->fd[2].position   = 0;
 	new_p->fd[2].dir_entry 	= NULL;
 
-
 	get_process_list()[new_p->asid] = new_p;
 
 	kdebug(D_SYSCALL, 2, "EXECVE: Program loaded! Freeing shit %p %p\n", p->ttb_address, p);
@@ -285,6 +284,8 @@ uint32_t svc_fork() {
 	copy->status 	= p->status;
 	copy->cwd 		= p->cwd;
 	copy->dummy 	= 0;
+	copy->name		= malloc(strlen(p->name)+1);
+	strcpy(copy->name, p->name);
 
 	int pid 		= sheduler_add_process(copy);
 	copy->parent_id = p->asid;
@@ -400,7 +401,6 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 		p->status = status_blocked_svc;
 		return 0;
 	}
-	//kdebug(D_SYSCALL, 2, "READ %d %#010x %d => %d\n", fd, buf, cnt, n);
 	p->status = status_active;
 	p->fd[fd].position += n;
 	return n;
@@ -649,4 +649,43 @@ int svc_mknodat(int dirfd, char* pathname, mode_t mode, dev_t dev) {
 		}
 	}
 	return 0;
+}
+
+int svc_dup(int oldfd) {
+	process* p = get_current_process();
+
+	if (oldfd >= MAX_OPEN_FILES
+	|| p->fd[oldfd].position < 0) {
+		return -EBADF;
+	}
+
+	int i=0;
+	for (;(p->fd[i].position != -1) && (i<MAX_OPEN_FILES);i++);
+
+	if (i == MAX_OPEN_FILES) {
+		return -ENFILE;
+	}
+
+	p->fd[i] = p->fd[oldfd];
+	return i;
+}
+
+int svc_dup2(int oldfd, int newfd) {
+	process* p = get_current_process();
+
+	if (oldfd >= MAX_OPEN_FILES
+	|| p->fd[oldfd].position < 0) {
+		return -EBADF;
+	}
+
+	if (newfd >= MAX_OPEN_FILES) {
+		return -EBADF;
+	}
+
+	if (p->fd[newfd].position >= 0) {
+		svc_close(newfd);
+	}
+
+	p->fd[newfd] = p->fd[oldfd];
+	return newfd;
 }

@@ -66,6 +66,7 @@ typedef struct {
 	user_context_t ctx; ///< Process' execution context.
 	wait_parameters_t wait; ///< When in wait status, wait parameters. When in zombie status, stores exit code.
 	inode_t cwd; ///< Current working directory.
+	char* name; ///< Process name.
 } process;
 
 #define ELF_ABI_SYSTEMV 0
@@ -123,7 +124,7 @@ typedef struct {
 } ph_entry_t;
 
 /** \struct sh_entry_t
- *	\brief Section header entry. 
+ *	\brief Section header entry.
  */
 typedef struct {
   uint32_t name;
@@ -139,5 +140,10 @@ typedef struct {
 } sh_entry_t;
 
 process* process_load(char* path, inode_t cwd, const char* argv[], const char *envp[]);
+
+superblock_t* proc_initialize(int id);
+vfs_dir_list_t* proc_lsdir(inode_t from);
+int proc_fread(inode_t from, char* buf, int size, int pos);
+
 
 #endif //PROCESS_H

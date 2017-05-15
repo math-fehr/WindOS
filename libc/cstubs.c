@@ -16,6 +16,48 @@ char **argv;
 char **environ;
 
 
+// 0x29
+int dup(int oldfd) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r7, =#0x29\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (oldfd)
+					:
+	);
+	if (res < 0) {
+		errno = -res;
+		return -1;
+	}
+	return res;
+}
+
+// 0x3f
+int dup2(int oldfd, int newfd) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"ldr 	r7, =#0x3f\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (oldfd), "m" (newfd)
+					:
+	);
+	if (res < 0) {
+		errno = -res;
+		return -1;
+	}
+	return res;
+}
 
 char *basename(char *path)
 {

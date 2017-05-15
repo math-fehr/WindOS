@@ -112,6 +112,7 @@ void free_process_data(process* p) {
 		}
 	}
 
+	free(p->name);
 	free((void*)p->ttb_address);
 	free(p);
 }

@@ -27,3 +27,6 @@ pid_t _wait(int *wstatus);
 off_t _lseek(int fd, off_t offset, int whence);
 int _unlinkat(int dfd, const char* name, int flag);
 ssize_t _read(int fd, void* buf, size_t count);
+
+int dup(int oldfd);
+int dup2(int oldfd, int newfd);

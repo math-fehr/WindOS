@@ -167,5 +167,9 @@ process* process_load(char* path, inode_t cwd, const char* argv[], const char* e
         processus->fd[i].position = -1;
     }
 
+	char* name = basename(path);
+	processus->name = malloc(strlen(name)+1);
+	strcpy(processus->name, name);
+
     return processus;
 }

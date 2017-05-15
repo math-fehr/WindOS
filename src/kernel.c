@@ -26,6 +26,7 @@
 #include "dev.h"
 #include "mailbox.h"
 #include "kernel.h"
+#include "procfs.h"
 
 #include "uspi.h"
 #include "uspibind.h"
@@ -167,9 +168,15 @@ void kernel_main(uint32_t memory) {
         kernel_printf("Error while initializing fsroot\n");
 		while(1) {}
 	}
-    superblock_t* devroot = dev_initialize(10);
+	superblock_t* devroot = dev_initialize(10);
 	if (devroot == NULL) {
         kernel_printf("Error while initializing devroot\n");
+		while(1) {}
+	}
+
+	superblock_t* procroot = proc_initialize(20);
+	if (procroot == NULL) {
+		kernel_printf("Error while initializing procroot\n");
 		while(1) {}
 	}
 
@@ -179,7 +186,11 @@ void kernel_main(uint32_t memory) {
 
 
     vfs_mkdir("/","dev",0x1FF);
-    vfs_mount(devroot,"/dev");
+	vfs_mount(devroot,"/dev");
+
+
+    vfs_mkdir("/","proc",0x1FF);
+    vfs_mount(procroot,"/proc");
 
 
 	const char* param[] = {"/bin/init",0};

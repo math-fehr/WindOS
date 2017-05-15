@@ -28,7 +28,7 @@ superblock_t* dev_initialize (int id) {
     superblock_t* res = malloc(sizeof(superblock_t));
     res->id = id;
     res->root.st.st_ino    = DEV_ROOT;
-    res->root.st.st_size   = 0;
+    res->root.st.st_size   = 1024;
     res->root.st.st_mode   = S_IFDIR | S_IRWXU | S_IRWXO | S_IRWXG;
     res->root.st.st_dev    = id;
 	res->root.sb 		   = res;
@@ -103,10 +103,11 @@ vfs_dir_list_t* dev_lsdir (inode_t from) {
 		r.st.st_nlink = 1;
         res = dev_append_elem(r, "serial", res);
 
-
+		r.st.st_mode = S_IFDIR;
         r.st.st_ino = DEV_ROOT;
         res = dev_append_elem(r, ".", res);
 
+		r.st.st_mode = S_IFDIR;
         r.st.st_ino = DEV_ROOT;
         res = dev_append_elem(r, "..", res);
         return res;

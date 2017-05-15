@@ -252,6 +252,12 @@ swi_beg:
 		case SVC_UNLINKAT:
 			res = svc_unlinkat(ctx->r[0], (char*) ctx->r[1], ctx->r[2]);
 			break;
+		case SVC_DUP:
+			res = svc_dup(ctx->r[0]);
+			break;
+		case SVC_DUP2:
+			res = svc_dup2(ctx->r[0], ctx->r[1]);
+			break;
         default:
         kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", ctx->r[7]);
 		while(1) {}
