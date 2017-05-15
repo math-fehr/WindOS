@@ -12,8 +12,6 @@ int 	nlines;
 int 	row;
 int 	col;
 
-int 	cursor_row;
-int 	cursor_col;
 
 bool 	open_buffer(char* new_path) {
 	FILE* fd = fopen(new_path, "rb");
@@ -37,9 +35,6 @@ bool 	open_buffer(char* new_path) {
 		if (buf[i] == '\n') {
 			nlines++;
 		}
-        if(i==size-1) {
-            nlines--;
-        }
 	}
 
 	nlines++;
@@ -86,6 +81,7 @@ int main() {
 	term_clear();
 	fflush(stdout);
 	term_get_size(&row, &col);
+	
 	fflush(stdout);
 	term_raw_enable(true);
 

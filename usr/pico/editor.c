@@ -4,23 +4,30 @@
 extern char** 	file;
 extern int 		nlines;
 
-extern int cursor_row;
-extern int cursor_col;
+int 	cursor_row;
+int 	cursor_col;
+
+int 	offset_row;
+
+extern int 	row;
+extern int 	col;
 
 void refresh_line(int n) {
-	term_save_cursor();
-	term_move_cursor(3+n, 1);
-	printf("\033[2K");
-	term_set_bg(255, 255, 255, false);
-	term_set_fg(0, 0, 0, false);
-	printf("% 3d", n+1);
-	term_default_colors();
-	printf(" %s\n", file[n]);
-	term_restore_cursor();
+	if (offset_row+n < nlines) {
+		term_save_cursor();
+		term_move_cursor(3+n, 1);
+		printf("\033[2K");
+		term_set_bg(255, 255, 255, false);
+		term_set_fg(0, 0, 0, false);
+		printf("% 3d", offset_row+n+1);
+		term_default_colors();
+		printf(" %s\n", file[offset_row+n]);
+		term_restore_cursor();
+	}
 }
 
 void update_cursor() {
-	term_move_cursor(cursor_row+3, cursor_col+5);
+	term_move_cursor(cursor_row+3-offset_row, cursor_col+5);
 }
 
 void editor_draw() {
@@ -38,6 +45,7 @@ void editor_draw() {
 	fflush(stdout);
 	cursor_row = 0;
 	cursor_col = 0;
+	offset_row = 0;
 }
 
 void editor_delete() {
@@ -116,6 +124,20 @@ void editor_move(char dir) {
 		cursor_col = strlen(file[cursor_row]);
 	}
 
+	if (cursor_row - offset_row < 0) {
+		offset_row--;
+		for (int i=0; i<row-3;i++) {
+			refresh_line(i);
+		}
+	}
+
+	if (cursor_row - offset_row >= row-3) {
+		offset_row++;
+		for (int i=0; i<row-2;i++) {
+			refresh_line(i);
+		}
+	}
+
 	update_cursor();
 }
 
@@ -144,9 +166,19 @@ void editor_putc(char c) {
 		nlines++;
 		cursor_row++;
 		cursor_col=0;
+
+		if (cursor_row - offset_row < 0) {
+			offset_row--;
+		}
+
+		if (cursor_row - offset_row >= row-3) {
+			offset_row++;
+		}
+
 		free(old_file);
 		file = new_file;
-		for (int i=cursor_row-1;i<nlines;i++) {
+
+		for (int i=0; i<row-2;i++) {
 			refresh_line(i);
 		}
 		update_cursor();
