@@ -27,9 +27,6 @@
 #include "mailbox.h"
 #include "kernel.h"
 
-#include "uspi.h"
-#include "uspibind.h"
-
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
 /** \var extern uint32_t __ramfs_start
