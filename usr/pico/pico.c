@@ -37,9 +37,6 @@ bool 	open_buffer(char* new_path) {
 		if (buf[i] == '\n') {
 			nlines++;
 		}
-        if(i==size-1) {
-            nlines--;
-        }
 	}
 
 	nlines++;

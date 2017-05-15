@@ -7,9 +7,11 @@
 #include "unistd.h"
 #include "sys/wait.h"
 #include "string.h"
+#include "fcntl.h"
 
 #include "../../include/termfeatures.h"
 #include "../../include/syscalls.h"
+#include "../../include/dirent.h"
 
 extern int argc;
 extern char** argv;
@@ -32,6 +34,49 @@ char wesh_history[MAX_HISTORY][MAX_BUF];
 
 int hist_top; // first free slot.
 int hist_bot; // first occupied slot.
+
+void autocomplete(char* currentBuffer, int* pos) {
+    char* last = strrchr(currentBuffer, ' ');
+
+    if(last == NULL) {
+        last = currentBuffer;
+    }
+    char* beg_file = basename(last);
+    char* folder = dirname(last);
+
+    unsigned size_beg_file = strlen(beg_file);
+
+    int fd = _open(folder,O_RDONLY);
+
+    char* best_prefix = beg_file;
+    int size_best_prefix = size_beg_file;
+    bool found_one = false;
+
+    struct dirent* entry = malloc(sizeof(struct dirent));
+    while(_getdents(fd,entry) == 0) {
+        if(strlen(entry->d_name) > size_beg_file && strncmp(entry->d_name,beg_file,size_beg_file) == 0) {
+            if(!found_one) {
+                found_one = true;
+                strcpy(best_prefix,entry->d_name);
+                size_best_prefix = strlen(entry->d_name);
+            } else {
+                int i = size_beg_file;
+                while(entry->d_name[i] != 0 && entry->d_name[i] == best_prefix[i] && i<size_best_prefix) {
+                    i++;
+                }
+                if(i != size_best_prefix) {
+                    size_best_prefix = i;
+                    strncpy(best_prefix,best_prefix,i);
+                }
+            }
+        }
+    }
+    if(found_one) {
+        printf("%s", best_prefix+size_beg_file);
+        *pos += size_best_prefix-size_beg_file;
+    }
+    return;
+}
 
 void wesh_readline(char* buffer) {
 
@@ -84,7 +129,9 @@ void wesh_readline(char* buffer) {
 				pos = strlen(current_buffer);
 			}
 
-		} else { // basic char
+		} else if(c == 0x9) {
+            autocomplete(current_buffer,&pos);
+        } else { // basic char
 			current_buffer[pos] = c;
 			pos++;
 			current_buffer[pos] = 0;
