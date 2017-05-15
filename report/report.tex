@@ -7,7 +7,6 @@
 \usepackage{listings}
 \usepackage{enumitem}
 \usepackage{relsize}
-\usepackage{dsfont}
 \usepackage{graphicx}
 \usepackage[margin=1.0in]{geometry}
 
@@ -22,9 +21,10 @@
 \begin{abstract}
   Pour ce projet, nous nous sommes intéressés à l'écriture d'un noyau en C pour
   Raspberry Pi (1 et 2). L'objectif était à la base de pouvoir accéder à l'OS en
-  réseau, ce qui n'a pas été implémenté au final, faute de temps. Un kernel à
-  quand même été implémenté, possédant de multiples fonctionnalités, comme un
-  user mode, un système de fichiers, et un shell.
+  réseau, ce qui n'a pas été implémenté au final, faute de temps. Le noyau
+  implémenté dispose cependant de multiples fonctionnalités similaires à un noyau
+  UNIX. Ainsi nous disposons d'un système d'exploitation préemptif, avec notamment
+  un mode utilisateur, un système de mémoire virtuelle et un système de fichier.
 \end{abstract}
 
 \tableofcontents
@@ -35,28 +35,26 @@
 
 Les sources du projet sont clonables via github, à l'addresse https://github.com/Nappy-san/WindOS.git.\\
 
-Une documentation doxygène a été compilé avec le projet, pour le rendre plus lisible.
+Une documentation Doxygen a été compilé avec le projet, pour le rendre plus lisible.
 % TODO  ajouter la documentation dans le makefile ou dans un dossier
 % TODO finir subsection
 
 \subsection{Modules utilisés et dépendances}
 
-Le git contient deux sous-modules :
+Le dépôt contient un sous-module:
 \begin{itemize}
-\item qemu-fvm, qui est un fork de qemu permettant d'émuler le raspberry pi 2
-\item USPi, qui est une librairie permettant d'utiliser les ports USB du
-  raspberry pi
+\item qemu-fvm, qui est un fork de qemu permettant d'émuler le raspberry pi 2.
 \end{itemize}
 % TODO voir si
 % demander de faire un git submodule init/update
 % ou de le mettre dans le makefile
 \ \\
-D'autres dépendances sont nécessaire pour pouvoir faire tourner le kernel :
+D'autres dépendances sont nécessaire pour pouvoir faire tourner l'OS:
 \begin{itemize}
-\item genext2fs, qui permet de créer un système de fichier dans notre mémoire ram
-\item minicom, qui permet de lire le port série
-\item arm-none-eabi, qui est le compilateur nous permettant de compiler pour le
-  raspberry pi
+\item genext2fs, qui permet de créer un système de fichier qui sera chargé en RAM.
+\item minicom, qui permet de lire le port série.
+\item arm-none-eabi-gcc, qui est le compilateur croisé nous permettant de compiler pour
+l'architecture ARM.
 \end{itemize}
 
 \subsection{Compilation du projet}
@@ -80,24 +78,29 @@ ttyUSB0).
 
 
 \section{Modules du kernel}
-
-Le kernel contient plusieurs modules intéressants, comme la gestion du serial
+Le kernel contient plusieurs modules intéressants, comme la gestion du port série
 pour envoyer des données à un ordinateur, l'utilisation du timer ARM,
-l'utilisation du MMu pour la gestion de la mémoire virtuelle, un système de
-fichier ext2, et une mailbox permettant de communiquer avec le VideoCore.
+l'utilisation du MMU pour la gestion de la mémoire virtuelle, une abstraction de
+système de fichier (VFS) sur lequel deux systèmes de fichiers sont montés, et
+une mailbox permettant de communiquer avec le VideoCore.
 
 \subsection{Serial}
-%TODO Ecrire cette partie
-\subsection{Timer}
+Le Raspberry Pi dispose de plusieurs UART (Universal Asynchronous Receiver Transmitter).
+Nous utilisons le Mini-UART qui est une version simplifiée implémentant UART avec
+moins d'options à contrôler. Avec un baudrate fixé à 115200 bps, cela nous suffit
+largement pour le développement d'un terminal.
+Le mini-UART dispose d'un buffer de lecture et d'écriture de 8 byte, ce qui permet
+de ne pas avoir à suivre précisément les interruptions levées par ce dernier:
+on peut se contenter de récupérer les données reçues à chaque tick de timer.
 
+\subsection{Timer}
 Le timer est très utile pour l'ordonnancement des processus, puisqu'il permet de
 lancer des interruptions à une fréquence donnée. Nous utilisons le timer de la
 carte BCM2835/2836. Nous l'avons implémenté à partir de la documentation du
 BCM2835 ARM Peripherals, à la page 196.\\
 
-Nous permettons à partir du timer d'éxecuter une fonction de manière décalée (ce
-qui est nécessaire pour USPi) ou encore de générer des interruptions de manière
-régulière pour appeler l'ordonnanceur
+Le timer permet de retarder l'exécution d'une fonction, et surtout de générer
+les interruptions de contrôle indispensables dans le cadre d'un OS préemptif.
 
 \subsection{Mémoire virtuelle}
 
@@ -113,7 +116,25 @@ Ces fonctions sont ensuites utilisées par memalloc.c pour avoir une gestion de
 la mémoire virtuelle, en retenant les pages physiques déjà allouées.
 
 \subsection{Système de fichiers}
-%TODO Ecrire cette partie
+Après une tentative infructueuse d'implémenter FAT, c'est EXT2 qui a été utilisé
+pour représenter les fichiers en mémoire.
+Au lieu de brancher directement Ext2 aux appels systèmes et autres fonctionnalités
+noyau, une interface a été développée afin de faire abstraction entre le driver
+et le reste du kernel. \\
+Ainsi chaque système de fichiers développé implemente des fonctions définies
+par le VFS (Virtual File System) ce qui permet au VFS de traiter indifféremment
+chaque système de fichier. Cela permet en plus de pouvoir monter un système de
+fichier sur un autre, et ainsi accéder à plusieurs systèmes fichiers à partir de
+l'arborescence. \\
+Deux drivers de systèmes de fichiers ont été implémentés:
+\begin{itemize}
+	\item EXT2: Ce système de fichiers, utilisé dans l'écosystème Unix avant
+	d'être remplacé par EXT3/4, utilise une structure à base d'i-node et de blocks.
+	\item DEV: Pour représenter les différentes interfaces disponibles dans l'OS,
+	(inspiré de /dev chez Unix), un pseudo-système de fichier a été implémenté.
+	Il permet par exemple d'accéder au port série (/dev/serial).
+\end{itemize}
+
 \subsection{Mailbox}
 
 La mailbox est ce qui permet la communication entre le VideoCore (le GPU) et le
@@ -127,22 +148,39 @@ Pour communiquer avec la mailbox, il faut lui envoyer un pointeur sur l'
 instruction demandée, qui est une structure contenant le tag de
 l'instruction, ainsi que l'espace mémoire nécessaire pour stocker les données de
 retour ou d'entrée. Il est possible d'envoyer jusqu'a 8 d'instructions en même
-temps, mais pour faciliter l'implémentation, et puisque nous utilisons peu la 
+temps, mais pour faciliter l'implémentation, et puisque nous utilisons peu la
 mailbox, nous n'envoyons qu'une instruction à la fois.
 
 \section{Gestion de l'User mode}
-
 L'user mode est correctement géré par notre noyau, sous un modèle préemptif.
+Un timer déclenche des interruptions à intervalle régulier, permettant au noyau
+de reprendre la main sur les processus et d'exécuter l'ordonnanceur.
 
 \subsection{Gestion de la mémoire virtuelle}
-
 La mémoire virtuelle permet d'isoler les processus les uns des autres, ainsi que
 de leur faire croire qu'ils ont accès à toute la RAM. Nous avons placé le kernel
 dans la partie haute de la mémoire virtuelle (de 0x80000000 à 0xFFFFFFFF), pour
 y avoir accès directement lors des interruptions, sans avoir à changer la tables
 de translations. Grace aux fonctions définies dans memalloc, le kernel peut
 récupérer facilement les pages physiques libres disponibles, pour les affecter
-aux processus demandant de la mémoire.
+aux processus demandant de la mémoire. \\
+Le mapping choisi est le suivant:
+\begin{itemize}
+	\item 0x00000000 - 0x80000000: Espace utilisateur.
+	\item 0x80000000 - 0xbf000000: Mapping linéaire vers la mémoire physique.
+	\item 0xbf000000 - 0xc0000000: Mapping vers les addresses de périphériques.
+	\item 0xc0000000 - 0xf0000000: Tas (heap) du noyau alloué dynamiquement.
+	\item 0xf0000000 - 0xffffffff: Code et segment de données noyau.
+\end{itemize}
+\subsection{Bibliothèque standard}
+Le système disposant d'un MMU, les programmes sont compilables avec un nombre
+minimal d'options, à condition d'utiliser arm-none-eabi-gcc. Cette toolchain
+est compilée avec Newlib, une bibliothèque de développement bare metal
+implémentant en partie la libc et demandant un nombre minimal d'appels systèmes. \\
+Ainsi pour communiquer avec le noyau, les programmes disposent d'un certain
+nombre d'appels systèmes Linux, décrits dans include/syscalls.h.
+Des fonctionnalités de terminal furent aussi développées, elles sont décrites
+dans include/termfeatures.h.
 
 \subsection{Ordonnancement des processus}
 
@@ -158,22 +196,24 @@ Pour récupérer les processus à executer, il suffit donc de parcourir la liste
 des processus actif de gauche à droite, puis recommencer.
 
 \subsection{Appels systèmes}
-
-%TODO faire cette partie
+L'objectif initial était de faire un système s'apparentant à un noyau Linux.
+Ainsi les appels systèmes développés suivent les mêmes spécifications.
+L'encodage des erreurs se fait via la variable errno, que l'on transmet au
+processus en renvoyant -ernno, une valeur négative étant signe d'erreur, ce qui
+est décodé dans la bibliothèque utilisateur.
 
 \section{Séquence de boot}
 
-La séquence de boot d'un raspberry pi n'est pas la même que pour un ordinateur
-classique. C'est le GPU qui démarre le CPU, et qui facilite la tache du boot.
+La séquence de boot d'un Raspberry Pi n'est pas la même que pour un ordinateur
+classique. C'est le GPU qui démarre le CPU, et qui facilite la tâche du boot.
 
 \subsection{Lancement du code via le GPU}
 
-Pour booter le raspberry pi, le GPU cherche, dans la première partition FAT de la
-carte SD, un fichier nommé bootcode.bin (que l'on à copié de la distribution
-linux), qui va lui-même lire le fichier start.elf (copié aussi de la
-distribution linux), qui va s'occuper de lire le fichier CONFIG.TXT, pour
-ensuite trouver le fichier image à éxecuter, qui est ``kernel.img'' dans notre
-noyau. %TODO kernel.img mieux formatter
+Pour booter le Raspberry Pi, le GPU cherche, dans la première partition FAT de la
+carte SD, un fichier nommé bootcode.bin (firmware fourni par l'organisation Raspberry Pi),
+qui va lui-même lire le fichier start.elf, qui va s'occuper de lire le fichier CONFIG.TXT, pour
+ensuite trouver le fichier image à exécuter, qui est ``kernel.img'' dans notre
+cas. %TODO kernel.img mieux formatter
 C'est donc l'image kernel.img que nous devons compiler pour le noyau. La
 première instruction qui va être executée est à l'addresse 0x8000 pour le
 raspberry pi, et 0x10000 pour QEMU.
@@ -195,9 +235,20 @@ le timer, ou les interruptions, ou encore le système de fichiers). Ensuite, on
 s'occupe de charger en mémoire le programme init. On lance alors le mode
 utilisateur, en démarrant dans ce programme.
 
-
 \section{Programmes fournis avec l'OS}
-Une sous section par programme ?
+\begin{itemize}
+	\item cat: concatène les fichiers passés en paramètres et affiche le résultat sur stdout.
+	\item cp: copie un fichier ou un dossier vers une destination.
+	\item init: initialise le premier shell, et récupère les processus zombies.
+	\item ls: liste les entrées d'un dossier. (-i pour afficher les inodes, -a pour afficher les dossiers cachés, -l pour afficher en ligne)
+	\item mkdir: crée un dossier dans le répertoire courant.
+	\item pico: un éditeur de fichiers minimaliste.
+	\item pwd: affiche le dossier courant.
+	\item rm: supprime un fichier ou un dossier en mode récursif (-r)
+	\item show: affiche un fichier au format bitmap (base résolution de préférence).
+	\item touch: créer un fichier.
+	\item wesh: WindOS Experimental Shell, l'invite de commande lancé au démarrage de l'OS.
+\end{itemize}
 
 \section{Difficultés rencontrées}
 On plante sur une instruction, 3 instruction avant on a r0=r5, mais quand ça
