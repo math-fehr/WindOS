@@ -131,24 +131,23 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 
 	new_p->asid 			= p->asid;
 	new_p->parent_id 		= p->parent_id;
-	new_p->fd[0].inode		= malloc(sizeof(inode_t));
-	*new_p->fd[0].inode      = vfs_path_to_inode(NULL, "/dev/serial");
-	new_p->fd[0].position   = 0;
-	new_p->fd[0].dir_entry 	= NULL;
 
-	new_p->fd[1].inode 		= malloc(sizeof(inode_t));
-	*new_p->fd[1].inode      = vfs_path_to_inode(NULL, "/dev/serial");
-	new_p->fd[1].position   = 0;
-	new_p->fd[1].dir_entry 	= NULL;
-
-	new_p->fd[2].inode 		= malloc(sizeof(inode_t));
-	*new_p->fd[2].inode      = vfs_path_to_inode(NULL, "/dev/serial");
-	new_p->fd[2].position   = 0;
-	new_p->fd[2].dir_entry 	= NULL;
+	for (int i=0;i<64;i++) {
+		new_p->fd[i].position = p->fd[i].position;
+		if( new_p->fd[i].position >= 0) {
+			new_p->fd[i].inode = malloc(sizeof(inode_t));
+			new_p->fd[i].dir_entry = NULL;
+			*new_p->fd[i].inode = *p->fd[i].inode;
+			new_p->fd[i].flags = p->fd[i].flags;
+		} else {
+			new_p->fd[i].dir_entry = NULL;
+			new_p->fd[i].inode = NULL;
+		}
+	}
 
 	get_process_list()[new_p->asid] = new_p;
 
-	kdebug(D_SYSCALL, 2, "EXECVE: Program loaded! Freeing shit %p %p\n", p->ttb_address, p);
+	kdebug(D_SYSCALL, 2, "dup: Program loaded! Freeing shit %p %p\n", p->ttb_address, p);
 	free((void*)p->ttb_address);
 	free(p);
 	new_p->dummy = 0;
@@ -313,7 +312,7 @@ pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
 }
 
 uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
-	kdebug(D_SYSCALL, 1, "WRITE %d %#010x %#010x\n", fd, buf, cnt);
+	kdebug(D_SYSCALL, 5, "WRITE %d %#010x %#010x\n", fd, buf, cnt);
 	//int fd = r[0];
 	if (fd >= MAX_OPEN_FILES
         || get_current_process()->fd[fd].position < 0)
@@ -332,7 +331,6 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 	fd_t* fd_ = &(get_current_process()->fd[fd]);
 	if (fd_->position >= 0) {
 		int n = vfs_fwrite(*fd_->inode, buf, cnt, fd_->position);
-		kdebug(D_SYSCALL, 2, "WRITE => %d\n",n);
 		if (S_ISREG(fd_->inode->st.st_mode)) {
 			fd_->position += n;
 			fd_->inode->st.st_size = fd_->position;
@@ -666,7 +664,11 @@ int svc_dup(int oldfd) {
 		return -ENFILE;
 	}
 
-	p->fd[i] = p->fd[oldfd];
+	p->fd[i].inode = malloc(sizeof(inode_t));
+	*p->fd[i].inode = *p->fd[oldfd].inode;
+	p->fd[i].dir_entry = NULL;
+	p->fd[i].flags = p->fd[oldfd].flags;
+	p->fd[i].position = p->fd[oldfd].position;
 	return i;
 }
 
@@ -686,6 +688,10 @@ int svc_dup2(int oldfd, int newfd) {
 		svc_close(newfd);
 	}
 
-	p->fd[newfd] = p->fd[oldfd];
+	p->fd[newfd].inode = malloc(sizeof(inode_t));
+	*p->fd[newfd].inode = *p->fd[oldfd].inode;
+	p->fd[newfd].dir_entry = NULL;
+	p->fd[newfd].flags = p->fd[oldfd].flags;
+	p->fd[newfd].position = p->fd[oldfd].position;
 	return newfd;
 }

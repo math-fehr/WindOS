@@ -20,9 +20,10 @@ int main() {
 		int fd = _open(argv[i], O_RDONLY);
 		if (fd >= 0) {
 			int n;
-			while((n = _read(fd, buffer, 1023)) > 0){
-				buffer[n] = 0;
-				printf("%s", buffer);
+			while((n = _read(fd, buffer, 1023)) > 0) {
+				for (int i=0;i<n;i++) {
+					printf("%c", buffer[i]);
+				}
 			}
 			_close(fd);
 		} else {

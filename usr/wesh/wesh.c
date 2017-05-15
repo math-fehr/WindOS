@@ -16,10 +16,30 @@
 extern int argc;
 extern char** argv;
 
-int exec_blocking(char* command, char* params[]) {
+int exec_blocking(char* command, char* params[], char* input, char* output) {
 	int r = _fork();
+	int fd1 = dup(1);
 	if (r == 0) {
+		if (input != NULL) {
+			int fd_in = _open(input, O_WRONLY | O_CREAT | O_TRUNC);
+			if (fd_in < 0) {
+				perror(command);
+			} else {
+				dup2(fd_in, 0);
+			}
+		}
+
+		if (output != NULL) {
+			int fd_out = _open(output, O_WRONLY | O_CREAT | O_TRUNC);
+			if (fd_out < 0) {
+				perror(command);
+			} else {
+				dup2(fd_out, 1);
+			}
+		}
+
 		execvp(command, params);
+		dup2(fd1, 1);
 		perror(command);
 		_exit(1);
 	} else {
@@ -169,50 +189,64 @@ int main() {
 		if (hist_top == MAX_HISTORY)
 			hist_top = 0;
 
-        /*char* base_command = strtok(buf," ");
+        char* base_command = strtok(buf," ");
         char* input = NULL;
         char* output = NULL;
-        char* temp = strtok(NULL," ");
+		char* params[32];
+		params[0] = base_command;
+
+        char* temp;
         bool next_input = false;
         bool next_output = false;
 
-        while(temp != NULL) {
-            if(*(temp-1) == '<') {
-                strcpy(input,temp);
-            } else {
-                strcpy(output,temp);
-            }
-            char* base_command2 = strtok(NULL,"<>");
-            strcat(base_command,base_command2);
-            temp = strtok(NULL," ");
+		bool failed = false;
+
+		int cur_param = 1;
+
+        while(((temp = strtok(NULL," ")) != NULL )&& !failed) {
+			if (strcmp(temp, "<") == 0) {
+				if (!next_output) {
+					next_input = true;
+				} else {
+					failed = true;
+				}
+			} else if (strcmp(temp, ">") == 0) {
+				if (!next_input) {
+					next_output = true;
+				} else {
+					failed = true;
+				}
+			} else {
+				if (next_input) {
+					input = temp;
+					next_input = false;
+				} else if (next_output) {
+					output = temp;
+					next_output = false;
+				} else {
+					params[cur_param] = temp;
+					cur_param++;
+				}
+			}
         }
 
-        printf("\n%s\n %s\n %s\n",base_command,input,output);*/
-
-		char* token = strtok(buf," ");
-		char* params[32];
-		params[0] = token;
-		if (strcmp(buf, "exit") == 0) {
+		if (strcmp(base_command, "exit") == 0) {
 			return 0;
-		} else if (strcmp(buf, "cd") == 0) {
-			token = strtok(NULL," ");
-			if (token == NULL) {
+		} else if (strcmp(base_command, "cd") == 0) {
+			if (params[1] == NULL) {
 				_chdir("/");
 			}
 			else {
-				int res = _chdir(token);
+				int res = _chdir(params[1]);
 				if (res == -1) {
 					perror("cd");
 				}
 			}
 		} else {
-			int i = 0;
-			while(token != NULL) {
-				i++;
-				token = strtok(NULL," ");
-				params[i] = token;
-			}
-			exec_blocking(params[0], params);
+			params[cur_param] = 0;
+			exec_blocking(base_command, params, input, output);
+	        input = NULL;
+	        output = NULL;
 		}
 	}
   	return 0;

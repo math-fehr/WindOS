@@ -157,10 +157,6 @@ uint32_t software_interrupt_vector(void* user_context) {
 	//if (0xfeff726b == ctx->r[12]) {
 	//	while(1) {}
 	//}
-	if (ctx->r[7] != SVC_READ) {
-	    kdebug(D_SYSCALL, 5, "S=> %d.\n", get_current_process_id());
-		print_context(D_SYSCALL, 5, ctx);
-	}
 	process* p;
 swi_beg:
 	p = get_current_process();
@@ -171,82 +167,57 @@ swi_beg:
 
     switch(ctx->r[7]) {
 		case SVC_IOCTL:
-            kdebug(D_SYSCALL,5,"ENTREEIOCTL\n");
 			res = svc_ioctl(ctx->r[0],ctx->r[1],ctx->r[2]);
 			break;
         case SVC_EXIT:
-            kdebug(D_SYSCALL,5,"ENTREEEXIT\n");
 			res = svc_exit();
 			break;
         case SVC_SBRK:
-            kdebug(D_SYSCALL,5,"ENTREESBRK\n");
 			res = svc_sbrk(ctx->r[0]);
 			break;
 		case SVC_FORK:
-            kdebug(D_SYSCALL,5,"ENTREEFORK\n");
 			res = svc_fork();
 			break;
         case SVC_WRITE:
-            kdebug(D_SYSCALL,5,"ENTREEWRITE\n");
             res = svc_write(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
-            kdebug(D_IRQ,5,"SORTIEWRITE\n");
 			break;
         case SVC_CLOSE:
-            kdebug(D_SYSCALL,5,"ENTREECLOSE\n");
             res = svc_close(ctx->r[0]);
 			break;
 		case SVC_WAITPID:
-            kdebug(D_SYSCALL,5,"ENTREEWAITPID\n");
 			res = svc_waitpid(ctx->r[0],(int*) ctx->r[1], ctx->r[2]);
 			break;
         case SVC_FSTAT:
-            kdebug(D_SYSCALL,5,"ENTREEFSTAT\n");
             res = svc_fstat(ctx->r[0],(struct stat*)ctx->r[1]);
 			break;
         case SVC_LSEEK:
-            kdebug(D_SYSCALL,5,"ENTREELSEEK\n");
 			res = svc_lseek(ctx->r[0],ctx->r[1],ctx->r[2]);
             break;
         case SVC_READ:
-            //kdebug(D_IRQ,5,"ENTREEREAD\n");
             res = svc_read(ctx->r[0],(char*)ctx->r[1],ctx->r[2]);
 			if (p->status == status_blocked_svc) {
 				get_next_process();
-				/*int n = get_number_active_processes();
-				process** p_list = get_process_list();
-				kernel_printf("f => %d %d\n", current_process_id, n);
-				for (int i=0;i<n;i++) {
-				 	kernel_printf(">%d: %d\n", i, p_list[get_active_processes()[i]]->dummy);
-				}*/
 			}
 			break;
 		case SVC_TIME:
-            kdebug(D_SYSCALL,5,"ENTREETIME\n");
 			res = svc_time((time_t*)ctx->r[0]);
 			break;
 		case SVC_EXECVE:
-            kdebug(D_SYSCALL,5,"ENTREEEXECVE\n");
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
-            kdebug(D_IRQ,5,"SORTIEEXECVE\n");
 			break;
 		case SVC_GETCWD:
-            kdebug(D_SYSCALL,5,"ENTREEGETCWD\n");
 			res = (uint32_t)svc_getcwd((char*)ctx->r[0],ctx->r[1]);
 			break;
 		case SVC_CHDIR:
-            kdebug(D_SYSCALL,5,"ENTREECHDIR\n");
 			res = svc_chdir((char*)ctx->r[0]);
 			break;
 		case SVC_GETDENTS:
-            kdebug(D_SYSCALL,5,"ENTREEGETENTS\n");
 			res = svc_getdents(ctx->r[0], (struct dirent *)ctx->r[1]);
 			break;
 		case SVC_OPENAT:
-            kdebug(D_SYSCALL,5,"ENTREEOPENAT\n");
 			res = svc_openat(ctx->r[0], (char*) ctx->r[1], ctx->r[2]);
 			break;
 		case SVC_MKNODAT:
-			kdebug(D_SYSCALL,5,"ENTREEMKNODAT\n");
 			res = svc_mknodat(ctx->r[0], (char*) ctx->r[1], ctx->r[2], ctx->r[3]);
 			break;
 		case SVC_UNLINKAT:
@@ -278,11 +249,6 @@ swi_beg:
 		ctx->r[0] = res; // let's return the result in r0
 	}
 
-	if (r_bef != SVC_READ) {
-		print_context(D_SYSCALL, 5, ctx);
-	    kdebug(D_SYSCALL, 5, "Sortie SWI : <= %d.\n", get_current_process_id());
-	}
-	//kernel_printf("S<= %d PC: %p\n", get_current_process_id(), get_current_process()->ctx.pc);
 	return 0;
 }
 
