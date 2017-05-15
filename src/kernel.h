@@ -19,6 +19,10 @@
   #endif
 #endif
 
+
+/**	\def TIMER_LOAD
+ *	\brief Period of the ARM Timer.
+ */
 #define TIMER_LOAD 500
 
 /** \def TTBCR_ALIGN

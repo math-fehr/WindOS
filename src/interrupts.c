@@ -79,8 +79,8 @@ int count;
 void interrupt_vector(void* user_context) {
     callInterruptHandlers();
 
-    kdebug(D_IRQ,5,"ENTREEIRQ\n");
-    kdebug(D_IRQ, 5, "=> %d.\n", get_current_process_id());
+    kdebug(D_IRQ,3,"ENTREEIRQ\n");
+    kdebug(D_IRQ,3, "=> %d.\n", get_current_process_id());
 	process* p = get_current_process();
     if(p != NULL) {
         p->ctx.pc -= 4;
@@ -127,8 +127,8 @@ void interrupt_vector(void* user_context) {
 		}
 	}
 
-    kdebug(D_IRQ, 5, "<= %d.\n", get_current_process_id());
-    kdebug(D_IRQ,5,"SORTIEIRQ\n");
+    kdebug(D_IRQ,3, "<= %d.\n", get_current_process_id());
+    kdebug(D_IRQ,3,"SORTIEIRQ\n");
 	print_context(D_IRQ, 2, user_context);
 
 	//kernel_printf("T<= %d PC: %p\n", get_current_process_id(), get_current_process()->ctx.pc);
@@ -152,7 +152,7 @@ void interrupt_vector(void* user_context) {
  */
 uint32_t software_interrupt_vector(void* user_context) {
 	//kernel_printf("S=> %d PC: %p\n", get_current_process_id(), get_current_process()->ctx.pc);
-    kdebug(D_IRQ, 5, "ENTREESWI. %p \n", user_context);
+    kdebug(D_IRQ, 3, "ENTREESWI. %p \n", user_context);
 	user_context_t* ctx = (user_context_t*) user_context;
 	//if (0xfeff726b == ctx->r[12]) {
 	//	while(1) {}
@@ -487,29 +487,6 @@ void callInterruptHandlers() {
  *	\brief Enable interrupts
  */
 void enable_interrupts(void) {
-    /*kdebug(D_IRQ, 1, "Enabling interrupts.\n");
-    cleanDataCache();
-    dsb();
-
-    invalidateInstructionCache();
-    flush_branch_prediction();
-    dsb();
-
-    isb();
-    dmb();
-
-    rpi_irq_controller_t* controller =  RPI_GetIRQController();
-    controller->FIQ_control = 0;
-    controller->Disable_IRQs_1 = (uint32_t) -1;
-    controller->Disable_IRQs_2 = (uint32_t) -1;
-    controller->Disable_Basic_IRQs = (uint32_t) -1;
-    controller->IRQ_basic_pending = controller->IRQ_basic_pending;
-    controller->IRQ_pending_1 = controller->IRQ_pending_1;
-    controller->IRQ_pending_2 = controller->IRQ_pending_2;
-
-    dmb();
-
-    asm volatile("cpsie i");*/
     RPI_GetIRQController()->Enable_Basic_IRQs = 1;
     asm volatile("cpsie i");
 }

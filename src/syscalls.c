@@ -52,6 +52,9 @@ int svc_ioctl(int fd, int cmd, int arg) {
 		return -EBADF;
 	}
 
+	if (p->fd[fd].inode->op->ioctl == NULL) {
+		return -1;
+	}
 	return p->fd[fd].inode->op->ioctl(*p->fd[fd].inode, cmd, arg);
 }
 
@@ -324,12 +327,14 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 		return -EFAULT;
 	}
 
+
 	if (cnt == 0) {
 		return 0;
 	}
 
 	fd_t* fd_ = &(get_current_process()->fd[fd]);
-	if (fd_->position >= 0) {
+
+	if (fd_->position >= 0 && (fd_->flags | O_WRONLY)) {
 		int n = vfs_fwrite(*fd_->inode, buf, cnt, fd_->position);
 		if (S_ISREG(fd_->inode->st.st_mode)) {
 			fd_->position += n;
@@ -393,6 +398,10 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 		return 0;
 	}
 
+	if (p->fd[fd].flags == O_WRONLY) {
+		return -EBADF;
+	}
+
 	int n = vfs_fread(*p->fd[fd].inode, buf, cnt, p->fd[fd].position);
 	if (n == 0 && S_ISCHR(p->fd[fd].inode->st.st_mode)) {
 		// block the call.
@@ -443,6 +452,9 @@ uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 	// reload dirlist
 	if (w_fd->position == 0) {
 		free_vfs_dir_list(w_fd->dir_entry);
+		if (w_fd->inode->op == NULL) {
+			return 0;
+		}
 		w_fd->dir_entry = w_fd->inode->op->read_dir(*w_fd->inode);
 	}
 
@@ -542,6 +554,9 @@ int svc_openat(int dirfd, char* path_c, int flags) {
 	}
 
 	if ((flags & O_TRUNC) && S_ISREG(ino.st.st_mode)) {
+		if (p->fd[i].inode->op->resize == NULL) {
+			return -1;
+		}
 		p->fd[i].inode->op->resize(*p->fd[i].inode, 0);
 		p->fd[i].inode->st.st_size = 0;
 	}
@@ -585,6 +600,9 @@ int svc_unlinkat(int dirfd, char* name, int flag) {
 	}
 
 	char* target = basename(name);
+	if (dir.op->rm == NULL) {
+		return -1;
+	}
 	dir.op->rm(dir, target);
 	return -errno;
 }

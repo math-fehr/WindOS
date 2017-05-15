@@ -6,6 +6,10 @@ static inode_operations_t proc_inode_operations = {
   .read = proc_fread,
 };
 
+/**	\fn superblock_t* proc_initialize(int id)
+ *	\brief Initialize a virtual process directory.
+ *	\param id Virtual FS identifier.
+ */
 superblock_t* proc_initialize(int id) {
 	superblock_t* res = malloc(sizeof(superblock_t));
     res->id = id;
@@ -18,6 +22,9 @@ superblock_t* proc_initialize(int id) {
     return res;
 }
 
+/**	\fn vfs_dir_list_t* proc_lsdir(inode_t from)
+ *	\brief List the process directory.
+ */
 vfs_dir_list_t* proc_lsdir(inode_t from) {
     if (from.st.st_ino == 2) {
 		vfs_dir_list_t* res = NULL;
@@ -54,6 +61,13 @@ vfs_dir_list_t* proc_lsdir(inode_t from) {
 	}
 }
 
+/**	\fn int proc_fread(inode_t from, char* buf, int size, int pos)
+ *	\brief Read process data.
+ *	\param from Inode representing a process.
+ *	\param buf Destination buffer.
+ *	\param size Size buffer.
+ *	\param pos Offset.
+ */
 int proc_fread(inode_t from, char* buf, int size, int pos) {
     if (from.st.st_ino == 2) {
 		errno = EISDIR;

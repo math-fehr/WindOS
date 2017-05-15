@@ -108,7 +108,7 @@ page_list_t* paging_allocate(int n_pages) {
 
 
 	if (100*used_pages / tot_pages > 90 && 100*(used_pages-n_pages) / tot_pages <= 90) {
-		kdebug(D_KERNEL,10,"90%% of memory is used.\n");
+		kdebug(D_KERNEL,8,"90%% of memory is used.\n");
 	}
 	page_list_t *tmp = NULL;
 
@@ -144,7 +144,7 @@ page_list_t* paging_allocate(int n_pages) {
 	}
 
 	if (n_pages > 0) {
-    	kdebug(D_KERNEL, 6, "Out of memory error.\n");
+    	kdebug(D_KERNEL, 10, "Out of memory error.\n");
 	} else {
 		kdebug(D_KERNEL, 1, "%d/%d pages in use.\n", used_pages, tot_pages);
 	}

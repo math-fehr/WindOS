@@ -88,6 +88,9 @@ inode_t vfs_parent(inode_t base, int* ancestor, char* writebuf) {
 		base = mount_points[dev_to_mnt[base.sb->id]].inode;
 	}
 
+	if (base.op->read_dir == NULL) {
+		return base;
+	}
 	vfs_dir_list_t* result = base.op->read_dir(base);
 	vfs_dir_list_t* result_start = result;
 
@@ -200,6 +203,10 @@ inode_t vfs_path_to_inode(inode_t* base, char *path_) {
 		if (strcmp(token, "..") == 0) {
 			position = vfs_parent(position, NULL, NULL);
 		} else {
+			if (position.op->read_dir == NULL) {
+				errno = -1;
+				return position;
+			}
 			vfs_dir_list_t* result = position.op->read_dir(position);
 			vfs_dir_list_t* result_start = result;
 			bool found = false;
@@ -288,7 +295,10 @@ int vfs_fwrite(inode_t fd, char* buffer, int length, int offset) {
     if (offset > fd.st.st_size) {
         offset = fd.st.st_size;
     }
-
+	if (fd.op->write == NULL) {
+		errno = -1;
+		return -1;
+	}
     return fd.op->write(fd, buffer, length, offset);
 }
 
@@ -310,7 +320,10 @@ int vfs_fread(inode_t fd, char* buffer, int length, int offset) {
   if (offset > fd.st.st_size) {
       offset = fd.st.st_size;
   }
-
+  if (fd.op->read == NULL) {
+  	errno = -1;
+  	return -1;
+  }
   return fd.op->read(fd, buffer, length, offset);
 }
 
@@ -323,6 +336,10 @@ vfs_dir_list_t* vfs_readdir(char* path) {
 	inode_t position = vfs_path_to_inode(NULL, path);
 	if (errno == 0) {
 		if (S_ISDIR(position.st.st_mode)) {
+			if (position.op->read_dir == NULL) {
+		    	errno = -1;
+		    	return NULL;
+		    }
 			vfs_dir_list_t* r = position.op->read_dir(position);
 		    return r;
 		} else {
@@ -351,6 +368,10 @@ int vfs_attr(char* path) {
 int vfs_mkdir(char* path, char* name, int permissions) {
   inode_t position = vfs_path_to_inode(NULL,path);
   if (errno == 0) {
+	  if (position.op->read_dir == NULL) {
+		  errno = -1;
+		  return -1;
+	  }
 	  vfs_dir_list_t* ls = position.op->read_dir(position);
 	  vfs_dir_list_t* ls_start = ls;
 	  if ((intptr_t)ls == -1) {
@@ -368,6 +389,11 @@ int vfs_mkdir(char* path, char* name, int permissions) {
 	  if (found) {
 		  errno = EEXIST;
 		  return 0;
+	  }
+
+	  if (position.op->mkdir == NULL) {
+		  errno = -1;
+		  return -1;
 	  }
       return position.op->mkdir(position, name, permissions);
   } else {
@@ -378,6 +404,10 @@ int vfs_mkdir(char* path, char* name, int permissions) {
 int vfs_rm(char* path, char* name) {
   inode_t position = vfs_path_to_inode(NULL, path);
   if (errno == 0) {
+	  if (position.op->rm == NULL) {
+		  errno = -1;
+		  return -1;
+	  }
       return position.op->rm(position, name);
   } else {
       return 0;
@@ -387,6 +417,10 @@ int vfs_rm(char* path, char* name) {
 int vfs_mkfile(char* path, char* name, int permissions) {
   inode_t position = vfs_path_to_inode(NULL,path);
   if (errno == 0) {
+	  if (position.op->read_dir == NULL) {
+		  errno = -1;
+		  return -1;
+	  }
 	  vfs_dir_list_t* ls = position.op->read_dir(position);
 	  vfs_dir_list_t* ls_start = ls;
 	  if ((intptr_t)ls == -1) {
@@ -404,6 +438,10 @@ int vfs_mkfile(char* path, char* name, int permissions) {
 	  if (found) {
 		  errno = EEXIST;
 		  return 0;
+	  }
+	  if (position.op->mkfile == NULL) {
+		  errno = -1;
+		  return -1;
 	  }
       return position.op->mkfile(position, name, permissions);
   } else {

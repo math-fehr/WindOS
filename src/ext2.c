@@ -36,17 +36,17 @@ superblock_t* ext2fs_initialize(
 		sizeof(ext2_superblock_t));
 
 	if (sb->signature != 0xef53) {
-	    kdebug(D_EXT2, 3, "Could not setup filesystem: wrong signature.\n \
+	    kdebug(D_EXT2, 8, "Could not setup filesystem: wrong signature.\n \
 	                       0xEF53 != %#04X\n", sb->signature);
 	    free(sb);
 		errno = EIO;
 	    return NULL;
 	}
-	kdebug(D_EXT2, 1, "Signature found. Loading filesystem superblock.\n");
+	kdebug(D_EXT2, 2, "Signature found. Loading filesystem superblock.\n");
 	ext2_extended_superblock_t* esb =
 		(ext2_extended_superblock_t*)malloc(sizeof(ext2_extended_superblock_t));
 
-	kdebug(D_EXT2,1,"Version is %d.%d\n", sb->major_version, sb->minor_version);
+	kdebug(D_EXT2,2,"Version is %d.%d\n", sb->major_version, sb->minor_version);
 	if (sb->major_version >= 1) {
 		disk->read(
 			1024 + 84,
@@ -443,7 +443,7 @@ int ext2_rm (inode_t inode, char* name) {
           			}
 					if (cnt > 0)
 					{
-						kdebug(D_EXT2, 2, "Directory isn't empty. (%d)\n",cnt);
+						kdebug(D_EXT2, 5, "Directory isn't empty. (%d)\n",cnt);
 						ok_to_delete = false;
 						errno = ENOTEMPTY;
 					}
@@ -905,7 +905,7 @@ bool ext2_register_inode(superblock_t* fs, int inode) {
              1);
 
   if (byte & (1 << (offset%8))) {
-    kdebug(D_EXT2, 3, "Inode %d is already taken.", inode);
+    kdebug(D_EXT2, 8, "Inode %d is already taken.", inode);
     return false;
   }
   group_descriptor.unallocated_inode_count--;
@@ -937,7 +937,7 @@ bool ext2_register_block(superblock_t* fs, int number) {
              1);
 
   if (byte & (1 << (offset%8))) {
-    kdebug(D_EXT2, 10, "Block %d is already taken.", number);
+    kdebug(D_EXT2, 8, "Block %d is already taken.", number);
     return false;
   }
   group_descriptor.unallocated_block_count--;
@@ -967,7 +967,7 @@ bool ext2_free_inode(superblock_t* fs, int inode) {
              1);
 
   if (!(byte & (1 << (offset%8)))) {
-    kdebug(D_EXT2, 2, "Inode %d is already free.", inode);
+    kdebug(D_EXT2, 8, "Inode %d is already free.", inode);
     return false;
   }
   // TODO: Setup a mutex here..
@@ -996,7 +996,7 @@ bool ext2_free_block(superblock_t* fs, int number) {
              1);
 
   if (!(byte & (1 << (offset%8)))) {
-    kdebug(D_EXT2, 2, "Block %d is already free.", number);
+    kdebug(D_EXT2, 8, "Block %d is already free.", number);
     return false;
   }
   // TODO: Setup a mutex here..

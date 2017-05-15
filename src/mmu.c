@@ -27,7 +27,7 @@ void mmu_setup_ttbcr(uint32_t N) {
 void mmu_set_ttb_1(uint32_t addr) {
     uint32_t reg;
     if (addr & ((1 << 14) - 1)) {
-        kdebug(D_MEMORY, 10, "TTB1 address is not correctly aligned (%#010x)\n", addr);
+        kdebug(D_MEMORY, 8, "TTB1 address is not correctly aligned (%#010x)\n", addr);
         // TTB address is not correctly aligned. (16kb)
         return;
     }
@@ -57,7 +57,7 @@ void mmu_set_ttb_1(uint32_t addr) {
 void mmu_set_ttb_0(uint32_t addr, uint32_t N) {
     uint32_t reg;
     if (addr & ((1 << (14-N)) - 1)) {
-        kdebug(D_MEMORY, 10, "TTB0 address is not correctly aligned (%#010x %d)\n", addr, N);
+        kdebug(D_MEMORY, 8, "TTB0 address is not correctly aligned (%#010x %d)\n", addr, N);
         // TTB address is not correctly aligned. (16kb/2^N)
         return;
     }
