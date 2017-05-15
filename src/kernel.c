@@ -128,8 +128,6 @@ void kernel_main(uint32_t memory) {
     serial_init();
     setup_scheduler();
 
-    blink(3);
-
     enable_interrupts();
 
 

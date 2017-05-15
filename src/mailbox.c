@@ -6,33 +6,14 @@
 #include "stdint.h"
 #include "debug.h"
 
-
-/**
- * Wait for the mailbox to be empty
+/** \file mailbox.c
+ *  \brief Contains the wrappers to use the mailbox
+ *  The mailbox is the system to be able to connect the processor to the
+ *  VideoCore (VC), in order to use the GPU, manipulate the peripherals...
+ *  The mailbox works with a FIFO to send to a certain place in the RAM
+ *  The FIFO contains multiple tags, wich represent actions for the VC.
+ *  We use only one tag per call, to simplify the implementation
  */
-static void mbxFlush();
-
-/**
- * Read in the mailbox at a specified channel
- */
-static uint32_t mbxRead(uint32_t channel);
-
-/**
- * Write in the mailbox
- */
-static void mbxWrite(uint32_t channel, uint32_t data);
-
-/**
- * Get the result of a request
- */
-static bool mbxGetTag (uint32_t channel, uint32_t tagID, void* tag, uint32_t tagSize, uint32_t requestParamSize);
-
-/**
- * Write in the mailbox and wait for the answer
- */
-static uint32_t mbxWriteRead(uint32_t channel, uint32_t data);
-
-
 
 #define MBX_BASE		(PERIPHERALS_BASE + 0xB880)
 #define MBX0_STATUS 	(MBX_BASE + 0x18)
@@ -49,26 +30,27 @@ static uint32_t mbxWriteRead(uint32_t channel, uint32_t data);
 
 #define PROPTAG_END                0x00000000
 
-/**
- * The header of the property tag
+/** \st propTagHeader
+ *  \brief The header of the property tag
  */
 typedef struct propTagHeader {
-    uint32_t tagID;
-    uint32_t valueBuffSize;
-    uint32_t valueLength;
+    uint32_t tagID;           ///< The tag ID
+    uint32_t valueBuffSize;   ///< The size of the value buffer
+    uint32_t valueLength;     ///< The value length
 } propTagHeader;
 #define VALUE_LENGTH_RESPONSE	(1 << 31)
 
 
-/**
- * The property buffer
- * Contains different tags to send to the mailbox
+/** \st propBuffer
+ *  \brief The property buffer
+ *  Contains different tags to send to the mailbox
  */
 typedef struct propBuffer {
-    uint32_t bufferSize;
-    uint32_t code;
-    uint8_t tags[0]; //This indicates the start of the tags
+    uint32_t bufferSize;    ///< The size of the buffer
+    uint32_t code;          ///< The code of the message (Response, or send)
+    uint8_t tags[0];        ///< The start of the tags
 } propBuffer;
+
 
 /**
  * Values used in propBuffer.code
@@ -79,8 +61,13 @@ typedef struct propBuffer {
 
 
 
-
-static uint32_t mbxWriteRead(uint32_t channel, uint32_t data) {
+/** \fn static uint32_t mbxWriteRead(uint32_t channel, uint32_t data) {
+ *  \brief Send data to the mailbox, and retrieve the response
+ *  \param channel The channel to send the data
+ *  \param data The data to send (a pointer to the data actually)
+ *  \return The result of the message
+ */
+uint32_t mbxWriteRead(uint32_t channel, uint32_t data) {
     dmb();
     mbxFlush(channel);
     mbxWrite(channel,data);
@@ -90,7 +77,10 @@ static uint32_t mbxWriteRead(uint32_t channel, uint32_t data) {
 }
 
 
-static void mbxFlush() {
+/** \fn void mbxFlush()
+ *  \brief flush the mailbox (to wait for space to write data)
+ */
+void mbxFlush() {
     while(!(*(uint32_t*)(MBX0_STATUS) & MBX_STATUS_EMPTY)) {
         //TODO check if the data is actually read
         *(volatile uint32_t*)(MBX0_READ);  // Update the data
@@ -99,7 +89,12 @@ static void mbxFlush() {
 }
 
 
-static uint32_t mbxRead(uint32_t channel) {
+/** \fn uint32_t mbxRead(uint32_t channel)
+ *  \brief read from the mailbox, to a certain channel
+ *  \param channel The channel to read from
+ *  \return The return value
+ */
+uint32_t mbxRead(uint32_t channel) {
     uint32_t result;
     do {
         while(*(uint32_t*)(MBX0_STATUS) & MBX_STATUS_EMPTY) {
@@ -111,7 +106,12 @@ static uint32_t mbxRead(uint32_t channel) {
 }
 
 
-static void mbxWrite(uint32_t channel, uint32_t data) {
+/** \fn void mbxWrite(uint32_t channel, uint32_t data)
+ *  \brief Write to the mailbox on a certain channel
+ *  \param channel The channel to write to
+ *  \parma data The data to write to the channel
+ */
+void mbxWrite(uint32_t channel, uint32_t data) {
     // We wait for the mailbox to have space
     while(*(uint32_t*)(MBX1_STATUS) & MBX_STATUS_FULL) {}
 
@@ -119,7 +119,16 @@ static void mbxWrite(uint32_t channel, uint32_t data) {
 }
 
 
-static bool mbxGetTag (uint32_t channel, uint32_t tagID, void* tag, uint32_t tagSize, uint32_t requestParamSize) {
+/** \fn bool mbxGetTag (uint32_t channel, uint32_t tagID, void* tag, uint32_t tagSize, uint32_t requestParamSize) {
+ *  \brief send a Tag to the mailbox, and retrieve the response
+ *  \param channel The channel to write to
+ *  \param tagID the ID of the tag to send
+ *  \param tag The tag to send
+ *  \param tagSize The size of the tag
+ *  \param requestParamSize The size of the tag requests
+ *  \return true if the message has been send and recieved, false otherwise
+ */
+bool mbxGetTag (uint32_t channel, uint32_t tagID, void* tag, uint32_t tagSize, uint32_t requestParamSize) {
     uint32_t bufferSize = sizeof(propBuffer) + tagSize + sizeof(uint32_t);
     uint8_t buffer[bufferSize + 15];
     propBuffer* propBuff = (propBuffer*) (((uint32_t) buffer + 15) & ~15);
@@ -170,17 +179,23 @@ static bool mbxGetTag (uint32_t channel, uint32_t tagID, void* tag, uint32_t tag
 }
 
 
-/**
- * The property tag for getting the mac address
+/** \st propTagMACAddress
+ *  \brief The property tag for getting the mac address
  */
 typedef struct propTagMACAddress {
-    propTagHeader header;
-    uint8_t address[6];
-    uint8_t padding[2];
+    propTagHeader header;  ///< The property tag header
+    uint8_t address[6];    ///< The place to write the mac address
+    uint8_t padding[2];    ///< the pagging (tags must be 4bytes aligned)
 } propTagMACAddress;
 
 #define PROPTAG_GET_MAC_ADDRESS    0x00010003
 
+
+/** \fn int mbxGetMACAddress(uint8_t buffer[6])
+ *  \brief Get the mac address from the mailbox
+ *  \param buffer The buffer to put the address to
+ *  \return MBX_SUCCESS or MBX_FAILURE
+ */
 int mbxGetMACAddress(uint8_t buffer[6]) {
     static uint8_t cachedAddress[6];    //We keep in memory the mac address
     static bool isCached = false;
@@ -215,18 +230,24 @@ int mbxGetMACAddress(uint8_t buffer[6]) {
 #define POWER_STATE_NO_DEVICE	(1 << 1)
 
 
-/**
- * The property tag for setting power state for devices
+/** \st propTagPowerState
+ *  \brief The property tag for setting power state for devices
  */
 typedef struct propTagPowerState
 {
-	propTagHeader header;
-	uint32_t		deviceID;
-	uint32_t		state;
+	propTagHeader header;   ///< The tag header
+	uint32_t	  deviceID; ///< The device ID
+	uint32_t	  state;    ///< The power state we want to put the device
 } propTagPowerState;
 
 #define PROPTAG_SET_POWER_STATE		0x00028001
 
+
+/** \fn int mbxSetPowerStateOn(uint32_t deviceID)
+ *  \brief Set power state on on a device
+ *  \param deviceID The id of the device
+ *  \return MBX_SUCCESS or MBX_FAILURE
+ */
 int mbxSetPowerStateOn(uint32_t deviceID) {
     propTagPowerState tag;
     uint32_t channel = MBX_CHANNEL_PROP;
@@ -249,6 +270,12 @@ int mbxSetPowerStateOn(uint32_t deviceID) {
 }
 
 
+
+/** \fn int mbxSetPowerStateOff(uint32_t deviceID)
+ *  \brief Set power state off on a device
+ *  \param deviceID The id of the device
+ *  \return MBX_SUCCESS or MBX_FAILURE
+ */
 int mbxSetPowerStateOff(uint32_t deviceID) {
     propTagPowerState tag;
     uint32_t channel = MBX_CHANNEL_PROP;

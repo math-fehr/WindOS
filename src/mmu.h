@@ -73,10 +73,13 @@ void mmu_set_ttb_0(uint32_t addr, uint32_t N);
 uintptr_t mmu_vir2phy_ttb(uintptr_t addr, uintptr_t ttb_phy);
 uintptr_t mmu_vir2phy(uintptr_t reg); // performs a table walk to get the physical address.
 
+
 static inline void mmu_invalidate_caches() {
   asm("mov r0, #0\n"
       "mcr p15,0,r0,c7,c7,0");
 }
+
+
 static inline void mmu_invalidate_unified_tlb() {
   asm("mov r0, #0\n"
       "mcr p15,0,r0,c8,c7,0\n");

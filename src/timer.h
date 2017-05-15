@@ -12,8 +12,8 @@
 #define RPI_SYSTIMER_BASE (PERIPHERALS_BASE + 0x3000)
 
 
-/**
- * Structure of the system timer
+/** \st rpi_sys_timer_t
+ *  \breif Structure of the system timer (see bcm2835 manual)
  */
 typedef struct {
   volatile uint32_t control_status;
@@ -37,28 +37,24 @@ void Timer_WaitMicroSeconds(uint32_t time);
 void Timer_WaitCycles(uint32_t count);
 
 // Base adress of the arm timer
-/*
-#ifdef RPI2
-#define RPI_ARMTIMER_BASE 0x3F00B400
-#else
-#define RPI_ARMTIMER_BASE 0x2000B400
-#endif*/
 #define RPI_ARMTIMER_BASE (PERIPHERALS_BASE + 0xB400)
 
-/**
- * Scructure of the ARM timer
+
+/** \st rpi_arm_timer_t
+ *  \brief Structure of the ARM timer
  */
 typedef struct {
-  volatile uint32_t load;
-  const volatile uint32_t value;
-  volatile uint32_t control;
-  volatile uint32_t irq_clear;
-  const volatile uint32_t raw_irq;
-  const volatile uint32_t masked_irq;
-  volatile uint32_t reload;
-  volatile uint32_t pre_divider;
-  volatile uint32_t freerunning_counter;
+    volatile uint32_t load;                 ///< Set the timer frequency (and reset the timer)
+    const volatile uint32_t value;
+    volatile uint32_t control;              ///< Control register
+    volatile uint32_t irq_clear;            ///< Clear the IRQs
+    const volatile uint32_t raw_irq;
+    const volatile uint32_t masked_irq;
+    volatile uint32_t reload;               ///< Set the timer frequency (continue its current tick)
+    volatile uint32_t pre_divider;          ///< Used to set timer frequency
+    volatile uint32_t freerunning_counter;  ///< Counter of microseconds
 } rpi_arm_timer_t;
+
 
 /**
  * Defines used by the functions
@@ -117,16 +113,19 @@ void Timer_ClearInterrupt();
  */
 typedef void timerFunction (unsigned,void*,void*);
 
+/** \st timerHandler
+ *  \brief Represent a function handler for delayed function call
+ */
 typedef struct timerHandler {
-    timerFunction* function;
-    void* param;
-    void* context;
-    uint32_t triggerTime;
-    uint32_t overflowTime;
+    timerFunction* function;    ///< The address of the function
+    void* param;                ///< Its second parameter
+    void* context;              ///< Its third parameter
+    uint32_t triggerTime;       ///< When to execute it (Timer_GetTime
+    uint32_t overflowTime;      ///< How many overflow of Timer_GetTime before executing it
 } timerHandler;
 
 /**
- * Call a function after some time
+ * Delay the call of a function
  */
 int Timer_addHandler(uint32_t millis, timerFunction* function, void* param, void* context);
 
@@ -160,10 +159,10 @@ void Timer_deleteHandler(unsigned id);
  */
 uint32_t Timer_GetTime();
 
+
 /**
- * Return posix time (not implemented)
- * TODO implement that function
+ * Return the posix time
  */
-uint32_t timer_get_posix_time();
+ uint32_t timer_get_posix_time();
 
 #endif //TIMER_H
