@@ -58,6 +58,10 @@ int hist_bot; // first occupied slot.
 
 void autocomplete(char* currentBuffer, int* pos) {
     char* last = strrchr(currentBuffer, ' ');
+    last++;
+    if(*last == '\0') {
+        last = NULL;
+    }
 
     if(last == NULL) {
         last = currentBuffer;
