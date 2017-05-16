@@ -160,6 +160,10 @@ process* process_load(char* path, inode_t cwd, const char* argv[], const char* e
     processus->brk_page = 0;
 	processus->cwd = cwd;
 
+	for (int i=0;i<32;i++) {
+		processus->sighandlers[i].handler = SIG_DFL;
+	}
+
 	kdebug(D_PROCESS, 2, "Program loaded %s. S0=%p, S1=%p\n ttb=%p\n", path, section_addr, section_stack, ttb_address);
 
 

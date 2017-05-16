@@ -17,7 +17,7 @@
 extern int argc;
 extern char** argv;
 
-int exec_blocking(char* command, char* params[], char* input, char* output) {
+int exec_blocking(char* command, char* params[], char* input, char* output, bool append, bool background) {
 	int r = _fork();
 	int fd1 = dup(1);
 	if (r == 0) {
@@ -31,7 +31,12 @@ int exec_blocking(char* command, char* params[], char* input, char* output) {
 		}
 
 		if (output != NULL) {
-			int fd_out = _open(output, O_WRONLY | O_CREAT | O_TRUNC);
+			int fd_out;
+			if (append) {
+				fd_out = _open(output, O_WRONLY | O_CREAT | O_APPEND);
+			} else {
+				fd_out = _open(output, O_WRONLY | O_CREAT | O_TRUNC);
+			}
 			if (fd_out < 0) {
 				perror(command);
 			} else {
@@ -44,7 +49,12 @@ int exec_blocking(char* command, char* params[], char* input, char* output) {
 		perror(command);
 		_exit(1);
 	} else {
-		return _waitpid(r, NULL, 0);
+		if (!background) {
+			return _waitpid(r, NULL, 0);
+		} else {
+			printf("[%d]\n", r);
+			return 0;
+		}
 	}
 }
 
@@ -154,7 +164,9 @@ void wesh_readline(char* buffer) {
 
 		} else if(c == 0x9) {
             autocomplete(current_buffer,&pos);
-        } else { // basic char
+        } else if (c < 32 && c != '\r') {
+
+		} else { // basic char
 			current_buffer[pos] = c;
 			pos++;
 			current_buffer[pos] = 0;
@@ -202,6 +214,7 @@ int main() {
         char* temp;
         bool next_input = false;
         bool next_output = false;
+		bool output_append = false;
 
 		bool failed = false;
 
@@ -209,14 +222,22 @@ int main() {
 
         while(((temp = strtok(NULL," ")) != NULL )&& !failed) {
 			if (strcmp(temp, "<") == 0) {
-				if (!next_output) {
+				if (!next_output && !next_input) {
 					next_input = true;
 				} else {
 					failed = true;
 				}
 			} else if (strcmp(temp, ">") == 0) {
-				if (!next_input) {
+				if (!next_input && !next_output) {
 					next_output = true;
+					output_append = false;
+				} else {
+					failed = true;
+				}
+			} else if (strcmp(temp, ">>") == 0) {
+				if (!next_input && !next_output) {
+					next_output = true;
+					output_append = true;
 				} else {
 					failed = true;
 				}
@@ -247,8 +268,13 @@ int main() {
 				}
 			}
 		} else {
+			bool bg=false;
+			if (strcmp(params[cur_param-1], "&") == 0) {
+				cur_param--;
+				bg = true;
+			}
 			params[cur_param] = 0;
-			exec_blocking(base_command, params, input, output);
+			exec_blocking(base_command, params, input, output, output_append, bg);
 	        input = NULL;
 	        output = NULL;
 		}

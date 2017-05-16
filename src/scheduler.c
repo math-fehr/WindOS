@@ -135,6 +135,7 @@ int kill_process(int const process_id, int wstatus) {
 	}
 
 	process* child  = process_list[process_id];
+	bool was_active = (child->status == status_active) || (child->status == status_blocked_svc);
 	process* parent = process_list[child->parent_id];
 	for (int i=0;i<MAX_PROCESSES;i++) {
 		if ((process_list[i] != NULL) && (process_list[i]->parent_id == process_id)) {
@@ -193,12 +194,16 @@ int kill_process(int const process_id, int wstatus) {
 		number_zombie_processes++;
 	}
 	int i=0;
-	for (;active_processes[i] != process_id;i++) {} // Danger
-	if (current_process_id == number_active_processes-1) {
-		current_process_id = i; // Follow the swap.
+
+	if (was_active) {
+		for (;active_processes[i] != process_id;i++) {} // Danger
+		if (current_process_id == number_active_processes-1) {
+			current_process_id = i; // Follow the swap.
+		}
+		active_processes[i] = active_processes[number_active_processes-1];
+		number_active_processes--;
 	}
-	active_processes[i] = active_processes[number_active_processes-1];
-	number_active_processes--;
+
     return 0;
 }
 
@@ -300,6 +305,14 @@ process** get_process_list() {
 
 int* get_active_processes() {
     return active_processes;
+}
+
+int get_number_free_processes() {
+	return number_free_processes;
+}
+
+int get_number_zombie_processes() {
+	return number_zombie_processes;
 }
 
 process* get_current_process() {

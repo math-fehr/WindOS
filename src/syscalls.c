@@ -101,6 +101,15 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 		}
 	}
 
+
+	for (int i=0;i<32;i++) {
+		if ((new_p->sighandlers[i].handler != SIG_DFL) && (new_p->sighandlers[i].handler != SIG_IGN)) {
+			new_p->sighandlers[i].handler = SIG_DFL;
+		} else {
+			new_p->sighandlers[i] = p->sighandlers[i];
+		}
+	}
+
 	get_process_list()[new_p->asid] = new_p;
 
 	kdebug(D_SYSCALL, 2, "dup: Program loaded! Freeing shit %p %p\n", p->ttb_address, p);
@@ -242,6 +251,10 @@ uint32_t svc_fork() {
 	copy->dummy 	= 0;
 	copy->name		= malloc(strlen(p->name)+1);
 	strcpy(copy->name, p->name);
+
+	for (int i=0;i<32;i++) {
+		copy->sighandlers[i] = p->sighandlers[i];
+	}
 
 	int pid 		= sheduler_add_process(copy);
 	copy->parent_id = p->asid;

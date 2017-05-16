@@ -171,6 +171,41 @@ void serial_irq() {
 			c = (c << 6) | (d & 0x3F);
 		}
 
+		if (c == 1) { // Ctrl-A
+			kernel_printf("\nCurrent process: %d\n", get_current_process_id());
+		}
+
+		if (c == 2) { // Ctrl-B
+			kernel_printf("\n");
+			paging_print_status();
+		}
+
+		if (c == 4) { // Ctrl-D
+			process** list = get_process_list();
+			kernel_printf("\n");
+			kernel_printf("%d %d %d\n", get_number_active_processes(), get_number_free_processes(), get_number_zombie_processes());
+			for (int i = 0;i<MAX_PROCESSES;i++) {
+				if (list[i] != NULL) {
+					char* sstr;
+					switch (list[i]->status) {
+						case status_active:
+							sstr = "R";
+							break;
+						case status_zombie:
+							sstr = "Z";
+							break;
+						case status_blocked_svc:
+							sstr = "BS";
+							break;
+						case status_wait:
+							sstr = "S";
+							break;
+					}
+					kernel_printf("[%d] %2s %d %s | %x\n", i, sstr, list[i]->parent_id, list[i]->name, list[i]->ctx.pc);
+				}
+			}
+		}
+
 		if (mode == 1) { // canon mode
 			if (c == 0x7F) { // DEL
 				if (read_buffer_index > 0) {
@@ -182,6 +217,16 @@ void serial_irq() {
 			} else if (c == 0x1B) { // ANSI Escape sequence
 				serial_readc();
 				serial_readc();
+			} else if (c <= 31 && c != '\r') { // Ctrl-Something
+			/*	if (c == 4) { // Ctrl-D: send sigterm.
+					siginfo_t sgn;
+					sgn.si_pid = -1;
+					sgn.si_signo = SIGTERM;
+					if (process_signal(get_current_process(), sgn)) {
+						kill_process(get_current_process_id(), (SIGTERM << 8) | 1);
+					}
+					return;
+				}*/
 			} else {
 				serial_putc(c);
 				read_buffer[read_buffer_index] = c;
@@ -210,7 +255,6 @@ void serial_irq() {
  *	\bug Buffer overflow in canonical mode.
  */
 int serial_readline(char* buffer, int buffer_size) {
-	serial_irq();
 	if (read_buffer_index == 0) {
 		return 0;
 	}

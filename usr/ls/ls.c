@@ -30,9 +30,10 @@ int main() {
 	for (int i=0;i<argc;i++) {
 		params[i] = argv[i];
 	}
+	/*
 	printf("argc: %d\n", argc);
 	for (int i=0;i<argc;i++)
-		printf("argv: %s\n", argv[i]);
+		printf("argv: %s\n", argv[i]);*/
 	if (argc > 1) {
 		while ((opt = getopt(argc,params,"ali")) != -1) {
 			switch (opt) {

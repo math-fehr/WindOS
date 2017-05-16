@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "debug.h"
 #include "arm.h"
+#include "kernel.h"
 
 extern int __kernel_phy_start;
 extern int __kernel_phy_end;
