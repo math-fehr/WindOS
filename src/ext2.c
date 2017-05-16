@@ -706,8 +706,6 @@ void ext2_set_inode_block_address(
 
 
 int ext2_fwrite(inode_t inode, char* buf, int len, int ofs) {
-	kernel_printf("write operation (%d,%d)\n", ofs, len);
-
   	superblock_t* fs = inode.sb;
 
   	ext2_inode_t data = ext2_get_inode_descriptor(fs, inode.st.st_ino);
