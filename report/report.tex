@@ -62,8 +62,8 @@ Pour compiler le projet, il faut lancer \verb!make all!, qui compilera le kernel
 et les programmes utilisateurs. Ensuite, pour lancer le kernel sur qemu, il
 suffit d'exécuter \verb!make runs!.\\
 
-Pour lancer le kernel sur raspberry pi 2 (le
-kernel ne marchant pas sur raspberry pi 1), il faut copier les fichiers contenus
+Pour lancer le kernel sur raspberry pi 2 (le kernel ne fonctionnant pas sur le
+raspberry pi 1), il faut copier les fichiers contenus
 dans le dossier \verb!img!, et les copier dans la première partition fat de la
 carte SD inséré dans le raspberry pi. Pour pouvoir afficher dans un terminal la
 sortie du raspberry pi, il faut brancher sur les pins connectés au controller
@@ -128,6 +128,7 @@ Deux drivers de systèmes de fichiers ont été implémentés:
 	\item DEV: Pour représenter les différentes interfaces disponibles dans l'OS,
 	(inspiré de /dev chez Unix), un pseudo-système de fichier a été implémenté.
 	Il permet par exemple d'accéder au port série (/dev/serial).
+	\item PROC: Un dossier virtuel est présent (/proc) pour représenter l'ensemble des processus en cours.
 \end{itemize}
 
 \subsection{Mailbox}
@@ -175,7 +176,11 @@ implémentant en partie la libc et demandant un nombre minimal d'appels système
 Ainsi pour communiquer avec le noyau, les programmes disposent d'un certain
 nombre d'appels systèmes Linux, décrits dans include/syscalls.h.
 Des fonctionnalités de terminal furent aussi développées, elles sont décrites
-dans include/termfeatures.h.
+dans include/termfeatures.h. \\
+On peut donc assez simplement compiler des progammes en C, les fonctionnalités
+de base de la bibliothèque standard étant déjà intégrées. De plus nous avons le
+support des variables d'environnement et des arguments dans la fonction execvp.
+Par défaut, le PATH contient seulement /bin.
 
 \subsection{Ordonnancement des processus}
 
@@ -237,15 +242,20 @@ utilisateur, en démarrant dans ce programme.
 	\item init: initialise le premier shell, et récupère les processus zombies.
 	\item ls: liste les entrées d'un dossier. (-i pour afficher les inodes, -a pour afficher les dossiers cachés, -l pour afficher en ligne)
 	\item mkdir: crée un dossier dans le répertoire courant.
-	\item pico: un éditeur de fichiers minimaliste.
+	\item pico: un éditeur de fichiers minimaliste. Ctrl-X pour quitter, Ctrl-S pour sauvegarder. Il a du mal avec les gros fichiers.
 	\item pwd: affiche le dossier courant.
 	\item rm: supprime un fichier ou un dossier en mode récursif (-r)
 	\item show: affiche un fichier au format bitmap (basse résolution de préférence).
 	\item touch: créer un fichier.
-	\item wesh: WindOS Experimental Shell, l'invite de commande lancé au démarrage de l'OS.
+	\item wesh: WindOS Experimental Shell, l'invite de commande lancé au démarrage de l'OS. Ce shell est assez simpliste mais dispose notamment des redirections de flux, grâce à dup et dup2.
 \end{itemize}
 
 \section{Difficultés rencontrées}
+
+\subsection{Instabilités et sécurité}
+Des instabilités sont à noter lors que l'on tente de pousser à bout l'OS.
+Les redirections de flux sont en théorie fonctionnelles mais des bugs sont à remarquer.
+Le système de permissions est faible.
 
 \subsection{De la simulation à la réalité}
 
