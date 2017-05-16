@@ -400,9 +400,15 @@ pid_t _waitpid(pid_t pid, int *wstatus, int options) {
 	return res;
 }
 
-// TODO: Coder ça
 int _isatty(int fd) {
-  return 1;
+	struct stat st;
+	fstat(fd, &st);
+
+	if (S_ISCHR(st.st_mode)) {
+		return 1;
+	} else {
+  		return 0;
+	}
 }
 
 pid_t _wait(int *wstatus) {

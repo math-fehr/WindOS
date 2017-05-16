@@ -13,8 +13,7 @@ extern int argc;
 extern char** argv;
 
 int main() {
-	int r, c;
-	r=40;
+	int c;
 	c=80;
 	//term_get_size(&r, &c);
 
@@ -26,9 +25,6 @@ int main() {
 	bool line = false;
 	bool inode = false;
 	bool all = false;
-
-	optind = 1;
-	opterr = 0;
 
 	char* params[18];
 	for (int i=0;i<argc;i++) {
@@ -76,8 +72,8 @@ int main() {
 		struct stat fs;
 
 		int total = 0;
-
-		while(_getdents(fd,entry) == 0) {
+		int result;
+		while((result = _getdents(fd,entry)) == 0) {
 			if (all || entry->d_name[0] != '.') {
 				total++;
 				cur_size = strlen(entry->d_name);
@@ -104,6 +100,10 @@ int main() {
 				}
 			}
 		};
+
+		if (result != 1) {
+			perror("ls");
+		}
 
 		_lseek(fd,0,SEEK_SET);
 

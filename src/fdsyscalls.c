@@ -206,7 +206,7 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
  * 	\brief Explore the directory described by fd.
  *	\param fd A directory file descriptor.
  *	\param user_entry Where the entry should be written to.
- *	\return Zero on success, -errno on error.
+ *	\return Zero on success, 1 when listing ended, -errno on error.
  */
 uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 	process* p = get_current_process();
@@ -219,9 +219,13 @@ uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 		return -EBADF;
 	}
 
-	kdebug(D_SYSCALL, 2, "GETDENTS => %d\n", fd);
+
 
 	fd_t* w_fd = &p->fd[fd];
+	kdebug(D_SYSCALL, 2, "GETDENTS => %d: %d\n", fd, w_fd->inode->st.st_ino);
+	if (!S_ISDIR(w_fd->inode->st.st_mode)) {
+		return -ENOTDIR;
+	}
 
 	// reload dirlist
 	if (w_fd->position == 0) {
@@ -249,7 +253,6 @@ uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry) {
 }
 
 int svc_openat(int dirfd, char* path_c, int flags) {
-
 	process* p = get_current_process();
 	if (!his_own(p, path_c)) {
 		return -EFAULT;
