@@ -706,16 +706,18 @@ void ext2_set_inode_block_address(
 
 
 int ext2_fwrite(inode_t inode, char* buf, int len, int ofs) {
-  superblock_t* fs = inode.sb;
+	kernel_printf("write operation (%d,%d)\n", ofs, len);
 
-  ext2_inode_t data = ext2_get_inode_descriptor(fs, inode.st.st_ino);
+  	superblock_t* fs = inode.sb;
 
-  int to_append = max(len+ofs - data.size, 0);
-  int to_replace = len - to_append;
+  	ext2_inode_t data = ext2_get_inode_descriptor(fs, inode.st.st_ino);
 
-  ext2_replace_file(fs, inode.st.st_ino, buf, to_replace, ofs);
-  ext2_append_file(fs, inode.st.st_ino, buf+to_replace, to_append);
-  return len;
+  	int to_append = max(len+ofs - data.size, 0);
+  	int to_replace = len - to_append;
+
+  	ext2_replace_file(fs, inode.st.st_ino, buf, to_replace, ofs);
+  	ext2_append_file(fs, inode.st.st_ino, buf+to_replace, to_append);
+  	return len;
 }
 
 void ext2_replace_file(superblock_t* fs, int inode, char* buffer, int size, int ofs) {
@@ -768,7 +770,7 @@ void ext2_append_file(superblock_t* fs, int inode, char* buffer, int size) {
 
   if (last_block != -1) {
     uintptr_t last_block_address = ext2_get_block_address(fs, data, last_block);
-    disk->write(last_block_address*block_size, buffer, fill_blk);
+    disk->write(last_block_address*block_size+data.size%block_size, buffer, fill_blk);
   }
 
   int buf_pos = fill_blk; // position in the buffer.

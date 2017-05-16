@@ -299,12 +299,12 @@ int svc_openat(int dirfd, char* path_c, int flags) {
 					return -errno;
 				}
 
-				ino = vfs_mknod(dir, last+1, S_IFREG, 0);
+				ino = vfs_mknod(dir, last+1, S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH, 0);
 				if (errno > 0) {
 					return -errno;
 				}
 			} else {
-				ino = vfs_mknod(*base, last, S_IFREG, 0);
+				ino = vfs_mknod(*base, last, S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH, 0);
 
 				if (errno > 0)  {
 					free(path);

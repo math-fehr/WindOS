@@ -29,6 +29,7 @@ bool 	open_buffer(char* new_path) {
 	//printf("file of size %d\n", size);
 	char* buf = malloc(size+1);
 	fread(buf, 1, size+1, fd);
+	fclose(fd);
 
 	nlines = 0;
 	for (int i=0;i<size;i++) {
@@ -81,7 +82,7 @@ int main() {
 	term_clear();
 	fflush(stdout);
 	term_get_size(&row, &col);
-	
+
 	fflush(stdout);
 	term_raw_enable(true);
 
