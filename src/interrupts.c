@@ -359,6 +359,20 @@ void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
 	uint32_t status = reg & 0xF;
 
 	kdebug(D_IRQ, 10, "\"%s\" occured.\n", messages[status]);
+
+
+	if ((ctx->cpsr & 0x1F) == 0x10) {
+		kill_process(get_current_process_id(), -1); //we are sure a running process exist
+		process* p = get_next_process();
+		if (p == NULL) {
+			kdebug(D_IRQ, 10, "No process left.\n");
+			while(1) {}
+		}
+		kdebug(D_IRQ, 10, "Switching to %d.\n", get_current_process_id());
+		p = get_current_process();
+		mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+		*ctx = p->ctx; // Copy next process ctx
+	}
 	kern_debug();
 
     while(1);
@@ -398,7 +412,7 @@ void data_abort_vector(void* data) {
 		bool wnr = reg & (1 << 11);
 
 		kdebug(D_IRQ, 10, "\"%s\" occured on domain %d. (w=%d)\n", messages[status], domain, wnr);
-		kern_debug();
+
 		kill_process(get_current_process_id(), -1); //we are sure a running process exist
 		process* p = get_next_process();
 		if (p == NULL) {
