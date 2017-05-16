@@ -99,13 +99,25 @@ void serial_init() {
  *	\warning If the character is \r, a \n is added to ensure correct output.
  */
 void serial_putc(unsigned char data) {
-  while((auxiliary->MU_LSR & AUX_MULSR_TX_EMPTY) == 0) {}
-  dmb();
-  auxiliary->MU_IO = data;
+	if (data & 0x80) { // ASCII Symbol > 127. Encoding to UTF-8.
+		char left  = ((data & 0xc0) >> 6) | 0b11000000;
+		char right = (data & 0x3F) | 0b10000000;
+		while((auxiliary->MU_LSR & AUX_MULSR_TX_EMPTY) == 0) {}
+		dmb();
+		auxiliary->MU_IO = left ;
 
-  if (data == '\r') {
-    serial_putc('\n');
-  }
+		while((auxiliary->MU_LSR & AUX_MULSR_TX_EMPTY) == 0) {}
+		dmb();
+		auxiliary->MU_IO = right;
+	} else {
+		while((auxiliary->MU_LSR & AUX_MULSR_TX_EMPTY) == 0) {}
+		dmb();
+		auxiliary->MU_IO = data;
+
+		if (data == '\r') {
+			serial_putc('\n');
+		}
+	}
 }
 
 /**	\fn unsigned char serial_readc()
@@ -154,6 +166,11 @@ void serial_irq() {
 	while(auxiliary->MU_LSR & AUX_MULSR_DATA_READY) {
 		char c = auxiliary->MU_IO;
 		//kernel_printf("data ready: %c\n", c);
+		if (c & 0x80) { // UTF-8 Symbol. Here we do a partial decoding, translating to ASCII.
+			char d = serial_readc();
+			c = (c << 6) | (d & 0x3F);
+		}
+
 		if (mode == 1) { // canon mode
 			if (c == 0x7F) { // DEL
 				if (read_buffer_index > 0) {
