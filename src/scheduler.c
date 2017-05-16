@@ -194,6 +194,9 @@ int kill_process(int const process_id, int wstatus) {
 	}
 	int i=0;
 	for (;active_processes[i] != process_id;i++) {} // Danger
+	if (current_process_id == number_active_processes-1) {
+		current_process_id = i; // Follow the swap.
+	}
 	active_processes[i] = active_processes[number_active_processes-1];
 	number_active_processes--;
     return 0;

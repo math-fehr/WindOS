@@ -32,4 +32,5 @@ int 	 svc_ioctl(int fd, int cmd, int arg);
 int 	 svc_dup(int oldfd);
 int 	 svc_dup2(int oldfd, int newfd);
 
+uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry);
 #endif

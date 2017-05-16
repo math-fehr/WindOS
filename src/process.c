@@ -173,3 +173,31 @@ process* process_load(char* path, inode_t cwd, const char* argv[], const char* e
 
     return processus;
 }
+
+/** \fn bool process_signal(process* p, siginfo_t signal)
+ *	\brief Send a signal to a process.
+ *	\return If the process should be killed or not.
+ */
+bool process_signal(process* p, siginfo_t signal) {
+	int sig = signal.si_signo;
+
+	if (p->sighandlers[sig].handler == SIG_DFL) {
+		switch (sig) {
+			case SIGTERM:
+			case SIGKILL:
+			case SIGSEGV:
+				return true;
+			default:
+				return false;
+		}
+	} else if (p->sighandlers[sig].handler == SIG_IGN) {
+		return false;
+	} else {
+		p->old_ctx = p->ctx; // Save context.
+		p->ctx.r[15] = (intptr_t)p->sighandlers[sig].handler; // Call handler.
+		intptr_t dest_addr = 0x80000000 + mmu_vir2phy_ttb((intptr_t)p->sighandlers[sig].user_siginfo, p->ttb_address);
+		memcpy((void*)dest_addr, &signal, sizeof(siginfo_t));
+		p->ctx.r[0] = sig;
+		return false;
+	}
+}

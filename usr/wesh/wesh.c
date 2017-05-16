@@ -9,6 +9,7 @@
 #include "string.h"
 #include "fcntl.h"
 
+
 #include "../../include/termfeatures.h"
 #include "../../include/syscalls.h"
 #include "../../include/dirent.h"
@@ -43,7 +44,7 @@ int exec_blocking(char* command, char* params[], char* input, char* output) {
 		perror(command);
 		_exit(1);
 	} else {
-		return wait(NULL);
+		return _waitpid(r, NULL, 0);
 	}
 }
 

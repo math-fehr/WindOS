@@ -30,6 +30,7 @@
 #define 	SVC_TIME 		0x0d
 #define     SVC_LSEEK       0x13
 #define     SVC_FSTAT       0x1c
+#define 	SVC_KILL		0x25
 #define 	SVC_DUP			0x29
 #define     SVC_SBRK        0x2d
 #define 	SVC_IOCTL 		0x36

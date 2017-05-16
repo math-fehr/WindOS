@@ -8,6 +8,8 @@
 #include "debug.h"
 #include "stdlib.h"
 #include "kernel.h"
+#include <libgen.h>
+#include <signal.h>
 
 /** \struct user_context_t
  *	\brief User process data on a context switch.
@@ -22,6 +24,12 @@ typedef struct {
  * 	\brief Number of file descriptor that a process can open.
  */
 #define MAX_OPEN_FILES 64
+
+#define N_SIGNALS 	32
+
+#define SIGKILL  	9
+#define SIGSEGV 	11
+#define SIGTERM 	15
 
 /** \struct fd_t
  * 	\brief File descriptor structure.
@@ -51,6 +59,16 @@ typedef struct {
 	int*  	wstatus; ///< The pointer where we should write to on return.
 } wait_parameters_t;
 
+typedef struct {
+	int si_signo;
+	int si_pid;
+} siginfo_t;
+
+typedef struct {
+	void     (*handler)(int);
+	siginfo_t* user_siginfo;
+} signal_handler_t;
+
 /** \struct process
  *	\brief All the data representing a process.
  */
@@ -64,9 +82,11 @@ typedef struct {
     int brk_page; ///< Number of pages allocated for program break
     fd_t fd[MAX_OPEN_FILES]; ///< Process' file descriptors
 	user_context_t ctx; ///< Process' execution context.
+	user_context_t old_ctx; ///< Process' execution context before a signal was caught.
 	wait_parameters_t wait; ///< When in wait status, wait parameters. When in zombie status, stores exit code.
 	inode_t cwd; ///< Current working directory.
 	char* name; ///< Process name.
+	signal_handler_t sighandlers[N_SIGNALS];
 } process;
 
 #define ELF_ABI_SYSTEMV 0
@@ -140,10 +160,6 @@ typedef struct {
 } sh_entry_t;
 
 process* process_load(char* path, inode_t cwd, const char* argv[], const char *envp[]);
-
-superblock_t* proc_initialize(int id);
-vfs_dir_list_t* proc_lsdir(inode_t from);
-int proc_fread(inode_t from, char* buf, int size, int pos);
-
+bool process_signal(process* p, siginfo_t signal);
 
 #endif //PROCESS_H
