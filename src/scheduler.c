@@ -6,6 +6,7 @@
 #include "serial.h"
 #include "debug.h"
 #include "string.h"
+#include "fdsyscalls.h"
 
 /** \var process* process_list[MAX_PROCESSES]
  *	\brief List of possible processes (not all are active)
@@ -108,7 +109,7 @@ void free_process_data(process* p) {
 	for (int i=0;i<64;i++) {
 		if (p->fd[i].position >= 0) {
 			free_vfs_dir_list(p->fd[i].dir_entry);
-			free(p->fd[i].inode);
+			unload_inode(p->fd[i].inode);
 		}
 	}
 

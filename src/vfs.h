@@ -53,6 +53,7 @@ struct inode_t {
   superblock_t* sb; ///< Pointer to superblock.
   inode_operations_t* op; ///< Pointer to inode's operations.
   struct stat st; ///< Inode descriptor data.
+  int ref_count; ///< Number of references to this inode.
 };
 
 /** \struct superblock_t

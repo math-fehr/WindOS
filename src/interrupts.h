@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "scheduler.h"
 #include "syscalls.h"
+#include "fdsyscalls.h"
 #include "memalloc.h"
 #include "arm.h"
 
