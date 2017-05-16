@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['id',['id',['../structsuperblock__t.html#a7441ef0865bcb3db9b8064dd7375c1ea',1,'superblock_t']]],
+  ['init_5fget_5fram',['init_get_ram',['../initsys_8c.html#a9a86f1e2b2221f3d5c916b465adf5ae3',1,'initsys.c']]],
+  ['init_5fmap',['init_map',['../initsys_8c.html#aa3192e45a28a31e089b7de531e46946b',1,'initsys.c']]],
+  ['init_5fsetup_5fttb',['init_setup_ttb',['../initsys_8c.html#aa66b94236ac1db39b8fa89562e36b415',1,'initsys.c']]],
+  ['initsys_2ec',['initsys.c',['../initsys_8c.html',1,'']]],
+  ['inode',['inode',['../structfd__t.html#ab1e31eef73255cff59d7800e52210577',1,'fd_t::inode()'],['../structvfs__dir__list__t.html#a96127909c0dd0c11bdc9c25659462c9b',1,'vfs_dir_list_t::inode()'],['../structmount__point__t.html#a96127909c0dd0c11bdc9c25659462c9b',1,'mount_point_t::inode()']]],
+  ['inode_5foperations_5ft',['inode_operations_t',['../structinode__operations__t.html',1,'']]],
+  ['inode_5ft',['inode_t',['../structinode__t.html',1,'']]],
+  ['insertion',['insertion',['../memalloc_8c.html#a563f994d2b67010c27d2d3e179bc9503',1,'memalloc.c']]],
+  ['interrupt_5fvector',['interrupt_vector',['../interrupts_8c.html#aa133190c0d3821284e1dc9410423d383',1,'interrupts.c']]],
+  ['interrupthandler',['interruptHandler',['../structinterrupt_handler.html',1,'']]],
+  ['interrupts_2ec',['interrupts.c',['../interrupts_8c.html',1,'']]],
+  ['ioctl',['ioctl',['../structinode__operations__t.html#accef1e2f030cf60b355828192e40a422',1,'inode_operations_t']]],
+  ['ipow',['ipow',['../cstubs_8c.html#a2238d28df23a32e17494bf84d028688f',1,'cstubs.c']]],
+  ['irq_5fbasic_5fpending',['IRQ_basic_pending',['../structrpi__irq__controller__t.html#add0636f63e62dc629fdd68201a1e7399',1,'rpi_irq_controller_t']]],
+  ['irq_5fclear',['irq_clear',['../structrpi__arm__timer__t.html#a068134e9c6dfa97cde673efaf3d38539',1,'rpi_arm_timer_t']]],
+  ['irq_5fpending_5f1',['IRQ_pending_1',['../structrpi__irq__controller__t.html#ae60e9b2d3bd8344640ac94e75d6f6024',1,'rpi_irq_controller_t']]],
+  ['irq_5fpending_5f2',['IRQ_pending_2',['../structrpi__irq__controller__t.html#a673d328e477eec84d38e3cfb13ffcda9',1,'rpi_irq_controller_t']]]
+];

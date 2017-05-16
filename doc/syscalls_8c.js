@@ -1,0 +1,26 @@
+var syscalls_8c =
+[
+    [ "his_own", "syscalls_8c.html#aee9f25dc0478bbedb72b797f29e5afef", null ],
+    [ "svc_chdir", "syscalls_8c.html#a1a467a837a0300155e0762951d55482f", null ],
+    [ "svc_close", "syscalls_8c.html#a2a203aa690aa478df4c2f704ea59d8f9", null ],
+    [ "svc_dup", "syscalls_8c.html#aa950e992c9b725742b16b9db04990dc0", null ],
+    [ "svc_dup2", "syscalls_8c.html#aff302c180f57a63f7bcc4ef520f69598", null ],
+    [ "svc_execve", "syscalls_8c.html#aaaaccd96bd31e83591ba4aaf5631740a", null ],
+    [ "svc_exit", "syscalls_8c.html#ab4ca6f1dc590127e54d680396f458a59", null ],
+    [ "svc_fork", "syscalls_8c.html#afcd9f1685f5fc7f4763722c2b8b7ab3c", null ],
+    [ "svc_fstat", "syscalls_8c.html#aa3803466b41295f1632bb59e683a4449", null ],
+    [ "svc_getcwd", "syscalls_8c.html#a21f47aeb828025c6300fb6c3fc583f11", null ],
+    [ "svc_getdents", "syscalls_8c.html#a9aa9956a9b5f7c819c74ea83b5254340", null ],
+    [ "svc_ioctl", "syscalls_8c.html#a98c39d3bea1930c66b98921c387acde2", null ],
+    [ "svc_lseek", "syscalls_8c.html#af1ba773b8d472ed7a30acff5cbd558b9", null ],
+    [ "svc_mknodat", "syscalls_8c.html#a9f86398a32ef23894e672e7e22349e31", null ],
+    [ "svc_openat", "syscalls_8c.html#aebbf6b0379006ed6b2713864ac18a5fd", null ],
+    [ "svc_read", "syscalls_8c.html#a8af1c9aef0bfa0e4d700bff281545aa3", null ],
+    [ "svc_sbrk", "syscalls_8c.html#a7b021c8f82d4df9719a155145d6f4fcd", null ],
+    [ "svc_time", "syscalls_8c.html#ab52c877bdd172729ba6abb52b64635c2", null ],
+    [ "svc_unlinkat", "syscalls_8c.html#ae55a1238288ccc062b416e8fc0767bf5", null ],
+    [ "svc_waitpid", "syscalls_8c.html#ae20fd6f4702d1e54a697ab80db2d16a8", null ],
+    [ "svc_write", "syscalls_8c.html#a3a1cf6e1d6adcd3aa8b752d41b04f7d6", null ],
+    [ "__ram_size", "syscalls_8c.html#a804934e5bfe94bfa77dce410ba323e5a", null ],
+    [ "heap_end", "syscalls_8c.html#a874db3bfd8c5593f9080ee32fee5b1ab", null ]
+];
