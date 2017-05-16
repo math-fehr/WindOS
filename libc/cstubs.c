@@ -8,13 +8,68 @@
 #include "string.h"
 #include "stdlib.h"
 #include "errno.h"
-
+#include "../include/syscalls.h"
 #include "../include/dirent.h"
 
 int argc;
 char **argv;
 char **environ;
 
+
+int sigreturn() {
+	int res;
+	asm volatile(
+				 "push 	{r7}\n"
+				 "ldr 	r7, =#0x77\n"
+				 "svc 	#0\n"
+			 	 "pop 	{r7}\n"
+			 	 "mov 	%0, r0\n" : "=r" (res) : :);
+	errno = -res;
+	return -1;
+}
+
+int sigaction(int signum, void (*handler)(int), siginfo_t* siginfo) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"ldr 	r2, %3\n"
+					"ldr 	r7, =#0x43\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (signum), "m" (handler), "m" (siginfo)
+					:
+	);
+	if (res < 0) {
+		errno = -res;
+		return -1;
+	}
+	return res;
+}
+
+int _kill(pid_t pid, int sig) {
+	int res;
+	asm volatile(
+					"push 	{r7}\n"
+					"ldr 	r0, %1\n"
+					"ldr 	r1, %2\n"
+					"ldr 	r7, =#0x25\n"
+					"svc 	#0\n"
+					"pop 	{r7}\n"
+					"mov 	%0, r0\n"
+					: "=r" (res)
+					: "m" (pid), "m" (sig)
+					:
+	);
+	if (res < 0) {
+		errno = -res;
+		return -1;
+	}
+	return res;
+}
 
 // 0x29
 int dup(int oldfd) {
@@ -146,7 +201,7 @@ void *_sbrk(intptr_t increment) {
                 :   "m" (increment)
                 :);
 	if (res < 0) {
-		errno = -(int)res;
+		errno = -(int)(intptr_t)res;
 	}
     return res;
 }
@@ -314,7 +369,7 @@ char* getcwd(char* buf, size_t size) {
 					:
 	);
 	if (res < 0) {
-		errno = -(int)res;
+		errno = -(int)(intptr_t)res;
 	}
 	return res;
 }

@@ -1,8 +1,11 @@
+#ifndef USR_SYSCALLS_H
+#define USR_SYSCALLS_H
+
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/stat.h>
-#include "../include/dirent.h"
-
+#include "../include/dirent.h" 
+#include "../include/signals.h"
 
 char *basename(char *path);
 char *dirname(char *path);
@@ -30,3 +33,9 @@ ssize_t _read(int fd, void* buf, size_t count);
 
 int dup(int oldfd);
 int dup2(int oldfd, int newfd);
+
+int _kill(pid_t pid, int sig);
+int sigaction(int signum, void (*handler)(int), siginfo_t* siginfo);
+int sigreturn();
+
+#endif

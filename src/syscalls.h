@@ -20,6 +20,7 @@
 #include <signal.h>
 
 #include "../include/dirent.h"
+#include "../include/signals.h"
 
 bool 	 his_own(process* p, void* pointer);
 
@@ -34,5 +35,6 @@ uint32_t svc_chdir(char* path);
 
 
 int svc_kill(pid_t pid, int sig);
-
+int svc_sigaction(int signum, void (*handler)(int), siginfo_t* siginfo);
+void svc_sigreturn();
 #endif

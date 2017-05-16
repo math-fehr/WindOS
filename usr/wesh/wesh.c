@@ -180,6 +180,9 @@ int main() {
 		char buf[1500];
 		getcwd(buf, 1500);
 		printf("%s$ ", buf);
+		for (int i=0;i<1500;i++) {
+			buf[i] = 0;
+		}
 		term_raw_enable(true);
 		wesh_readline(buf);
 		term_raw_enable(false);

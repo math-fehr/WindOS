@@ -30,27 +30,31 @@ int main() {
 	for (int i=0;i<argc;i++) {
 		params[i] = argv[i];
 	}
-
-	while ((opt = getopt(argc,params,"ali")) != -1) {
-		switch (opt) {
-			case 'l':
-				line = true;
-				break;
-			case 'i':
-				inode = true;
-				break;
-			case 'a':
-				all = true;
-				break;
-			case '?':
-				break;
-			default:
-				fprintf(stderr, "Usage: ls [-lia] [directory]");
+	printf("argc: %d\n", argc);
+	for (int i=0;i<argc;i++)
+		printf("argv: %s\n", argv[i]);
+	if (argc > 1) {
+		while ((opt = getopt(argc,params,"ali")) != -1) {
+			switch (opt) {
+				case 'l':
+					line = true;
+					break;
+				case 'i':
+					inode = true;
+					break;
+				case 'a':
+					all = true;
+					break;
+				case '?':
+					break;
+				default:
+					fprintf(stderr, "Usage: ls [-lia] [directory]");
+			}
 		}
-	}
 
-	if (argv[optind] != NULL) {
-		target = argv[optind];
+		if (argv[optind] != NULL) {
+			target = argv[optind];
+		}
 	}
 
 	fd = _open(target,O_RDONLY);

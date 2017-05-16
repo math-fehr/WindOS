@@ -10,6 +10,7 @@
 #include "kernel.h"
 #include <libgen.h>
 #include <signal.h>
+#include "../include/signals.h"
 
 /** \struct user_context_t
  *	\brief User process data on a context switch.
@@ -59,10 +60,6 @@ typedef struct {
 	int*  	wstatus; ///< The pointer where we should write to on return.
 } wait_parameters_t;
 
-typedef struct {
-	int si_signo;
-	int si_pid;
-} siginfo_t;
 
 typedef struct {
 	void     (*handler)(int);

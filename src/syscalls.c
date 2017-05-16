@@ -298,7 +298,7 @@ int svc_kill(pid_t pid, int sig) {
 	siginfo_t signal;
 	signal.si_signo = sig;
 	signal.si_pid = own_pid;
-	 
+
 	int wstatus = (sig << 8) | 1;
 
 	if (pid > 0) {
@@ -333,4 +333,12 @@ int svc_kill(pid_t pid, int sig) {
 		get_next_process();
 	}
 	return 0;
+}
+
+int svc_sigaction(int signum, void (*handler)(int), siginfo_t* siginfo) {
+
+}
+
+void svc_sigreturn() {
+
 }

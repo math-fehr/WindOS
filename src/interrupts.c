@@ -232,6 +232,12 @@ swi_beg:
 		case SVC_KILL:
 			res = svc_kill(ctx->r[0], ctx->r[1]);
 			break;
+		case SVC_SIGACTION:
+			res = svc_sigaction(ctx->r[0],ctx->r[1],ctx->r[2]);
+			break;
+		case SVC_SIGRETURN:
+			svc_sigreturn();
+			break;
         default:
         kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", ctx->r[7]);
 		while(1) {}
@@ -239,6 +245,7 @@ swi_beg:
 
 	if ((ctx->r[7] == SVC_EXIT)
 	|| 	(ctx->r[7] == SVC_EXECVE)
+	|| 	(ctx->r[7] == SVC_SIGRETURN)
 	|| 	(ctx->r[7] == SVC_KILL)
     ||	(ctx->r[7] == SVC_WAITPID && res == (uint32_t)-1)
 	||  (p->status == status_blocked_svc)) {
