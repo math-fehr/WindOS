@@ -29,6 +29,7 @@
 #define 	SVC_CHDIR 		0x0c
 #define 	SVC_TIME 		0x0d
 #define     SVC_LSEEK       0x13
+#define 	SVC_GETPID 		0x14
 #define     SVC_FSTAT       0x1c
 #define 	SVC_KILL		0x25
 #define 	SVC_DUP			0x29

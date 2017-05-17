@@ -66,25 +66,19 @@ process* process_load(char* path, inode_t cwd, const char* argv[], const char* e
 		errno = ENOMEM;
 		return NULL;
 	}
-    page_list_t* res = paging_allocate(2);
+    page_list_t* res = paging_allocate(1);
     if (res == NULL) {
         kdebug(D_PROCESS, 10, "Can't load %s: page allocation failed.\n", path);
 		errno = ENOMEM;
         return NULL;
     }
     int section_addr = res->address*PAGE_SECTION;
-    int section_stack;
-    if (res->size == 1) {
-        section_stack = res->next->address*PAGE_SECTION;
-		free(res->next);
-		free(res);
-    } else {
-        section_stack = (res->address+1)*PAGE_SECTION;
-		free(res);
-    }
+	free(res);
+
+
     // 1MB for the program. TODO: Make this less brutal. (not hardcoded as i could read the symbol table)
     mmu_add_section(ttb_address, 0, section_addr, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
-    mmu_add_section(ttb_address, __ram_size-PAGE_SECTION, section_stack, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
+    //mmu_add_section(ttb_address, __ram_size-PAGE_SECTION, section_stack, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
     // Loads executable data into memory and allocates it.
     ph_entry_t ph;
     for (int i=0; i<header.ph_num;i++) {
@@ -159,12 +153,12 @@ process* process_load(char* path, inode_t cwd, const char* argv[], const char* e
     processus->brk = PAGE_SECTION;
     processus->brk_page = 0;
 	processus->cwd = cwd;
-
+	processus->allocated_framebuffer = false;
 	for (int i=0;i<32;i++) {
 		processus->sighandlers[i].handler = SIG_DFL;
 	}
 
-	kdebug(D_PROCESS, 2, "Program loaded %s. S0=%p, S1=%p\n ttb=%p\n", path, section_addr, section_stack, ttb_address);
+	kdebug(D_PROCESS, 2, "Program loaded %s. S0=%p\n ttb=%p\n", path, section_addr, ttb_address);
 
 
     for (int i=0;i<MAX_OPEN_FILES;i++) {

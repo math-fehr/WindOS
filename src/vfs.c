@@ -317,14 +317,14 @@ int vfs_fread(inode_t fd, char* buffer, int length, int offset) {
 	}
 
 
-  if (offset > fd.st.st_size) {
-      offset = fd.st.st_size;
-  }
-  if (fd.op->read == NULL) {
-  	errno = -1;
-  	return -1;
-  }
-  return fd.op->read(fd, buffer, length, offset);
+	if (offset > fd.st.st_size) {
+	  offset = fd.st.st_size;
+	}
+	if (fd.op->read == NULL) {
+		errno = -1;
+		return -1;
+	}
+	return fd.op->read(fd, buffer, length, offset);
 }
 
 /** \fn vfs_dir_list_t* vfs_readdir(char* path)

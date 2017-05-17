@@ -34,7 +34,7 @@ char* 	 svc_getcwd(char* buf, size_t cnt);
 uint32_t svc_chdir(char* path);
 
 
-int svc_kill(pid_t pid, int sig);
-int svc_sigaction(int signum, void (*handler)(int), siginfo_t* siginfo);
-void svc_sigreturn();
+int 	 svc_kill(pid_t pid, int sig);
+int 	 svc_sigaction(int signum, void (*handler)(int), siginfo_t* siginfo);
+void  	 svc_sigreturn();
 #endif

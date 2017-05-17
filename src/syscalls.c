@@ -78,7 +78,6 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 
 	// free stack and program code
 	paging_free(1,mmu_vir2phy_ttb(0, p->ttb_address)/PAGE_SECTION);
-	paging_free(1,mmu_vir2phy_ttb(__ram_size-PAGE_SECTION, p->ttb_address)/PAGE_SECTION);
 
 
 	for (int i=0;i<64;i++) {
@@ -112,7 +111,7 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 
 	get_process_list()[new_p->asid] = new_p;
 
-	kdebug(D_SYSCALL, 2, "dup: Program loaded! Freeing shit %p %p\n", p->ttb_address, p);
+	kdebug(D_SYSCALL, 2, "Program loaded! Freeing shit %p %p\n", p->ttb_address, p);
 	free((void*)p->ttb_address);
 	free(p);
 	new_p->dummy = 0;
@@ -188,6 +187,7 @@ uint32_t svc_sbrk(uint32_t ofs) {
 extern uintptr_t heap_end;
 
 uint32_t svc_fork() {
+	kdebug(D_PROCESS, 2, "FORK\n");
 	process* p = get_current_process();
 	process* copy 		= malloc(sizeof(process));
 
@@ -221,10 +221,6 @@ uint32_t svc_fork() {
 		res = res->next;
 		free(prev);
 	}
-	mmu_add_section(copy->ttb_address, __ram_size-PAGE_SECTION, res->address*PAGE_SECTION, ENABLE_CACHE|ENABLE_WRITE_BUFFER,0,AP_PRW_URW);
-	dmb();
-	memcpy((void*)(intptr_t)(0x80000000 + res->address*PAGE_SECTION), (void*)(intptr_t)(__ram_size-PAGE_SECTION), PAGE_SECTION);
-	dmb();
 	free(res);
 
 	// Now all the data is copied..
@@ -250,6 +246,7 @@ uint32_t svc_fork() {
 	copy->cwd 		= p->cwd;
 	copy->dummy 	= 0;
 	copy->name		= malloc(strlen(p->name)+1);
+	copy->allocated_framebuffer = false;
 	strcpy(copy->name, p->name);
 
 	for (int i=0;i<32;i++) {
@@ -365,3 +362,69 @@ void svc_sigreturn() {
 	process* p = get_current_process();
 	p->ctx = p->old_ctx;
 }
+
+
+#include "framebuffer.h"
+extern frameBuffer* kernel_framebuffer;
+extern uintptr_t framebuffer_phy_addr;
+
+/** \fn svc_getframebuffer(int target)
+	\brief Remaps memory to access a target's framebuffer.
+	\param target The target
+
+	If target == -1, get the address of the output framebuffer.
+	If target != -1, get program's framebuffer.
+	\warning No security mechanism, we should have a permission system.
+	\warning TODO: Checks.
+ *//*
+uint32_t svc_getframebuffer(int pid) {
+	kdebug(D_SYSCALL, 20, "GetFB %d\n", pid);
+	process* p = get_current_process();
+	if (pid == -1) {
+		intptr_t target = framebuffer_phy_addr;
+		kernel_printf("Target: %p\n", target);
+		int section_size = 1+(kernel_framebuffer->bufferSize >> 20); // Number of used sections.
+		kernel_printf("On %d sections\n", section_size);
+		intptr_t dep = 0x80000000 - (section_size << 20);
+		for (int i=0;i<section_size;i++) {
+			mmu_add_section(p->ttb_address, dep + i*(1 << 20), target + i*(1 << 20), 0, 0, AP_PRW_URW);
+		}
+		return dep;
+	} else {
+		if (pid == -2) {
+			pid = p->asid;
+		}
+		process* p_target = get_process_list()[pid];
+		if (p_target != NULL) {
+			int section_size = 1+(kernel_framebuffer->bufferSize >> 20); // Number of used sections.
+			if (!p_target->allocated_framebuffer) {
+				p_target->allocated_framebuffer = true;
+				page_list_t* res = paging_allocate(section_size);
+				for (int i=0;i<section_size;i++) {
+					mmu_add_section(
+							p_target->ttb_address,
+							0x80000000 - 2*(section_size << 20) + i*PAGE_SECTION,
+							res->address*PAGE_SECTION,
+							0, 0, AP_PRW_URW);
+					res->address++;
+					res->size--;
+
+					if (res->size == 0) {
+						page_list_t* tmp = res;
+						res = res->next;
+						free(tmp);
+					}
+				}
+			}
+			uintptr_t target = mmu_vir2phy_ttb(0x80000000 - 2*(section_size << 20), p_target->ttb_address);
+			uintptr_t dep = 0x80000000 - 2*(section_size << 20);
+			for (int i=0;i<section_size;i++) {
+				mmu_add_section(p->ttb_address, dep + i*(1 << 20), target + i*(1 << 20), 0, 0, AP_PRW_URW);
+			}
+			tlb_flush_all();
+			kernel_printf("GETFB %d -> %p\n", pid, dep);
+			return dep;
+		}
+		return -ENOENT;
+	}
+}*/

@@ -35,7 +35,7 @@ const char sources[N_SOURCES][9]= { "KERNEL", "SERIAL", "WESH",
  * 	- 10: Critical error, probably leading to a kernel crash.
  */
 const int enable_source[N_SOURCES] = { 8,8,8,
-                                       8,8,8,
+                                       8,6,8,
 									   8,8,8,
 									   8,8,8,
                                        8,8};
@@ -83,7 +83,7 @@ void vkernel_printf(const char* fmt, va_list args) {
 void kdebug(int from, int level, const char* fmt, ...) {
   if (from < 0 || from >= N_SOURCES) return;
   if (enable_source[from] > level) return;
-  kernel_printf("[%s][%d] ", sources[from], level);
+  kernel_printf("[%s][%d][%d] ", sources[from], level, get_current_process_id());
 
   va_list args;
   va_start(args, fmt);

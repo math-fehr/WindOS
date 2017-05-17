@@ -85,13 +85,14 @@ int pipe_read(inode_t pipe, char* buffer, int count, int ofs) {
 
 	buffer_begin[i] = pos_blk;
 	pipe_buffers[i] = pos;
-	//kernel_printf("read %d %d %d\n", count, buffer_begin[i], buffer_end[i]);
+//	kernel_printf("read %d %d %d\n", count, buffer_begin[i], buffer_end[i]);
 	return size_read;
 }
 
 
 
 int pipe_write(inode_t pipe, char* buffer, int count, int ofs) {
+
 	(void) ofs; // No seek on a pipe.
 	int i = pipe.st.st_ino;
 	pipe_block* pos = pipe_buffers[i];
@@ -122,6 +123,6 @@ int pipe_write(inode_t pipe, char* buffer, int count, int ofs) {
 	}
 
 	buffer_end[i] = pos_blk;
-	//kernel_printf("write %d %d %d\n", count, buffer_begin[i], buffer_end[i]);
+	kernel_printf("write %d %d %d\n", count, buffer_begin[i], buffer_end[i]);
 	return to_write;
 }

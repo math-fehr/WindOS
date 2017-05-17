@@ -116,8 +116,8 @@ void interrupt_vector(void* user_context) {
 
 		p = get_next_process();
 		if (p == NULL) {
-			kdebug(D_IRQ, 10,
-		"Every one is dead. Only the void remains. In the distance, sirens.\n");
+		/*	kdebug(D_IRQ, 10,
+		"Every one is dead. Only the void remains. In the distance, sirens.\n");*/
             return; //We are probably in the kernel
 		}
 
@@ -202,6 +202,9 @@ swi_beg:
 			break;
 		case SVC_TIME:
 			res = svc_time((time_t*)ctx->r[0]);
+			break;
+		case SVC_GETPID:
+			res = get_current_process_id();
 			break;
 		case SVC_EXECVE:
 			res = svc_execve((char*)ctx->r[0],(const char**)ctx->r[1],(const char**)ctx->r[2]);
