@@ -28,6 +28,7 @@
 #include "kernel.h"
 #include "procfs.h"
 #include "fdsyscalls.h"
+#include "framebuffer.h"
 
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
@@ -143,6 +144,30 @@ void kernel_main(uint32_t memory) {
     mbxGetMACAddress(mac);
     kernel_printf("Mac address : %X:%X:%X:%X:%X:%X\n",
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+
+
+
+
+    //We use a buffer to store the frameBuffer informations
+    //Using malloc makes qemu crash
+    uint32_t fbBuffer[(sizeof(frameBuffer) + 16)/4 + 1];
+    frameBuffer* fb = (frameBuffer*)((uintptr_t)fbBuffer + (16 - ((uintptr_t)(fbBuffer) % 16)));
+
+    if(fb_initialize(fb,640,480,8) == FB_SUCCESS) {
+        kernel_printf("Frame Buffer was correctly initialized\n");
+    }
+    uintptr_t section_to = (uintptr_t)fb->bufferPtr >> 20;
+    mmu_add_section(0xf0004000,0x7FE00000,section_to << 20,0,0,AP_PRW_URW);
+    mmu_add_section(0xf0004000,0x7FF00000,(section_to+1) << 20,0,0,AP_PRW_URW);
+    fb->bufferPtr = (fb->bufferPtr & 0x000FFFFF) | 0x7FE00000;
+
+    volatile uint16_t* frame = (uint16_t*)fb->bufferPtr;
+    for(int i = 0; i<640*480; i++) {
+        *(frame+i) = 0x5555;
+    }
+
+
+
 
 
   	asm volatile("mrs r0,cpsr\n"

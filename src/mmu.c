@@ -230,8 +230,8 @@ void mmu_setup_fine_table(uintptr_t fine_table_address, uintptr_t ttb_address, u
 /** \fn void mmu_add_section(uintptr_t ttb_address, uintptr_t from, uintptr_t to, uint32_t flags, uint32_t domain, uint32_t ap)
  *  \brief Add a redirection of a physical address to a ttb
  *  \param ttb_address The address of the ttb
- *  \param from The physical address base to redirect from
- *  \param to The virtual address base to redirect to
+ *  \param from The virtual address base to redirect from
+ *  \param to The physical address base to redirect to
  *  \param flags The flags used for the ttb
  *  \param domain The domain of the page
  *  \param ap The access permissions bits
@@ -261,8 +261,8 @@ void mmu_delete_section(uintptr_t ttb_address, uintptr_t address) {
 /** \fn void mmu_add_small_page(uintptr_t coarse_table_address, uintptr_t from, uintptr_t to, uint32_t flags) {
  *  \brief Add a small page to a coarse table
  *  \param coarse_table_address The address of the coarse table
- *  \param from The base address of the physical page
- *  \param to The base address of the virtual page
+ *  \param from The base address of the virtual page
+ *  \param to The base address of the physical page
  *  \param flags The flags used in the coarse table
  */
 void mmu_add_small_page(uintptr_t coarse_table_address, uintptr_t from, uintptr_t to, uint32_t flags) {
@@ -285,8 +285,8 @@ void mmu_delete_small_page(uintptr_t coarse_table_address, uintptr_t address) {
 /** \fn void mmu_add_tiny_page(uintptr_t fine_table_address, uintptr_t from, uintptr_t to, uint32_t flags) {
  *  \brief Add a tiny page to a fine table
  *  \param fine_table_address The address of the fine table
- *  \param from The base address of the physical page
- *  \param to The base address of the virtual page
+ *  \param from The base address of the virtual page
+ *  \param to The base address of the physical page
  *  \param flags The flags used in the fine table
  */
 void mmu_add_tiny_page(uintptr_t fine_table_address, uintptr_t from,
