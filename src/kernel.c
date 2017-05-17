@@ -150,21 +150,30 @@ void kernel_main(uint32_t memory) {
 
     //We use a buffer to store the frameBuffer informations
     //Using malloc makes qemu crash
-    uint32_t fbBuffer[(sizeof(frameBuffer) + 16)/4 + 1];
-    frameBuffer* fb = (frameBuffer*)((uintptr_t)fbBuffer + (16 - ((uintptr_t)(fbBuffer) % 16)));
+    frameBuffer fb __attribute__((aligned (16)));
 
-    if(fb_initialize(fb,640,480,8) == FB_SUCCESS) {
+    if(fb_initialize(&fb,640,480,24) == FB_SUCCESS) {
         kernel_printf("Frame Buffer was correctly initialized\n");
     }
-    uintptr_t section_to = (uintptr_t)fb->bufferPtr >> 20;
+	kernel_printf("Ramsize: %x\n", __ram_size);
+	kernel_printf("B: %p\n", fb.bufferPtr);
+	kernel_printf("S: %x\n", fb.bufferPtr >> 20);
+	fb.bufferPtr &= ~0xC0000000;
+    uintptr_t section_to = (uintptr_t)fb.bufferPtr >> 20;
     mmu_add_section(0xf0004000,0x7FE00000,section_to << 20,0,0,AP_PRW_URW);
     mmu_add_section(0xf0004000,0x7FF00000,(section_to+1) << 20,0,0,AP_PRW_URW);
-    fb->bufferPtr = (fb->bufferPtr & 0x000FFFFF) | 0x7FE00000;
 
-    volatile uint16_t* frame = (uint16_t*)fb->bufferPtr;
-    for(int i = 0; i<640*480; i++) {
-        *(frame+i) = 0x5555;
+    fb.bufferPtr = (fb.bufferPtr & 0x000FFFFF) | 0x7FE00000;
+	kernel_printf("V: %x\n", fb.bufferPtr);
+
+    volatile uint16_t* frame = (volatile uint16_t*)(intptr_t)fb.bufferPtr;
+	kernel_printf("SZ: %d\n", fb.bufferSize);
+	kernel_printf("P: %d\n", fb.pitch);
+    for(int i = 0; i<fb.bufferSize; i++) {
+		((uint8_t*) fb.bufferPtr)[i] = i%255;
     }
+
+	dmb();
 
 
 

@@ -42,8 +42,8 @@ bool fb_initialize(frameBuffer* fb, unsigned width, unsigned height, unsigned de
         fb->palette[i] = 0;
     }
 
-    uint32_t fbBusAddress = ((uint32_t)(fb) & ~0xC0000000) | GPU_MEM_BASE;
-    cleanDataCache();
+   	uint32_t fbBusAddress = ((uint32_t)(fb) & ~0xC0000000) | GPU_MEM_BASE;
+	cleanDataCache();
     dsb();
     uint32_t result = mbxWriteRead(MBX_CHANNEL_FB,fbBusAddress);
     dmb();
@@ -57,4 +57,3 @@ bool fb_initialize(frameBuffer* fb, unsigned width, unsigned height, unsigned de
 
     return FB_SUCCESS;
 }
-
