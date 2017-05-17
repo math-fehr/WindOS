@@ -1,5 +1,5 @@
 #include "../include/loadfont.h"
-#include "../../include/syscall.h"
+#include "../include/syscalls.h"
 #include <stdlib.h>
 #include <stdio.h>
 
