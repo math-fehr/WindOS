@@ -235,5 +235,8 @@ inline void invalidateInstructionCache() {
     asm volatile("mcr p15, 0, %0, c7, c5, 0" :: "r" (0) : "memory");
 }
 
+inline void invalidateDataCache() {
+    mcr(p15,0,c7,c6,0,0);
+}
 
 #endif
