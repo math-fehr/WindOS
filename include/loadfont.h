@@ -3,6 +3,6 @@
 
 #include <stdbool.h>
 
-bool loadFont(char* path_font, unsigned* width, unsigned* height, unsigned char* font);
+bool loadFont(char* path_font, unsigned* width, unsigned* height, unsigned char** font);
 
 #endif

@@ -6,7 +6,7 @@
 /**
  * width_ptr and height_ptr should be allocated, font musn't
  */
-bool loadFont(char* path_font, unsigned* width_ptr, unsigned* height_ptr, unsigned char* font) {
+bool loadFont(char* path_font, unsigned* width_ptr, unsigned* height_ptr, unsigned char** font) {
     FILE* f = fopen(path_font,"rb");
 
     if(f == NULL || width_ptr == NULL || height_ptr == NULL) {
@@ -27,13 +27,13 @@ bool loadFont(char* path_font, unsigned* width_ptr, unsigned* height_ptr, unsign
 
 	int off = *(int*)&info[14];
 
-    font = malloc(sizeof(unsigned char) * (img_width) * (img_height) * 3);
+    *font = malloc(sizeof(unsigned char) * (img_width) * (img_height) * 3);
 
     int row_padded = (img_width*3 + 3) & (~3);
 	unsigned char* data = malloc(row_padded);
 	fread(data, sizeof(unsigned char), off-43, f);
 
-    int temp;
+    unsigned char temp;
 	for (unsigned y=0;y<img_height;y++) {
 		fread(data, sizeof(unsigned char), row_padded, f);
 		for (unsigned x=0;x<img_width;x++) {
@@ -47,9 +47,15 @@ bool loadFont(char* path_font, unsigned* width_ptr, unsigned* height_ptr, unsign
                 temp = 0;
             }
 
-            *(font + 3*((x*height) + 16*y*width + (y%height)*16 + (x%width))) = temp;
-            *(font + 3*((x*height) + 16*y*width + (y%height)*16 + (x%width)) + 1) = temp;
-            *(font + 3*((x*height) + 16*y*width + (y%height)*16 + (x%width)) + 2) = temp;
+            unsigned char_x = x/width;
+            unsigned char_y = y/height;
+            unsigned character = char_y * 16 + char_x;
+            unsigned pos_x = x % width;
+            unsigned pos_y = y % height;
+
+            *(*font + 3*(character*width*height + pos_y*width + pos_x )) = temp;
+            *(*font + 3*(character*width*height + pos_y*width + pos_x ) +1) = temp;
+            *(*font + 3*(character*width*height + pos_y*width + pos_x ) +2) = temp;
 		}
 	}
     return true;
