@@ -8,6 +8,7 @@
 #include "syscalls.h"
 
 #define IOCTL_TERMMODE	0
+#define IOCTL_BLOCKING 	1
 
 #define TERMMODE_RAW	0
 #define TERMMODE_CANON 	1

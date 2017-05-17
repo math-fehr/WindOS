@@ -14,9 +14,10 @@ extern char** argv;
 extern char** envp;
 
 int main () {
+	printf("Init started\n");
 	int pid = _fork();
 
-	if (pid != 0) {
+	if (pid != 0) { // The father is the reaper.
 		int status;
 		while(1) {
 			pid_t res = _wait(&status);
@@ -25,19 +26,14 @@ int main () {
 			} else if (WIFSIGNALED(status)) {
 				printf("[INIT] Process %d killed by signal %d.\n", res, WTERMSIG(status));
 			}
-			if (pid == res) {
+			/*if (pid == res) {
 				printf("[INIT] The shell is dead. Long live the shell..\n");
 				main();
-			}
+			}*/
 		}
-	} else {
-		pid = _fork();
-		if (pid == 0) {
-			while (1) {}
-		} else {
-			char* argv_wesh[] = {"/bin/wesh", NULL};
-			char* envp_wesh[] = {"PATH=/bin", NULL};
-			execve("/bin/wesh", argv_wesh, envp_wesh);
-		}
+	} else { // process 1
+		char* argv_wesh[] = {"/bin/miniterm",NULL};
+		char* envp_wesh[] = {NULL};
+		execve("/bin/miniterm", argv_wesh, envp_wesh);
 	}
 }

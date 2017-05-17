@@ -2,6 +2,7 @@
 #include "scheduler.h"
 #include <errno.h>
 #include "syscalls.h"
+#include "../include/termfeatures.h"
 
 inode_t fd_open_inodes[1024];
 bool used[1024];
@@ -72,10 +73,15 @@ int svc_ioctl(int fd, int cmd, int arg) {
 		return -EBADF;
 	}
 
-	if (p->fd[fd].inode->op->ioctl == NULL) {
-		return -1;
+	if (cmd == IOCTL_BLOCKING) {
+		p->fd[fd].read_blocking = arg;
+		return 0;
+	} else {
+		if (p->fd[fd].inode->op->ioctl == NULL) {
+			return -1;
+		}
+		return p->fd[fd].inode->op->ioctl(*p->fd[fd].inode, cmd, arg);
 	}
-	return p->fd[fd].inode->op->ioctl(*p->fd[fd].inode, cmd, arg);
 }
 
 off_t svc_lseek(int fd_i, off_t offset, int whence) {
@@ -153,7 +159,7 @@ uint32_t svc_close(uint32_t fd) {
 	|| p->fd[fd].position < 0) {
 		return -EBADF;
 	}
-	kdebug(D_SYSCALL, 2, "CLOSE %d %p\n", fd, p->fd[fd].dir_entry);
+	kdebug(D_SYSCALL, 2, "CLOSE %d %d\n", fd, p->fd[fd].inode->ref_count);
 
 
 
@@ -202,8 +208,9 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 		return -EBADF;
 	}
 
+
 	int n = vfs_fread(*p->fd[fd].inode, buf, cnt, p->fd[fd].position);
-	if (n == 0 && S_ISCHR(p->fd[fd].inode->st.st_mode)) {
+	if (n == 0 && p->fd[fd].read_blocking) {
 		// block the call.
 		p->status = status_blocked_svc;
 		return 0;
@@ -333,6 +340,7 @@ int svc_openat(int dirfd, char* path_c, int flags) {
 	p->fd[i].position = 0;
 	p->fd[i].dir_entry = NULL;
 	p->fd[i].inode = load_inode(ino);
+	p->fd[i].read_blocking = 0;
 	free(path);
 
 	p->fd[i].flags = flags;
@@ -346,6 +354,10 @@ int svc_openat(int dirfd, char* path_c, int flags) {
 			p->fd[i].inode->op->resize(*p->fd[i].inode, 0);
 			p->fd[i].inode->st.st_size = 0;
 		}
+	}
+
+	if ((S_ISCHR(p->fd[i].inode->st.st_mode)) || (S_ISFIFO(p->fd[i].inode->st.st_mode))) {
+		p->fd[i].read_blocking = 1;
 	}
 
 	kdebug(D_SYSCALL,5, "OPEN => %d\n", i);

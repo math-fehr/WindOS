@@ -8,6 +8,7 @@
 #include "../include/signals.h"
 
 
+char* get_framebuffer(int pid);
 int pipe(int pipefd[2]);
 char *basename(char *path);
 char *dirname(char *path);

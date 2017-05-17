@@ -28,9 +28,9 @@
 /** \def TTBCR_ALIGN
  * 	\brief Defines the frontier between user and kernel address space.
  *
- *	Here we choose 1GB/3GB split.
+ *	Here we choose 2GB/2GB split.
  */
-#define TTBCR_ALIGN TTBCR_ALIGN_4K
+#define TTBCR_ALIGN 1
 
 /**	\def MAX_PROCESSES
  * 	\brief Maximum number of processes that can be handled

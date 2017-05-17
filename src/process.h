@@ -40,6 +40,7 @@ typedef struct {
     int position; ///< Cursor position in the file.
 	vfs_dir_list_t* dir_entry; ///< If the inode is a directory, store it's entries.
 	int flags; ///< Open flags.
+	int read_blocking;
 } fd_t;
 
 /** \enum status_process
@@ -84,6 +85,7 @@ typedef struct {
 	inode_t cwd; ///< Current working directory.
 	char* name; ///< Process name.
 	signal_handler_t sighandlers[N_SIGNALS];
+	bool allocated_framebuffer;
 } process;
 
 #define ELF_ABI_SYSTEMV 0

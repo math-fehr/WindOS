@@ -36,6 +36,9 @@ superblock_t* dev_initialize (int id) {
     return res;
 }
 
+#include "framebuffer.h"
+#include "fb.h"
+extern frameBuffer* kernel_framebuffer;
 
 /** \fn int dev_ioctl (inode_t from, int cmd, int arg)
  * 	\brief Modifies the attributes of a device.
@@ -49,6 +52,24 @@ int dev_ioctl (inode_t from, int cmd, int arg) {
 		if (cmd == 0) { // 0 is the set mode command.
 			serial_setmode(arg);
 			return 0;
+		}
+	} else if (from.st.st_ino == DEV_FB) {
+		switch (cmd) {
+			case FB_WIDTH:
+				return kernel_framebuffer->width;
+				break;
+			case FB_HEIGHT:
+				return kernel_framebuffer->height;
+				break;
+			case FB_OPEN:
+				return fb_open(get_current_process_id());
+				break;
+			case FB_CLOSE:
+				return fb_close(get_current_process_id());
+				break;
+			case FB_SHOW:
+				return fb_show(get_current_process_id());
+				break;
 		}
 	}
 	return -1;
@@ -71,6 +92,7 @@ vfs_dir_list_t* dev_append_elem (inode_t inode, char* name, vfs_dir_list_t* lst)
     return res;
 }
 
+
 /**	\fn vfs_dir_list_t* dev_lsdir (inode_t from)
  *	\brief List the content of a directory.
  *	\param from The explored inode.
@@ -82,11 +104,16 @@ vfs_dir_list_t* dev_lsdir (inode_t from) {
         vfs_dir_list_t* res = NULL;
 
         inode_t r;
-        r.st.st_ino = DEV_NULL;
-        r.st.st_mode = S_IFCHR | S_IRWXU | S_IRWXO | S_IRWXG;
-        r.st.st_size = 0;
+        r.st.st_ino = DEV_FB;
+        r.st.st_mode = S_IFREG | S_IRWXU | S_IRWXO | S_IRWXG;
+        r.st.st_size = kernel_framebuffer->bufferSize;
         r.sb = from.sb;
         r.op = &dev_inode_operations;
+        res = dev_append_elem(r, "fb", res);
+
+        r.st.st_size = 0;
+        r.st.st_ino = DEV_NULL;
+        r.st.st_mode = S_IFCHR | S_IRWXU | S_IRWXO | S_IRWXG;
         res = dev_append_elem(r, "null", res);
 
         r.st.st_ino = DEV_ZERO;
@@ -142,6 +169,15 @@ int dev_fread (inode_t from, char* buf, int size, int pos) {
             return size;
         case DEV_SERIAL:
             return serial_readline(buf, size);
+		case DEV_FB:
+			if (size+pos > kernel_framebuffer->bufferSize) {
+				size = kernel_framebuffer->bufferSize - pos;
+			}
+			if (size > 0) {
+				memcpy(buf, kernel_framebuffer->bufferPtr+pos, size);
+				return size;
+			}
+			return 0;
     }
 	errno = EINVAL;
     return -1;
@@ -164,6 +200,16 @@ int dev_fwrite(inode_t from, char* buf, int size, int pos) {
                 serial_putc(buf[i]);
             }
             return size;
+		case DEV_FB:
+			if (size+pos > kernel_framebuffer->bufferSize) {
+				size = kernel_framebuffer->bufferSize - pos;
+			}
+			if (size > 0 && fb_has_focus(get_current_process_id())) {
+				memcpy(kernel_framebuffer->bufferPtr+pos, buf, size);
+				return size;
+			} else {
+				return 0;
+			}
         default:
 			errno = EINVAL;
             return -1;

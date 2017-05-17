@@ -78,10 +78,10 @@ $(BUILD)fs.img: $(RAMFS_OBJ)
 										$(BUILD)fs.ren $(BUILD)fs.img
 
 run: $(USR_BIN) $(TARGET_QEMU)
-	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -monitor stdio -serial pty -serial pty
+	$(QEMU) -kernel $(TARGET_QEMU) -m 1024 -M raspi2 -monitor stdio -serial pty -serial pty
 
 runs: $(USR_BIN) $(TARGET_QEMU)
-	$(QEMU) -kernel $(TARGET_QEMU) -m 256 -M raspi2 -serial pty -serial stdio 2>/dev/null
+	$(QEMU) -kernel $(TARGET_QEMU) -m 1024 -M raspi2 -serial pty -serial stdio 2>/dev/null
 
 
 minicom:

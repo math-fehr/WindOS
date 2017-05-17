@@ -15,6 +15,34 @@ int argc;
 char **argv;
 char **environ;
 
+int _getpid() {
+	int res;
+	asm volatile(
+				"push 	{r7}\n"
+				"ldr 	r7, =#0x14\n"
+				"svc 	#0\n"
+				"pop	{r7}\n"
+				"mov 	%0, r0\n" : "=r" (res) : :);
+	return res;
+}
+
+char* get_framebuffer(int pid) {
+	char* res;
+	asm volatile(
+				"push 	{r7}\n"
+				"ldr 	r0, %1\n"
+				"ldr 	r7, =#0x42\n"
+				"svc 	#0\n"
+				"pop	{r7}\n"
+				"mov 	%0, r0\n" : "=r" (res) : "m" (pid) :);
+	if ((int)(intptr_t)res < 0) {
+		errno = -(int)(intptr_t)res;
+		return NULL;
+	}
+	return res;
+}
+
+
 int pipe(int pipefd[2]) {
 	int res;
 	asm volatile(
