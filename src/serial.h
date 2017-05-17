@@ -7,6 +7,9 @@
 #include "gpio.h"
 #include "timer.h"
 
+#include "process.h"
+#include "scheduler.h"
+
 /** \def AUX_BASE
  * 	\brief Base address of AUX registers.
  */

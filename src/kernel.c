@@ -99,6 +99,12 @@ void blink(int n) {
 	GPIO_setPinValue(GPIO_LED_PIN, true);
 }
 
+
+
+//We use a buffer to store the frameBuffer informations
+frameBuffer* kernel_framebuffer;
+uintptr_t framebuffer_phy_addr;
+
 /** \fn void kernel_main(uint32_t memory)
  * 	\brief Kernel main function.
  *
@@ -146,39 +152,81 @@ void kernel_main(uint32_t memory) {
                   mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
 
 
-
-
-    //We use a buffer to store the frameBuffer informations
-    //Using malloc makes qemu crash
-    uint32_t fbBuffer[(sizeof(frameBuffer) + 16)/4 + 1];
-    frameBuffer* fb = (frameBuffer*)((uintptr_t)fbBuffer + (16 - ((uintptr_t)(fbBuffer) % 16)));
-
-    if(fb_initialize(fb,640,480,24) == FB_SUCCESS) {
-        kernel_printf("Frame Buffer was correctly initialized\n");
-    }
-    uintptr_t section_to = (uintptr_t)fb->bufferPtr >> 20;
-    mmu_add_section(0xf0004000,0x7FE00000,section_to << 20,0,0,AP_PRW_URW);
-    mmu_add_section(0xf0004000,0x7FF00000,(section_to+1) << 20,0,0,AP_PRW_URW);
-    fb->bufferPtr = (fb->bufferPtr & 0x000FFFFF) | 0x7FE00000;
-
-    volatile uint8_t* frame = (uint8_t*)fb->bufferPtr;
-    for(int i = 0; i<fb->bufferSize; i++) {
-        frame[i] = i % 256;
-    }
-    dmb();
-
-
-
-
-
-  	asm volatile("mrs r0,cpsr\n"
-  				 "orr r0,r0,#0x80\n"
-  				 "msr cpsr_c,r0\n");
-
+	asm volatile("mrs r0,cpsr\n"
+				 "orr r0,r0,#0x80\n"
+				 "msr cpsr_c,r0\n");
 	Timer_Setup();
 	Timer_SetLoad(TIMER_LOAD);
-    Timer_Enable();
+	Timer_Enable();
 
+
+	kernel_framebuffer = memalign(16,sizeof(frameBuffer));
+
+    if(fb_initialize(kernel_framebuffer,1024,768,24) == FB_SUCCESS) {
+        kernel_printf("Frame Buffer was correctly initialized\n");
+    }
+	kernel_printf("Ramsize: %x\n", __ram_size);
+	kernel_printf("B: %p\n", kernel_framebuffer->bufferPtr);
+	kernel_printf("S: %x\n", kernel_framebuffer->bufferPtr >> 20);
+	kernel_framebuffer->bufferPtr &= ~0xC0000000;
+	framebuffer_phy_addr = kernel_framebuffer->bufferPtr;
+    uintptr_t section_to = (uintptr_t)kernel_framebuffer->bufferPtr >> 20;
+    mmu_add_section(0xf0004000,0xFFC00000,section_to << 20,0,0,AP_PRW_URW);
+    mmu_add_section(0xf0004000,0xFFD00000,(section_to+1) << 20,0,0,AP_PRW_URW);
+    mmu_add_section(0xf0004000,0xFFE00000,(section_to+2) << 20,0,0,AP_PRW_URW);
+    mmu_add_section(0xf0004000,0xFFF00000,(section_to+3) << 20,0,0,AP_PRW_URW);
+
+    kernel_framebuffer->bufferPtr = (kernel_framebuffer->bufferPtr & 0x000FFFFF) | 0xFFC00000;
+	kernel_printf("V: %x\n", kernel_framebuffer->bufferPtr);
+
+    volatile uint16_t* frame = (volatile uint16_t*)(intptr_t)kernel_framebuffer->bufferPtr;
+	kernel_printf("SZ: %d\n", kernel_framebuffer->bufferSize);
+	kernel_printf("%dx%d\n", kernel_framebuffer->width, kernel_framebuffer->height);
+	kernel_printf("P: %d\n", kernel_framebuffer->pitch);
+	char* pos = kernel_framebuffer->bufferPtr;
+
+	int n_1 = Timer_GetTime();
+	int n_lines = 0;
+    for(int i = 0; i<kernel_framebuffer->bufferSize; i+=3) {
+		int r,g,b;
+		int j = (i - 17*n_lines) % 255;
+		if (j < 42) {
+			r = 255;
+			g = j*6;
+			b = 0;
+		} else if (j < 2*42) {
+			r = 255+(42-j)*6;
+			g = 255;
+			b = 0;
+		} else if (j < 3*42) {
+			r = 0;
+			g = 255;
+			b = (j-2*42)*6;
+		} else if (j < 4*42) {
+			r = 0;
+			g = 255+(3*42-j)*6;
+			b = 255;
+		} else if (j < 5*42) {
+			r = (j-4*42)*6;
+			g = 0;
+			b = 255;
+		} else {
+			r = 255;
+			g = 0;
+			b = 255 + (5*42-j)*6;
+		}
+		((uint8_t*) kernel_framebuffer->bufferPtr)[i] = r;
+		((uint8_t*) kernel_framebuffer->bufferPtr)[i+1] = g;
+		((uint8_t*) kernel_framebuffer->bufferPtr)[i+2] = b;
+
+		if (i % kernel_framebuffer->pitch == 0) {
+			n_lines++;
+		}
+    }
+	kernel_printf("Buffer|position: %p\n", kernel_framebuffer->bufferPtr);
+	kernel_printf("Timer: %d\n", Timer_GetTime() - n_1);
+
+	dmb();
     //USPiInitialize();
 
 

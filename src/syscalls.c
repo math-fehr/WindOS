@@ -28,10 +28,12 @@ bool his_own(process *p, void* pointer) {
 	return (((uintptr_t)pointer) < __ram_size) && (pointer != NULL); // no further check.
 }
 
-uint32_t svc_exit() {
+uint32_t svc_exit(int code) {
     int current_process_id = get_current_process_id();
 	kdebug(D_SYSCALL, 2, "Program %d wants to quit (switch him to zombie state)\n", current_process_id);
-	kill_process(current_process_id, 0);
+
+	int wstatus = (code << 8);
+	kill_process(current_process_id, wstatus);
     process* p = get_next_process();
 	if (p == NULL) {
 		kdebug(D_SYSCALL, 10, "The last process has died. The end is near.\n");
@@ -96,6 +98,15 @@ uint32_t svc_execve(char* path, const char** argv, const char** envp) {
 		} else {
 			new_p->fd[i].dir_entry = NULL;
 			new_p->fd[i].inode = NULL;
+		}
+	}
+
+
+	for (int i=0;i<32;i++) {
+		if ((new_p->sighandlers[i].handler != SIG_DFL) && (new_p->sighandlers[i].handler != SIG_IGN)) {
+			new_p->sighandlers[i].handler = SIG_DFL;
+		} else {
+			new_p->sighandlers[i] = p->sighandlers[i];
 		}
 	}
 
@@ -241,6 +252,10 @@ uint32_t svc_fork() {
 	copy->name		= malloc(strlen(p->name)+1);
 	strcpy(copy->name, p->name);
 
+	for (int i=0;i<32;i++) {
+		copy->sighandlers[i] = p->sighandlers[i];
+	}
+
 	int pid 		= sheduler_add_process(copy);
 	copy->parent_id = p->asid;
 	if (pid == -1) {
@@ -279,4 +294,74 @@ uint32_t svc_time(time_t *tloc) {
 		*tloc = timer_get_posix_time();
 		return *tloc;
 	}
+}
+
+int svc_kill(pid_t pid, int sig) {
+	process* p = get_current_process();
+	int own_pid = p->asid;
+	bool autokill = false;
+
+	if (!(sig == SIGTERM || sig == SIGKILL || sig == SIGSEGV)) {
+		p->ctx.r[0] = -EINVAL;
+		return 0;
+	}
+
+	process** lst = get_process_list();
+
+	siginfo_t signal;
+	signal.si_signo = sig;
+	signal.si_pid = own_pid;
+
+	int wstatus = (sig << 8) | 1;
+
+	if (pid > 0) {
+		if (lst[pid] != NULL && lst[pid]->status != status_zombie) {
+			p->ctx.r[0] = 0;
+			if (process_signal(lst[pid], signal)) {
+				kill_process(pid, wstatus);
+				if (pid == own_pid) {
+					autokill = true;
+				}
+			}
+		} else {
+			p->ctx.r[0] = -EINVAL;
+		}
+	} else if (pid == -1) {
+		p->ctx.r[0] = 0;
+		for (int i=1;i<MAX_PROCESSES;i++) {
+			if (lst[i] != NULL && lst[i]->status != status_zombie) {
+				if (process_signal(lst[i], signal)) {
+					kill_process(i, wstatus);
+					if (i == own_pid) {
+						autokill = true;
+					}
+				}
+			}
+		}
+	} else {
+		p->ctx.r[0] = -ESRCH;
+	}
+
+	if (autokill) {
+		get_next_process();
+	}
+	return 0;
+}
+
+int svc_sigaction(int signum, void (*handler)(int), siginfo_t* siginfo) {
+	process* p = get_current_process();
+	if (signum == SIGKILL) {
+		return -EINVAL;
+	} else if (signum == SIGSEGV || signum == SIGTERM) {
+		p->sighandlers[signum].handler = handler;
+		p->sighandlers[signum].user_siginfo = siginfo;
+		return 0;
+	} else {
+		return -EINVAL;
+	}
+}
+
+void svc_sigreturn() {
+	process* p = get_current_process();
+	p->ctx = p->old_ctx;
 }

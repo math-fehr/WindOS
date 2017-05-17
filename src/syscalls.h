@@ -17,12 +17,14 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <signal.h>
 
 #include "../include/dirent.h"
+#include "../include/signals.h"
 
 bool 	 his_own(process* p, void* pointer);
- 
-uint32_t svc_exit();
+
+uint32_t svc_exit(int code);
 uint32_t svc_sbrk(uint32_t ofs);
 uint32_t svc_fork();
 uint32_t svc_time(time_t* tloc);
@@ -32,7 +34,7 @@ char* 	 svc_getcwd(char* buf, size_t cnt);
 uint32_t svc_chdir(char* path);
 
 
-uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry);
-
-
+int svc_kill(pid_t pid, int sig);
+int svc_sigaction(int signum, void (*handler)(int), siginfo_t* siginfo);
+void svc_sigreturn();
 #endif

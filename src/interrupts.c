@@ -78,6 +78,7 @@ int count;
  */
 void interrupt_vector(void* user_context) {
     callInterruptHandlers();
+	serial_irq(); // refresh serial buffer
 
     kdebug(D_IRQ,3,"ENTREEIRQ\n");
     kdebug(D_IRQ,3, "=> %d.\n", get_current_process_id());
@@ -170,7 +171,7 @@ swi_beg:
 			res = svc_ioctl(ctx->r[0],ctx->r[1],ctx->r[2]);
 			break;
         case SVC_EXIT:
-			res = svc_exit();
+			res = svc_exit(ctx->r[0]);
 			break;
         case SVC_SBRK:
 			res = svc_sbrk(ctx->r[0]);
@@ -229,6 +230,18 @@ swi_beg:
 		case SVC_DUP2:
 			res = svc_dup2(ctx->r[0], ctx->r[1]);
 			break;
+		case SVC_KILL:
+			res = svc_kill(ctx->r[0], ctx->r[1]);
+			break;
+		case SVC_SIGACTION:
+			res = svc_sigaction(ctx->r[0],ctx->r[1],ctx->r[2]);
+			break;
+		case SVC_SIGRETURN:
+			svc_sigreturn();
+			break;
+		case SVC_PIPE:
+			res = svc_pipe((int*)ctx->r[0]);
+			break;
         default:
         kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", ctx->r[7]);
 		while(1) {}
@@ -236,6 +249,8 @@ swi_beg:
 
 	if ((ctx->r[7] == SVC_EXIT)
 	|| 	(ctx->r[7] == SVC_EXECVE)
+	|| 	(ctx->r[7] == SVC_SIGRETURN)
+	|| 	(ctx->r[7] == SVC_KILL)
     ||	(ctx->r[7] == SVC_WAITPID && res == (uint32_t)-1)
 	||  (p->status == status_blocked_svc)) {
 		p = get_current_process();
@@ -359,6 +374,20 @@ void __attribute__ ((interrupt("ABORT"))) prefetch_abort_vector(void* data) {
 	uint32_t status = reg & 0xF;
 
 	kdebug(D_IRQ, 10, "\"%s\" occured.\n", messages[status]);
+
+
+	if ((ctx->cpsr & 0x1F) == 0x10) {
+		kill_process(get_current_process_id(), -1); //we are sure a running process exist
+		process* p = get_next_process();
+		if (p == NULL) {
+			kdebug(D_IRQ, 10, "No process left.\n");
+			while(1) {}
+		}
+		kdebug(D_IRQ, 10, "Switching to %d.\n", get_current_process_id());
+		p = get_current_process();
+		mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
+		*ctx = p->ctx; // Copy next process ctx
+	}
 	kern_debug();
 
     while(1);
@@ -398,7 +427,7 @@ void data_abort_vector(void* data) {
 		bool wnr = reg & (1 << 11);
 
 		kdebug(D_IRQ, 10, "\"%s\" occured on domain %d. (w=%d)\n", messages[status], domain, wnr);
-		kern_debug();
+
 		kill_process(get_current_process_id(), -1); //we are sure a running process exist
 		process* p = get_next_process();
 		if (p == NULL) {

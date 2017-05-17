@@ -7,7 +7,6 @@
 #include <stdarg.h>
 
 #include "cstubs.h"
-#include "serial.h"
 
 /** \def GPIO_LED_PIN
  * 	The number of the pin holding the raspberry pi ACT LED.

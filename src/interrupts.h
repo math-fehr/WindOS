@@ -30,10 +30,14 @@
 #define 	SVC_TIME 		0x0d
 #define     SVC_LSEEK       0x13
 #define     SVC_FSTAT       0x1c
+#define 	SVC_KILL		0x25
 #define 	SVC_DUP			0x29
+#define 	SVC_PIPE		0x2a
 #define     SVC_SBRK        0x2d
 #define 	SVC_IOCTL 		0x36
 #define 	SVC_DUP2 		0x3f
+#define 	SVC_SIGACTION 	0x43
+#define 	SVC_SIGRETURN 	0x77
 #define 	SVC_GETCWD 		0xb7
 #define 	SVC_GETDENTS 	0x4e
 #define 	SVC_OPENAT 		0x127

@@ -20,7 +20,11 @@ int main () {
 		int status;
 		while(1) {
 			pid_t res = _wait(&status);
-			//printf("[INIT] Process %d exited with status %d.\n", res, status);
+			if (WIFEXITED(status)) {
+				printf("[INIT] Process %d exited with status %d.\n", res, WEXITSTATUS(status));
+			} else if (WIFSIGNALED(status)) {
+				printf("[INIT] Process %d killed by signal %d.\n", res, WTERMSIG(status));
+			}
 			if (pid == res) {
 				printf("[INIT] The shell is dead. Long live the shell..\n");
 				main();

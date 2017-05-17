@@ -86,7 +86,7 @@ void paging_print_status() {
 		fl = fl->next;
 	}
 	bitmap[tot_pages] = 0;
-	kdebug(D_KERNEL,3,"%s\n", bitmap);
+	kernel_printf("%s\n", bitmap);
 }
 
 /**	\fn page_list_t* paging_allocate(int n_pages)
@@ -148,7 +148,7 @@ page_list_t* paging_allocate(int n_pages) {
 	} else {
 		kdebug(D_KERNEL, 1, "%d/%d pages in use.\n", used_pages, tot_pages);
 	}
-	paging_print_status();
+	//paging_print_status();
 	return result;
 }
 
@@ -170,7 +170,7 @@ void paging_free(int n_pages, int address) {
 
 	free_list = insertion(elem, free_list);
 	kdebug(D_KERNEL, 1, "%d/%d pages in use.\n", used_pages, tot_pages);
-	paging_print_status();
+	//paging_print_status();
 }
 
 

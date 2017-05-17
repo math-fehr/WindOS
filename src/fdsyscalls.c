@@ -41,6 +41,16 @@ inode_t* load_inode(inode_t val) {
  *	\return true on success. false if this inode is not found.
  */
 bool unload_inode(inode_t* val) {
+	// Virtual pipe
+	if (val->st.st_mode == S_IFIFO && val->st.st_dev == -1) {
+		val->ref_count--;
+		if (val->ref_count == 0) {
+			free_pipe(val->st.st_ino);
+			free(val);
+		}
+		return true;
+	}
+
 	int i = ((intptr_t)val - (intptr_t)fd_open_inodes)/sizeof(inode_t);
 
 	if (used[i]) {
@@ -144,6 +154,8 @@ uint32_t svc_close(uint32_t fd) {
 		return -EBADF;
 	}
 	kdebug(D_SYSCALL, 2, "CLOSE %d %p\n", fd, p->fd[fd].dir_entry);
+
+
 
 	free_vfs_dir_list(p->fd[fd].dir_entry);
 	unload_inode(p->fd[fd].inode);
@@ -482,4 +494,34 @@ int svc_dup2(int oldfd, int newfd) {
 	p->fd[newfd] = p->fd[oldfd];
 	p->fd[newfd].inode->ref_count++;
 	return newfd;
+}
+
+
+int svc_pipe(int pipefd[2]) {
+	process* p = get_current_process();
+
+	int inputfd=0, outputfd=0;
+	for (;(p->fd[inputfd].position != -1) && (inputfd<MAX_OPEN_FILES);inputfd++);
+	for (;(p->fd[outputfd].position != -1 || inputfd == outputfd) && (outputfd<MAX_OPEN_FILES);outputfd++);
+
+	if (outputfd == MAX_OPEN_FILES) {
+		return -ENFILE;
+	}
+
+	p->fd[inputfd].position = 0;
+	inode_t* ino = malloc(sizeof(inode_t));
+	inode_t res = mkpipe();
+	*ino = res;
+	ino->ref_count = 2;
+	p->fd[inputfd].inode = ino;
+	p->fd[inputfd].dir_entry = NULL;
+	p->fd[outputfd] = p->fd[inputfd];
+
+
+	p->fd[inputfd].flags = O_WRONLY;
+	p->fd[outputfd].flags = O_RDONLY;
+
+	pipefd[0] = outputfd; // Read end of the pipe.
+	pipefd[1] = inputfd; // Write end of the pipe.
+	return 0;
 }
