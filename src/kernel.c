@@ -29,6 +29,7 @@
 #include "procfs.h"
 #include "fdsyscalls.h"
 #include "framebuffer.h"
+#include "fb.h"
 
 extern void start_mmu(uint32_t ttl_address, uint32_t flags);
 
@@ -162,7 +163,7 @@ void kernel_main(uint32_t memory) {
 
 	kernel_framebuffer = memalign(16,sizeof(frameBuffer));
 
-    if(fb_initialize(kernel_framebuffer,1024,768,24) == FB_SUCCESS) {
+    if(fb_initialize(kernel_framebuffer,1024,768,24,1+MAX_WINDOWS*768) == FB_SUCCESS) {
         kernel_printf("Frame Buffer was correctly initialized\n");
     }
 	kernel_printf("Ramsize: %x\n", __ram_size);
@@ -171,17 +172,19 @@ void kernel_main(uint32_t memory) {
 	kernel_framebuffer->bufferPtr &= ~0xC0000000;
 	framebuffer_phy_addr = kernel_framebuffer->bufferPtr;
     uintptr_t section_to = (uintptr_t)kernel_framebuffer->bufferPtr >> 20;
-    mmu_add_section(0xf0004000,0xFFC00000,section_to << 20,0,0,AP_PRW_URW);
-    mmu_add_section(0xf0004000,0xFFD00000,(section_to+1) << 20,0,0,AP_PRW_URW);
-    mmu_add_section(0xf0004000,0xFFE00000,(section_to+2) << 20,0,0,AP_PRW_URW);
-    mmu_add_section(0xf0004000,0xFFF00000,(section_to+3) << 20,0,0,AP_PRW_URW);
+	int taille_sections = (1+MAX_WINDOWS*kernel_framebuffer->bufferSize) >> 20;
 
-    kernel_framebuffer->bufferPtr = (kernel_framebuffer->bufferPtr & 0x000FFFFF) | 0xFFC00000;
+	for (int i=0;i<taille_sections;i++) {
+    	mmu_add_section(0xf0004000,0xFFF00000-(taille_sections << 20)+i*(1<<20),(section_to << 20)+i*(1<<20),0,0,AP_PRW_URW);
+	}
+
+    kernel_framebuffer->bufferPtr = (kernel_framebuffer->bufferPtr & 0x000FFFFF) | (0xFFF00000-(taille_sections << 20));
 	kernel_printf("V: %x\n", kernel_framebuffer->bufferPtr);
 
     volatile uint16_t* frame = (volatile uint16_t*)(intptr_t)kernel_framebuffer->bufferPtr;
 	kernel_printf("SZ: %d\n", kernel_framebuffer->bufferSize);
 	kernel_printf("%dx%d\n", kernel_framebuffer->width, kernel_framebuffer->height);
+	kernel_printf("%dx%d\n", kernel_framebuffer->virtualWidth, kernel_framebuffer->virtualHeight);
 	kernel_printf("P: %d\n", kernel_framebuffer->pitch);
 	char* pos = kernel_framebuffer->bufferPtr;
 
@@ -215,14 +218,17 @@ void kernel_main(uint32_t memory) {
 			g = 0;
 			b = 255 + (5*42-j)*6;
 		}
-		((uint8_t*) kernel_framebuffer->bufferPtr)[i] = r;
-		((uint8_t*) kernel_framebuffer->bufferPtr)[i+1] = g;
-		((uint8_t*) kernel_framebuffer->bufferPtr)[i+2] = b;
+		((uint8_t*) kernel_framebuffer->bufferSize+kernel_framebuffer->bufferPtr)[i] = r;
+		((uint8_t*) kernel_framebuffer->bufferSize+kernel_framebuffer->bufferPtr)[i+1] = g;
+		((uint8_t*) kernel_framebuffer->bufferSize+kernel_framebuffer->bufferPtr)[i+2] = b;
 
 		if (i % kernel_framebuffer->pitch == 0) {
 			n_lines++;
 		}
     }
+
+	memcpy(kernel_framebuffer->bufferPtr, kernel_framebuffer->bufferPtr+kernel_framebuffer->bufferSize, kernel_framebuffer->bufferSize);
+
 	kernel_printf("Buffer|position: %p\n", kernel_framebuffer->bufferPtr);
 	kernel_printf("Timer: %d\n", Timer_GetTime() - n_1);
 
