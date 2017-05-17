@@ -24,6 +24,11 @@ int main() {
 	} else {
 		f = fopen("/surprise.bmp", "rb");
 	}
+
+    if(f == NULL) {
+        return -1;
+    }
+
 	unsigned char info[54];
 	fread(info, sizeof(unsigned char), 54, f);
 
@@ -31,7 +36,7 @@ int main() {
     int height = *(int*)&info[22];
 	int off = *(int*)&info[14];
 
-	printf("w: %d\nh: %d\n o: %d\n", width, height, off);
+//	printf("w: %d\nh: %d\n o: %d\n", width, height, off);
 
 	int row_padded = (width*3 + 3) & (~3);
 	unsigned char* data = malloc(row_padded);

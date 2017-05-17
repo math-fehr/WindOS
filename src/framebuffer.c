@@ -38,9 +38,9 @@ bool fb_initialize(frameBuffer* fb, unsigned width, unsigned height, unsigned de
     fb->bufferPtr = 0;
     fb->bufferSize = 0;
 
-    for(int i = 0; i<256; i++) {
-        fb->palette[i] = 0;
-    }
+    //for(int i = 0; i<256; i++) {
+    //    fb->palette[i] = i *i;
+    //}
 
    	uint32_t fbBusAddress = ((uint32_t)(mmu_vir2phy(fb)) & ~0xC0000000) | GPU_MEM_BASE;
 	cleanDataCache();
