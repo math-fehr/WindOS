@@ -70,6 +70,11 @@ int dev_ioctl (inode_t from, int cmd, int arg) {
 			case FB_SHOW:
 				return fb_show(get_current_process_id());
 				break;
+			case FB_FLUSH:
+				return fb_flush(get_current_process_id());
+				break;
+			case FB_BUFFERED:
+				return fb_buffered(get_current_process_id(),arg);
 		}
 	}
 	return -1;
@@ -173,8 +178,8 @@ int dev_fread (inode_t from, char* buf, int size, int pos) {
 			if (size+pos > kernel_framebuffer->bufferSize) {
 				size = kernel_framebuffer->bufferSize - pos;
 			}
-			if (size > 0) {
-				memcpy(buf, kernel_framebuffer->bufferPtr+pos, size);
+			if (size > 0 && fb_has_window(get_current_process_id())) {
+				memcpy(buf, kernel_framebuffer->bufferPtr+fb_offset(get_current_process_id())+pos, size);
 				return size;
 			}
 			return 0;
@@ -204,8 +209,12 @@ int dev_fwrite(inode_t from, char* buf, int size, int pos) {
 			if (size+pos > kernel_framebuffer->bufferSize) {
 				size = kernel_framebuffer->bufferSize - pos;
 			}
-			if (size > 0 && fb_has_focus(get_current_process_id())) {
-				memcpy(kernel_framebuffer->bufferPtr+pos, buf, size);
+			int pid = get_current_process_id();
+			if (size > 0 && fb_has_window(pid)) {
+				if ((!fb_is_buffered(pid)) && fb_has_focus(pid)){
+					memcpy(kernel_framebuffer->bufferPtr+pos, buf, size);
+				}
+				memcpy(kernel_framebuffer->bufferPtr+fb_offset(get_current_process_id())+pos, buf, size);
 				return size;
 			} else {
 				return 0;

@@ -31,6 +31,8 @@ typedef struct frameBuffer {
 /**
  * Initialize the frame buffer
  */
-bool fb_initialize(frameBuffer* fb, unsigned width, unsigned height, unsigned depth);
+bool fb_initialize(frameBuffer* fb, unsigned width, unsigned height, unsigned depth, unsigned vir_height);
+
+void fb_set_offset_y(unsigned offset);
 
 #endif // FRAMEBUFFER_H

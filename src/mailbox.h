@@ -15,6 +15,13 @@
 #define PROPTAG_END                0x00000000
 
 
+/**
+ * Values used in propBuffer.code
+ */
+#define PROPBUFF_REQUEST    0x00000000
+#define PROPBUFF_SUCCESS    0x80000000
+#define PROPBUFF_FAILURE    0x80000001
+
 /** \st propTagHeader
  *  \brief The header of the property tag
  */
