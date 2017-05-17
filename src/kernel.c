@@ -153,7 +153,7 @@ void kernel_main(uint32_t memory) {
     uint32_t fbBuffer[(sizeof(frameBuffer) + 16)/4 + 1];
     frameBuffer* fb = (frameBuffer*)((uintptr_t)fbBuffer + (16 - ((uintptr_t)(fbBuffer) % 16)));
 
-    if(fb_initialize(fb,640,480,8) == FB_SUCCESS) {
+    if(fb_initialize(fb,640,480,24) == FB_SUCCESS) {
         kernel_printf("Frame Buffer was correctly initialized\n");
     }
     uintptr_t section_to = (uintptr_t)fb->bufferPtr >> 20;
@@ -161,10 +161,11 @@ void kernel_main(uint32_t memory) {
     mmu_add_section(0xf0004000,0x7FF00000,(section_to+1) << 20,0,0,AP_PRW_URW);
     fb->bufferPtr = (fb->bufferPtr & 0x000FFFFF) | 0x7FE00000;
 
-    volatile uint16_t* frame = (uint16_t*)fb->bufferPtr;
-    for(int i = 0; i<640*480; i++) {
-        *(frame+i) = 0x5555;
+    volatile uint8_t* frame = (uint8_t*)fb->bufferPtr;
+    for(int i = 0; i<fb->bufferSize; i++) {
+        frame[i] = i % 256;
     }
+    dmb();
 
 
 
