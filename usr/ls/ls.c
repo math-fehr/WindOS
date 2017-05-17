@@ -34,6 +34,7 @@ int main() {
 	printf("argc: %d\n", argc);
 	for (int i=0;i<argc;i++)
 		printf("argv: %s\n", argv[i]);*/
+
 	if (argc > 1) {
 		while ((opt = getopt(argc,params,"ali")) != -1) {
 			switch (opt) {
@@ -147,8 +148,8 @@ int main() {
 		strcpy(fmt_dir, fmt);
 
 
-		sprintf(fmt_dir+pos, "\033[1m\033[38;5;12m%% %ds \033[0m", max_size);
-		sprintf(fmt+pos, "%% %ds ", max_size);
+		sprintf(fmt_dir+pos, "\033[1m\033[38;5;12m%%- %ds \033[0m", max_size);
+		sprintf(fmt+pos, "%%- %ds ", max_size);
 
 
 		int n_per_lines = c/fmt_size;
