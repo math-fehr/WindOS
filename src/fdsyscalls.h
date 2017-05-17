@@ -3,6 +3,7 @@
 
 #include "debug.h"
 #include "process.h"
+#include "pipefs.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,6 +32,7 @@ int 	 svc_ioctl(int fd, int cmd, int arg);
 
 int 	 svc_dup(int oldfd);
 int 	 svc_dup2(int oldfd, int newfd);
+int 	 svc_pipe(int pipefd[2]);
 
 uint32_t svc_getdents(uint32_t fd, struct dirent* user_entry);
 #endif

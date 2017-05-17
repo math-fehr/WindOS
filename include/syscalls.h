@@ -4,9 +4,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/stat.h>
-#include "../include/dirent.h" 
+#include "../include/dirent.h"
 #include "../include/signals.h"
 
+
+int pipe(int pipefd[2]);
 char *basename(char *path);
 char *dirname(char *path);
 void _exit(int error_code);

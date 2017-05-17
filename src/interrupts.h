@@ -32,6 +32,7 @@
 #define     SVC_FSTAT       0x1c
 #define 	SVC_KILL		0x25
 #define 	SVC_DUP			0x29
+#define 	SVC_PIPE		0x2a
 #define     SVC_SBRK        0x2d
 #define 	SVC_IOCTL 		0x36
 #define 	SVC_DUP2 		0x3f

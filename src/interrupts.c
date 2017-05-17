@@ -239,6 +239,9 @@ swi_beg:
 		case SVC_SIGRETURN:
 			svc_sigreturn();
 			break;
+		case SVC_PIPE:
+			res = svc_pipe((int*)ctx->r[0]);
+			break;
         default:
         kdebug(D_IRQ, 10, "Undefined SWI. %#02x\n", ctx->r[7]);
 		while(1) {}

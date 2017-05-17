@@ -198,7 +198,7 @@ bool process_signal(process* p, siginfo_t signal) {
 		return false;
 	} else {
 		p->old_ctx = p->ctx; // Save context.
-		p->ctx.r[15] = (intptr_t)p->sighandlers[sig].handler; // Call handler.
+		p->ctx.pc = (intptr_t)p->sighandlers[sig].handler; // Call handler.
 		intptr_t dest_addr = 0x80000000 + mmu_vir2phy_ttb((intptr_t)p->sighandlers[sig].user_siginfo, p->ttb_address);
 		memcpy((void*)dest_addr, &signal, sizeof(siginfo_t));
 		p->ctx.r[0] = sig;

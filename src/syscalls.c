@@ -349,9 +349,19 @@ int svc_kill(pid_t pid, int sig) {
 }
 
 int svc_sigaction(int signum, void (*handler)(int), siginfo_t* siginfo) {
-
+	process* p = get_current_process();
+	if (signum == SIGKILL) {
+		return -EINVAL;
+	} else if (signum == SIGSEGV || signum == SIGTERM) {
+		p->sighandlers[signum].handler = handler;
+		p->sighandlers[signum].user_siginfo = siginfo;
+		return 0;
+	} else {
+		return -EINVAL;
+	}
 }
 
 void svc_sigreturn() {
-
+	process* p = get_current_process();
+	p->ctx = p->old_ctx;
 }

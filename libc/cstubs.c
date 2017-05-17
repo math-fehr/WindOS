@@ -15,6 +15,21 @@ int argc;
 char **argv;
 char **environ;
 
+int pipe(int pipefd[2]) {
+	int res;
+	asm volatile(
+				"push 	{r7}\n"
+				"ldr 	r0, %1\n"
+				"ldr 	r7, =#0x2a\n"
+				"svc 	#0\n"
+				"pop	{r7}\n"
+				"mov 	%0, r0\n" : "=r" (res) : "m" (pipefd) :);
+	if (res < 0) {
+		errno = -res;
+		return -1;
+	}
+	return res;
+}
 
 int sigreturn() {
 	int res;
