@@ -227,13 +227,6 @@ void kernel_main(uint32_t memory) {
 	kernel_printf("Timer: %d\n", Timer_GetTime() - n_1);
 
 	dmb();
-
-
-
-
-
-
-
     //USPiInitialize();
 
 
