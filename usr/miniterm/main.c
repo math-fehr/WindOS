@@ -35,7 +35,7 @@ unsigned hspace(unsigned char* buffer, int h, int size, int offset, unsigned cha
 
 
 char drawcharacter(unsigned char* buffer, unsigned char* font, int h, int w, int offset, char character, unsigned char ctext, unsigned char cback) {
-    unsigned pos = h*w*character*3;
+    unsigned pos = h*w*character;
     unsigned char temp;
     for(int i = 0; i<h; i++) {
         for(int j = 0; j<w; j++) {
@@ -56,47 +56,228 @@ char drawcharacter(unsigned char* buffer, unsigned char* font, int h, int w, int
 
 unsigned line(char* text, int fd, unsigned char* font, int h, int w, unsigned char ctext,unsigned char cback) {
     unsigned drawnlines = 0;
-    drawnlines += vspace(fd,10,25);
+   //drawnlines += vspace(fd,10,25);
     unsigned drawncol = 0;
 
     unsigned char buff[3*1024*h];
     drawncol += hspace(buff,h,5,0,cback);
     while(*text) {
         drawncol += drawcharacter(buff,font,h,w,drawncol,*text++,ctext,cback);
-        hspace(buff,h,5,drawncol,25);
+        drawncol += hspace(buff,h,1,drawncol,cback);
     }
     hspace(buff,h,1024-drawncol,drawncol,cback);
     _write(fd,buff,3*1024*h);
     drawnlines += h;
-    drawnlines += vspace(fd,10,25);
+   // drawnlines += vspace(fd,10,25);
     return drawnlines;
 }
 
+#include "../../include/termfeatures.h"
+
+bool ischar(char i) {
+	return (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z');
+}
+
 int main() {
-	printf("Starting miniterm\n");
-    int fd = _openat(AT_FDCWD, "/dev/fb",O_RDWR);
+	printf("Starting miniterm and launching WESH\n");
+	int pts_output_pipe[2];
+	int pts_input_pipe[2];
+	pipe(pts_output_pipe);
+	pipe(pts_input_pipe);
 
-    unsigned height;
-    unsigned width;
-    unsigned char* font = NULL;
+	int pid = _fork();
+	if (pid == 0) {
+		dup2(pts_output_pipe[1], 1);
+		dup2(pts_input_pipe[0], 0);
+		_ioctl(1, IOCTL_BLOCKING, 1);
+		_ioctl(0, IOCTL_BLOCKING, 1);
 
-    loadFont("/fonts/font.bmp",&height,&width,&font);
+		char* argv_wesh[] = {"/bin/wesh",NULL};
+		char* envp_wesh[] = {"PATH=/bin/",NULL};
+		_execve("/bin/wesh", argv_wesh, envp_wesh);
+	} else {
+		int fd = _openat(AT_FDCWD, "/dev/fb",O_RDWR);
 
-    unsigned character = 'O';
-    unsigned char buff[3*1024*height];
-    for(int i = 0; i<height; i++) {
-        for(int j = 0; j<width; j++) {
-            buff[3*(i*1024 + j)] = *(font + 3*(character*height*width + i*width + j));
-            buff[3*(i*1024 + j)+1] = *(font + 3*(character*height*width + i*width + j)+1);
-            buff[3*(i*1024 + j)+2] = *(font + 3*(character*height*width + i*width + j)+2);
-        }
-    }
-    _write(fd,buff,3*1024*height);
-    //line("H",fd,font,height,width,0,255);
-    /* line("Hello World!",fd,font,height,width,125,255); */
-    /* line("Hello World!",fd,font,height,width,125,255); */
-    /* line("Hello World!",fd,font,height,width,125,255); */
+		int write_to_term_fd 	= pts_input_pipe[1];
+		int read_from_term_fd 	= pts_output_pipe[0];
 
-	_close(fd);
+		_ioctl(fd, FB_OPEN, 0);
+		_ioctl(fd, FB_SHOW, 0);
+		_ioctl(fd, FB_BUFFERED, 0);
 
+		unsigned height;
+		unsigned width;
+		unsigned char* font = NULL;
+
+		unsigned screen_height = _ioctl(fd, FB_HEIGHT, 0);
+		unsigned screen_width = _ioctl(fd, FB_WIDTH, 0);
+
+		loadFont("/fonts/font2.bmp",&width,&height,&font);
+
+		unsigned character = 2;
+		unsigned char buff[3*1024*height];
+		printf("%d %d\n", height, width);
+		for(int i = 0; i<height; i++) {
+			for(int j = 0; j<width; j++) {
+				buff[3*(i*1024 + j)] = *(font + 3*(character*height*width + i*width + j));
+				buff[3*(i*1024 + j)+1] = *(font + 3*(character*height*width + i*width + j)+1);
+				buff[3*(i*1024 + j)+2] = *(font + 3*(character*height*width + i*width + j)+2);
+			}
+		}
+		_write(fd,buff,3*1024*height);
+		int n;
+		char buffer[256];
+
+		int cursor_x = 0;
+		int cursor_y = 0;
+
+		int cursor_x_bak = 0;
+		int cursor_y_bak = 0;
+
+		int n_chars = screen_width/width;
+		int n_rows = screen_height/height;
+		printf("nchars: %d\nnlines: %d\n", n_chars, screen_height/height);
+		char lines[128][n_chars];
+
+		_ioctl(0, IOCTL_BLOCKING, 0);
+		_ioctl(read_from_term_fd, IOCTL_BLOCKING, 0);
+
+
+		term_raw_enable(true);
+		while (1) {
+			n = _read(0, buffer, 256); // Read serial input.
+			if (n > 0) {
+				printf("main read %d\n", n);
+				_write(write_to_term_fd, buffer, n);
+			}
+
+			n = _read(read_from_term_fd, buffer, 256);
+			if (n > 0) {
+				printf("Shell wrote %d chars. %d\n",n,cursor_y);
+				_lseek(fd, cursor_y*screen_width*3*height, SEEK_SET);
+				for (int i=0;i<n;i++) {
+					char c = buffer[i];
+
+					if (c == '\n' || c == '\r') {
+						printf("%c", c);
+					}
+					else if (c == '\033') { // escape sequence.
+						i++;
+						c = buffer[i];
+						if (c == '[') {  // [i1;i2;i3;i4res
+							int params[4];
+							int r=0;
+							char* pos=buffer+i+1;
+							char* end=pos;
+
+							while (!ischar(end[0])) {
+								end++;
+							}
+
+							while(!ischar(pos[0]) && sscanf(pos, "%d", params+r)>0) {
+								r++;
+								if (strchr(pos, ';') != NULL) {
+									pos = 1+strchr(pos,';');
+								} else {
+									pos = end;
+								}
+
+								if (pos>end) {
+									pos = end;
+								}
+							}
+
+							char status_report[16];
+							switch (pos[0]) {
+								case 'D':
+									cursor_x--;
+									break;
+								case 'n': // Device status deport
+									_write(write_to_term_fd, status_report,
+										sprintf("\033[%d;%dR", status_report, cursor_y, cursor_x));
+									break;
+								case 's':
+									cursor_x_bak = cursor_x;
+									cursor_y_bak = cursor_y;
+									break;
+								case 'u':
+									cursor_x = cursor_x_bak;
+									cursor_y = cursor_y_bak;
+									break;
+								case 'J':
+									if (params[0] == 0) { // From cursor to end
+										printf("Not implemented.\n");
+									} else if (params[0] == 1) { // From cursor to beg
+										printf("Not implemented.\n");
+									} else if (params[0] <= 3) { // Clear screen
+										for (int j=0;j<n_rows;j++) {
+											for (int i=0;i<n_chars;i++)
+												lines[j][i] = 0;
+											line(lines[j], fd, font, height, width, 255, 0);
+										}
+										cursor_x = 0;
+										cursor_y = 0;
+									} else {
+										printf("Not implemented.\n");
+									}
+								case 'K':
+									if (params[0] == 0) {
+										printf("Not implemented.\n");
+									} else if (params[0] == 1) {
+										printf("Not implemented.\n");
+									} else if (params[0] == 2) {
+										for (int i=0;i<n_chars;i++)
+											lines[cursor_y][i] = 0;
+										line(lines[cursor_y], fd, font, height, width, 255, 0);
+									}
+									break;
+								case 'f':
+								case 'H':
+									cursor_y = params[0];
+									cursor_x = params[1];
+									break;
+								case 'm':
+									//Not implemented
+									break;
+								default:
+									printf("Control char not implemented: %c\n", pos[0]);
+									break;
+							}
+
+							i = (int) (pos-buffer);
+
+
+							if (cursor_x < 0)
+								cursor_x++;
+							if (cursor_y < 0)
+								cursor_y++;
+							if (cursor_y >= n_rows)
+								cursor_y--;
+							if (cursor_x >= n_chars)
+								cursor_x--;
+						}
+					} else {
+						printf("%c", c);
+						lines[cursor_y][cursor_x] = buffer[i];
+						cursor_x++;
+					}
+					if (c == '\r' || c == '\n' || cursor_x == n_chars) {
+						line(lines[cursor_y], fd, font, height, width, 255, 0);
+
+						cursor_y++;
+						cursor_x=0;
+					}
+				}
+
+				if (cursor_x > 0)
+					line(lines[cursor_y], fd, font, height, width, 255, 0);
+
+
+				//_ioctl(fd, FB_FLUSH, 0);
+			}
+
+		}
+
+		_close(fd);
+	}
 }

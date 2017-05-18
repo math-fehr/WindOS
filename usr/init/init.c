@@ -32,8 +32,9 @@ int main () {
 			}*/
 		}
 	} else { // process 1
-		char* argv_wesh[] = {"/bin/miniterm",NULL};
-		char* envp_wesh[] = {NULL};
-		execve("/bin/miniterm", argv_wesh, envp_wesh);
+		printf("Forked\n");
+		char* argv_wesh[] = {"/bin/wesh",NULL};
+		char* envp_wesh[] = {"PATH=/bin/",NULL};
+		execve("/bin/wesh", argv_wesh, envp_wesh);
 	}
 }
