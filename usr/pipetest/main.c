@@ -9,8 +9,6 @@ int main() {
 	int read = fd[0];
 	int write = fd[1];
 
-
-
 	for (int i = 0; i < 10; i++) {
 		_write(write, "bonjour\n", strlen("bonjour\n"));
 	}

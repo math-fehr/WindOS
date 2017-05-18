@@ -29,6 +29,7 @@ bool loadFont(char* path_font, unsigned* width_ptr, unsigned* height_ptr, unsign
 
     *font = malloc(sizeof(unsigned char) * (img_width) * (img_height) * 3);
 
+	//printf(":%p\n", malloc(128));
     int row_padded = (img_width*3 + 3) & (~3);
 	unsigned char* data = malloc(row_padded);
 	fread(data, sizeof(unsigned char), off-54, f);
@@ -58,6 +59,7 @@ bool loadFont(char* path_font, unsigned* width_ptr, unsigned* height_ptr, unsign
             *(*font + 3*(character*width*height + pos_y*width + pos_x ) +2) = temp;
 		}
 	}
+	fclose(f);
 
     return true;
 }

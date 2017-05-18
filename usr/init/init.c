@@ -14,7 +14,7 @@ extern char** argv;
 extern char** envp;
 
 int main () {
-	printf("Init started\n");
+	printf("Init started %d\n");
 	int pid = _fork();
 
 	if (pid != 0) { // The father is the reaper.
@@ -32,9 +32,15 @@ int main () {
 			}*/
 		}
 	} else { // process 1
-		printf("Forked\n");
-		char* argv_wesh[] = {"/bin/wesh",NULL};
-		char* envp_wesh[] = {"PATH=/bin/",NULL};
-		execve("/bin/wesh", argv_wesh, envp_wesh);
+		pid = _fork();
+		if (pid == 0) {
+			char* argv_wesh[] = {"/bin/waitscreen",NULL};
+			char* envp_wesh[] = {NULL};
+			execve("/bin/waitscreen", argv_wesh, envp_wesh);
+		} else {
+			char* argv_wesh[] = {"/bin/wesh",NULL};
+			char* envp_wesh[] = {"PATH=/bin/",NULL};
+			execve("/bin/wesh", argv_wesh, envp_wesh);
+		}
 	}
 }

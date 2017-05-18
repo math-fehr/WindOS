@@ -23,7 +23,7 @@
 /**	\def TIMER_LOAD
  *	\brief Period of the ARM Timer.
  */
-#define TIMER_LOAD 500
+#define TIMER_LOAD 100
 
 /** \def TTBCR_ALIGN
  * 	\brief Defines the frontier between user and kernel address space.
