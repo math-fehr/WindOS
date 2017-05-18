@@ -99,7 +99,6 @@ int main() {
 		_execve("/bin/wesh", argv_wesh, envp_wesh);
 	} else {
 		int fd = _openat(AT_FDCWD, "/dev/fb",O_RDWR);
-
 		int write_to_term_fd 	= pts_input_pipe[1];
 		int read_from_term_fd 	= pts_output_pipe[0];
 
@@ -115,6 +114,7 @@ int main() {
 		unsigned screen_width = _ioctl(fd, FB_WIDTH, 0);
 
 		loadFont("/fonts/font2.bmp",&width,&height,&font);
+
 
 		unsigned character = 2;
 		unsigned char buff[3*1024*height];
@@ -136,10 +136,22 @@ int main() {
 		int cursor_x_bak = 0;
 		int cursor_y_bak = 0;
 
-		int n_chars = screen_width/width;
-		int n_rows = screen_height/height;
-		printf("nchars: %d\nnlines: %d\n", n_chars, screen_height/height);
-		char lines[128][n_chars+1];
+
+		int n_chars = screen_width/width-15;
+		int n_rows = 32;
+
+		printf("%d\n", n_chars);
+		perror("miniterm");
+
+		char* lines[32];
+		for (int i=0;i<32;i++) {
+			lines[i] = malloc(n_chars+1);
+			for (int j=0;j<n_chars-1;j++) {
+				lines[i][j] = ' ';
+			}
+			lines[i][n_chars-1] = 0;
+		}
+
 
 		_ioctl(0, IOCTL_BLOCKING, 0);
 		_ioctl(read_from_term_fd, IOCTL_BLOCKING, 0);
@@ -147,6 +159,7 @@ int main() {
 
 		term_raw_enable(true);
 		while (1) {
+			for(int i=0;i<1000000;i++);
 			if (_waitpid(pid, NULL, 1) > 0) {
 				//printf("Son exited\n");
 				break;
@@ -203,10 +216,12 @@ int main() {
 										sprintf("\033[%d;%dR", status_report, cursor_y, cursor_x));
 									break;
 								case 's':
+									printf("backing up\n");
 									cursor_x_bak = cursor_x;
 									cursor_y_bak = cursor_y;
 									break;
 								case 'u':
+									printf("restored\n");
 									cursor_x = cursor_x_bak;
 									cursor_y = cursor_y_bak;
 									break;
@@ -216,31 +231,33 @@ int main() {
 									} else if (params[0] == 1) { // From cursor to beg
 										printf("Not implemented.\n");
 									} else if (params[0] <= 3) { // Clear screen
-										printf("clear screen");
 										int r = _lseek(fd, 0, SEEK_SET);
 										//printf("%d\n",r);
+										printf("> clear\n");
 										for (int j=0;j<n_rows;j++) {
-											printf("%d\n",j);
-											memset(lines[j], 'B', n_chars);
-											lines[j][0] = 'B';
-											lines[j][n_chars] = 0;
+											printf("%d\n",fd);
+											for (int i=0;i<n_chars-1;i++)
+												lines[j][i] = ' ';
+											lines[j][n_chars-1] = 0;
 											line(lines[j], fd, font, height, width, 255, 0);
 										}
+										printf("> cleared\n");
 										_lseek(fd, 0, SEEK_SET);
 										cursor_x = 0;
 										cursor_y = 0;
 									} else {
 										printf("Not implemented.\n");
 									}
+									break;
 								case 'K':
 									if (params[0] == 0) {
 										printf("Not implemented.\n");
 									} else if (params[0] == 1) {
 										printf("Not implemented.\n");
 									} else if (params[0] == 2) {
-										printf("clear line");
-										memset(lines[cursor_y], ' ', n_chars);
-										lines[cursor_y][n_chars] = 0;
+										for (int i=0;i<n_chars;i++)
+											lines[cursor_y][i] = 0;
+										_lseek(fd, cursor_y*screen_width*3*height, SEEK_SET);
 										line(lines[cursor_y], fd, font, height, width, 255, 0);
 									}
 									break;
@@ -253,7 +270,7 @@ int main() {
 									//Not implemented
 									break;
 								default:
-									printf("Control char not implemented: %c\n", pos[0]);
+									printf("Control char not implemented: %c %d\n", pos[0], params[0]);
 									break;
 							}
 
@@ -266,13 +283,19 @@ int main() {
 								cursor_y++;
 							if (cursor_x >= n_chars)
 								cursor_x--;
+						} else {
+							printf("Failed reading control sequence: %c\n", buffer[i]);
 						}
 					} else {
-						printf("%c", c);
+						printf("|%c|", buffer[i]);
 						lines[cursor_y][cursor_x] = buffer[i];
 						cursor_x++;
 					}
+
+					printf("cx: %d cy: %d\n", cursor_x, cursor_y);
+
 					if (c == '\r' || c == '\n' || cursor_x == n_chars) {
+						_lseek(fd, cursor_y*screen_width*3*height, SEEK_SET);
 						line(lines[cursor_y], fd, font, height, width, 255, 0);
 
 						cursor_y++;
@@ -295,6 +318,7 @@ int main() {
 				}
 
 				if (cursor_x > 0) {
+					_lseek(fd, cursor_y*screen_width*3*height, SEEK_SET);
 					line(lines[cursor_y], fd, font, height, width, 255, 0);
 				}
 

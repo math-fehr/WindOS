@@ -119,6 +119,7 @@ off_t svc_lseek(int fd_i, off_t offset, int whence) {
 
 
 uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
+	//kernel_printf("SVC Write %d %d\n", fd, cnt);
 	//int fd = r[0];
 	if (fd >= MAX_OPEN_FILES
         || get_current_process()->fd[fd].position < 0)

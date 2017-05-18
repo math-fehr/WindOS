@@ -65,7 +65,6 @@ int main() {
 		perror("ls");
 		return 1;
 	} else {
-
 		struct dirent* entry = malloc(sizeof(struct dirent));
 		int max_size 	= 0;
 		int cur_size    = 0;
