@@ -68,8 +68,6 @@ int main() {
     int upsize = (height_frame - multiply*height)/2;
     int downsize = height_frame - upsize - multiply*height;
 
-    printf("\n%d %d %d %d",height_frame,width_frame,height,width);
-
     //We write the up and down borders
     for(int i = 0; i<upsize; i++) {
         _write(fd,buffer,3*width_frame);
@@ -102,7 +100,8 @@ int main() {
         }
     }
 
-	fgetc(stdin);
+    fclose(f);
+    fgetc(stdin);
 	_ioctl(fd, FB_CLOSE, 0);
 
 
