@@ -80,7 +80,7 @@ int svc_ioctl(int fd, int cmd, int arg) {
 		if (p->fd[fd].inode->op->ioctl == NULL) {
 			return -1;
 		}
-		return p->fd[fd].inode->op->ioctl(*p->fd[fd].inode, cmd, arg);
+        return p->fd[fd].inode->op->ioctl(*p->fd[fd].inode, cmd, arg);
 	}
 }
 
