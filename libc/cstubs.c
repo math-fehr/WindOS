@@ -15,6 +15,17 @@ int argc;
 char **argv;
 char **environ;
 
+int _time() {
+	int res;
+	asm volatile(
+				"push 	{r7}\n"
+				"ldr 	r7, =#0x0d\n"
+				"svc 	#0\n"
+				"pop	{r7}\n"
+				"mov 	%0, r0\n" : "=r" (res) : :);
+	return res;
+}
+
 int _getpid() {
 	int res;
 	asm volatile(

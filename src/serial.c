@@ -164,12 +164,14 @@ void serial_setmode(int arg) {
 void serial_irq() {
 	//kernel_printf("fifo: %d\n", (auxiliary->MU_STAT & 0x000F0000) >> 16);
 	while(auxiliary->MU_LSR & AUX_MULSR_DATA_READY) {
+		//kernel_printf("serial1 IRQ\n");
 		char c = auxiliary->MU_IO;
-		//kernel_printf("data ready: %c\n", c);
+		//kernel_printf("\ndata ready: %c\n", c);
 		if (c & 0x80) { // UTF-8 Symbol. Here we do a partial decoding, translating to ASCII.
 			char d = serial_readc();
 			c = (c << 6) | (d & 0x3F);
 		}
+
 
 		if (c == 1) { // Ctrl-A
 			kernel_printf("\nCurrent process: %d\n", get_current_process_id());
@@ -255,14 +257,19 @@ void serial_irq() {
  *	\bug Buffer overflow in canonical mode.
  */
 int serial_readline(char* buffer, int buffer_size) {
+	serial_irq();
 	if (read_buffer_index == 0) {
 		return 0;
 	}
 
 	if (mode == 0) {
+		//kernel_printf("%d %p %d %c\n", buffer_size, buffer, read_buffer_index, buffer[0]);
 		int sz = min(buffer_size, read_buffer_index);
 		memcpy(buffer, read_buffer, sz);
 		read_buffer_index -= sz;
+		for (int i=0;i<read_buffer_index;i++) {
+			read_buffer[i] = read_buffer[i+sz];
+		}
 		return sz;
 	}
 

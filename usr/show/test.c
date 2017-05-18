@@ -102,6 +102,10 @@ int main() {
         }
     }
 
+	fgetc(stdin);
+	_ioctl(fd, FB_CLOSE, 0);
+
+
     /*for (int y=0;y<height;y++) {
 		fread(data, sizeof(unsigned char), row_padded, f);
 		for (int x=0;x<width;x++) {

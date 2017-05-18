@@ -40,7 +40,7 @@ typedef struct {
     int position; ///< Cursor position in the file.
 	vfs_dir_list_t* dir_entry; ///< If the inode is a directory, store it's entries.
 	int flags; ///< Open flags.
-	int read_blocking;
+	bool read_blocking;
 } fd_t;
 
 /** \enum status_process

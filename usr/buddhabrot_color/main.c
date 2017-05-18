@@ -14,7 +14,7 @@ unsigned window_w;
 
 
 int main() {
-    
+
     int fd = _openat(AT_FDCWD, "/dev/fb", O_RDWR);
     if(fd < 0) {
         return -1;
@@ -44,7 +44,7 @@ int main() {
     unsigned temp_b[iteration_max_r*2];
 
     for(unsigned x = 0; x< window_w; x++) {
-        printf("%d\n", x);
+      //  printf("%d\n", x);
         for(unsigned y = 0; y<window_h; y++) {
             float c_r = x / zoom_x + x1;
             float c_i = y / zoom_y + y1;
@@ -121,12 +121,14 @@ int main() {
 
         }
 
-        if(!(x%10)) {
+        if(!(x%5)) {
             _write(fd,img,3*window_w*window_h);
             _lseek(fd,0,SEEK_SET);
         }
     }
+    _write(fd,img,3*window_w*window_h);
 
-        _write(fd,img,3*window_w*window_h);
-        return 0;
+	fgetc(stdin);
+	_ioctl(fd, FB_CLOSE, 0);
+    return 0;
 }

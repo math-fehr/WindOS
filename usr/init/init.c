@@ -34,6 +34,6 @@ int main () {
 	} else { // process 1
 		char* argv_wesh[] = {"/bin/wesh",NULL};
 		char* envp_wesh[] = {"PATH=/bin/",NULL};
-		execve("/bin/waitscreen", argv_wesh, envp_wesh);
+		execve("/bin/wesh", argv_wesh, envp_wesh);
 	}
 }

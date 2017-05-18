@@ -217,7 +217,7 @@ int kill_process(int const process_id, int wstatus) {
  *	- if a zombie child is found, free him and return immediately to parent.
  *	- if not, put the parent in wait status.
  */
-int wait_process(int const process_id, int target_pid, int* wstatus) {
+int wait_process(int const process_id, int target_pid, int* wstatus, int options) {
 	if (process_id >= MAX_PROCESSES || process_id < 0 || process_list[process_id] == NULL) {
 		return -1;
 	}
@@ -263,16 +263,19 @@ int wait_process(int const process_id, int target_pid, int* wstatus) {
 	}
 
 	// No zombie found: parent goes in wait status.
+	if (options == 1) { // WNOHANG
+		return 0;
+	} else {
+		int i=0;
+		for (;active_processes[i] != process_id;i++) {} // Danger
+		active_processes[i] = active_processes[number_active_processes-1];
+		number_active_processes--;
+		parent->status 		 = status_wait;
+		parent->wait.pid 	 = target_pid;
+		parent->wait.wstatus = wstatus;
 
-	int i=0;
-	for (;active_processes[i] != process_id;i++) {} // Danger
-	active_processes[i] = active_processes[number_active_processes-1];
-	number_active_processes--;
-	parent->status 		 = status_wait;
-	parent->wait.pid 	 = target_pid;
-	parent->wait.wstatus = wstatus;
-
-	return -1;
+		return -1;
+	}
 }
 
 /** \fn int sheduler_add_process(process* p)

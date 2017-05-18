@@ -11,12 +11,19 @@ static inode_operations_t pipe_operations = {
 	.write = pipe_write,
 };
 
+void pipe_init() {
+	kernel_printf("PipeFS initilized\n");
+	for(int i=0;i<MAX_PIPES;i++) {
+		pipe_map[i] = false;
+	}
+}
+
 inode_t mkpipe() {
 	inode_t result;
 	result.ref_count = 1;
 
 	int i=0;
-	for(;!pipe_map[i];i++) {}
+	for(;pipe_map[i];i++) {}
 	pipe_map[i] = true;
 	pipe_buffers[i] = malloc(sizeof(pipe_block));
 	pipe_buffers[i]->next = NULL;
@@ -32,7 +39,7 @@ bool free_pipe(int index) {
 		return false;
 	}
 
-	pipe_block* lst = pipe_buffers[MAX_PIPES];
+	pipe_block* lst = pipe_buffers[index];
 	pipe_block* prev = NULL;
 	while (lst != NULL) {
 		prev = lst;
@@ -42,6 +49,7 @@ bool free_pipe(int index) {
 	pipe_map[index] = false;
 	buffer_begin[index] = 0;
 	buffer_end[index] = 0;
+	pipe_buffers[index] = 0;
 	return true;
 }
 
@@ -49,6 +57,7 @@ bool free_pipe(int index) {
 int pipe_read(inode_t pipe, char* buffer, int count, int ofs) {
 	(void) ofs; // No seek on a pipe.
 	int i = pipe.st.st_ino;
+//	kernel_printf("read %d\n",i);
 	pipe_block* pos = pipe_buffers[i];
 	// pos pointss to the first block.
 
@@ -85,7 +94,7 @@ int pipe_read(inode_t pipe, char* buffer, int count, int ofs) {
 
 	buffer_begin[i] = pos_blk;
 	pipe_buffers[i] = pos;
-//	kernel_printf("read %d %d %d\n", count, buffer_begin[i], buffer_end[i]);
+	//kernel_printf("read %d %d %d => %d\n", count, buffer_begin[i], buffer_end[i], size_read);
 	return size_read;
 }
 
@@ -96,6 +105,7 @@ int pipe_write(inode_t pipe, char* buffer, int count, int ofs) {
 	(void) ofs; // No seek on a pipe.
 	int i = pipe.st.st_ino;
 	pipe_block* pos = pipe_buffers[i];
+	//kernel_printf("write %d\n",i);
 	while (pos->next != NULL) {
 		pos = pos->next;
 	}
@@ -123,6 +133,6 @@ int pipe_write(inode_t pipe, char* buffer, int count, int ofs) {
 	}
 
 	buffer_end[i] = pos_blk;
-	kernel_printf("write %d %d %d\n", count, buffer_begin[i], buffer_end[i]);
+	//kernel_printf("write %d %d %d\n", count, buffer_begin[i], buffer_end[i]);
 	return to_write;
 }

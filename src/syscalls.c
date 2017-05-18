@@ -271,7 +271,7 @@ pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
 		return -EFAULT;
 	}
 
-	int res = wait_process(get_current_process_id(), pid, wstatus);
+	int res = wait_process(get_current_process_id(), pid, wstatus, options);
 	if (res == -1) {
 		get_next_process();
 	}
@@ -281,14 +281,14 @@ pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
 uint32_t svc_time(time_t *tloc) {
 	kdebug(D_SYSCALL, 1, "TIME\n");
 	process* p = get_current_process();
-	if (!his_own(p, tloc)) {
+	/*if (!his_own(p, tloc)) {
 		return -EFAULT;
-	}
+	}*/
 
 	if (tloc == NULL) {
-		return timer_get_posix_time();
+		return Timer_GetTime();
 	} else {
-		*tloc = timer_get_posix_time();
+		*tloc = Timer_GetTime();
 		return *tloc;
 	}
 }
@@ -362,69 +362,3 @@ void svc_sigreturn() {
 	process* p = get_current_process();
 	p->ctx = p->old_ctx;
 }
-
-
-#include "framebuffer.h"
-extern frameBuffer* kernel_framebuffer;
-extern uintptr_t framebuffer_phy_addr;
-
-/** \fn svc_getframebuffer(int target)
-	\brief Remaps memory to access a target's framebuffer.
-	\param target The target
-
-	If target == -1, get the address of the output framebuffer.
-	If target != -1, get program's framebuffer.
-	\warning No security mechanism, we should have a permission system.
-	\warning TODO: Checks.
- *//*
-uint32_t svc_getframebuffer(int pid) {
-	kdebug(D_SYSCALL, 20, "GetFB %d\n", pid);
-	process* p = get_current_process();
-	if (pid == -1) {
-		intptr_t target = framebuffer_phy_addr;
-		kernel_printf("Target: %p\n", target);
-		int section_size = 1+(kernel_framebuffer->bufferSize >> 20); // Number of used sections.
-		kernel_printf("On %d sections\n", section_size);
-		intptr_t dep = 0x80000000 - (section_size << 20);
-		for (int i=0;i<section_size;i++) {
-			mmu_add_section(p->ttb_address, dep + i*(1 << 20), target + i*(1 << 20), 0, 0, AP_PRW_URW);
-		}
-		return dep;
-	} else {
-		if (pid == -2) {
-			pid = p->asid;
-		}
-		process* p_target = get_process_list()[pid];
-		if (p_target != NULL) {
-			int section_size = 1+(kernel_framebuffer->bufferSize >> 20); // Number of used sections.
-			if (!p_target->allocated_framebuffer) {
-				p_target->allocated_framebuffer = true;
-				page_list_t* res = paging_allocate(section_size);
-				for (int i=0;i<section_size;i++) {
-					mmu_add_section(
-							p_target->ttb_address,
-							0x80000000 - 2*(section_size << 20) + i*PAGE_SECTION,
-							res->address*PAGE_SECTION,
-							0, 0, AP_PRW_URW);
-					res->address++;
-					res->size--;
-
-					if (res->size == 0) {
-						page_list_t* tmp = res;
-						res = res->next;
-						free(tmp);
-					}
-				}
-			}
-			uintptr_t target = mmu_vir2phy_ttb(0x80000000 - 2*(section_size << 20), p_target->ttb_address);
-			uintptr_t dep = 0x80000000 - 2*(section_size << 20);
-			for (int i=0;i<section_size;i++) {
-				mmu_add_section(p->ttb_address, dep + i*(1 << 20), target + i*(1 << 20), 0, 0, AP_PRW_URW);
-			}
-			tlb_flush_all();
-			kernel_printf("GETFB %d -> %p\n", pid, dep);
-			return dep;
-		}
-		return -ENOENT;
-	}
-}*/

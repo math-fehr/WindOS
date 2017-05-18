@@ -1,4 +1,5 @@
 #include "dev.h"
+#include "serial.h"
 
 /** \file dev.c
   * \brief A mountable device pseudo-filesystem
@@ -49,8 +50,13 @@ extern frameBuffer* kernel_framebuffer;
  */
 int dev_ioctl (inode_t from, int cmd, int arg) {
 	if (from.st.st_ino == DEV_SERIAL) {
-		if (cmd == 0) { // 0 is the set mode command.
+		if (cmd == 5000) { // 5000 is the set mode command.
 			serial_setmode(arg);
+			return 0;
+		}
+	} else if (from.st.st_ino == DEV_SERIAL2) {
+		if (cmd == 5000) { // 5000 is the set mode command.
+			serial2_setmode(arg);
 			return 0;
 		}
 	} else if (from.st.st_ino == DEV_FB) {
@@ -128,6 +134,13 @@ vfs_dir_list_t* dev_lsdir (inode_t from) {
         r.st.st_ino = DEV_RANDOM;
         res = dev_append_elem(r, "random", res);
 
+        r.st.st_ino = DEV_SERIAL2;
+        r.st.st_mode = S_IFCHR | S_IRWXU | S_IRWXO | S_IRWXG;
+        r.st.st_size = 0;
+		r.st.st_blksize = 1024;
+		r.st.st_nlink = 1;
+        res = dev_append_elem(r, "serial1", res);
+
         r.st.st_ino = DEV_SERIAL;
         r.st.st_mode = S_IFCHR | S_IRWXU | S_IRWXO | S_IRWXG;
         r.st.st_size = 0;
@@ -174,6 +187,8 @@ int dev_fread (inode_t from, char* buf, int size, int pos) {
             return size;
         case DEV_SERIAL:
             return serial_readline(buf, size);
+        case DEV_SERIAL2:
+            return serial2_readline(buf, size);
 		case DEV_FB:
 			if (size+pos > kernel_framebuffer->bufferSize) {
 				size = kernel_framebuffer->bufferSize - pos;
@@ -203,6 +218,11 @@ int dev_fwrite(inode_t from, char* buf, int size, int pos) {
         case DEV_SERIAL:
             for (int i=0;i<size;i++) {
                 serial_putc(buf[i]);
+            }
+            return size;
+        case DEV_SERIAL2:
+            for (int i=0;i<size;i++) {
+                serial2_putc(buf[i]);
             }
             return size;
 		case DEV_FB:

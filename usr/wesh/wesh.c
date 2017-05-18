@@ -41,6 +41,7 @@ int exec_blocking(char* command, char* params[], char* input, char* output, bool
 				perror(command);
 			} else {
 				dup2(fd_out, 1);
+				dup2(fd_out, 2);
 			}
 		}
 
@@ -109,6 +110,7 @@ void autocomplete(char* currentBuffer, int* pos) {
     }
     if(found_one) {
         printf("%s", best_prefix+size_beg_file);
+		fflush(stdout);
         *pos += size_best_prefix-size_beg_file;
     }
     return;
@@ -116,23 +118,26 @@ void autocomplete(char* currentBuffer, int* pos) {
 
 
 void wesh_readline(char* buffer) {
-
 	int pos = 0;
 	int hist_pos = hist_top;
 	char* current_buffer = buffer;
 	buffer[0] = 0;
 	while(1) {
-		char c = getc(stdin);
-		if (c == 0x7F) { // delete
+		char c;
+		_ioctl(0, IOCTL_BLOCKING, 1);
+		int n = _read(0, &c, 1);
+
+		if (c == 0x7F || c == 0x08) { // delete
 			if (pos > 0) {
 				current_buffer[pos--] = 0;
 				printf("\033[D \033[D");
 				fflush(stdout);
 			}
 		} else if (c == 0x1B) { // escape code
-			c = getc(stdin); // normally [
-			c = getc(stdin);
-			if (hist_bot != hist_top) {
+			_read(0, &c, 1);// normally [
+			_read(0, &c, 1);
+
+			if ((c == 'A' || c == 'B') && hist_bot != hist_top) {
 				char* new_entry;
 
 				if (c == 'A') { // ^
@@ -162,6 +167,7 @@ void wesh_readline(char* buffer) {
 					printf("\033[D \033[D");
 				}
 				printf("%s", new_entry);
+				fflush(stdout);
 				current_buffer = new_entry;
 				pos = strlen(current_buffer);
 			}
@@ -187,15 +193,16 @@ void wesh_readline(char* buffer) {
 }
 
 int main() {
-	printf("WESH is an Experimental SHell.\n");
+	printf("WESH is an Experimental SHell.\r");
+
 	hist_top = 0;
 	hist_bot = 0;
-
 
 	while(1) {
 		char buf[1500];
 		getcwd(buf, 1500);
 		printf("%s$ ", buf);
+		fflush(stdout);
 		for (int i=0;i<1500;i++) {
 			buf[i] = 0;
 		}

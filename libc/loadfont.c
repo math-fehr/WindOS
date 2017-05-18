@@ -25,13 +25,13 @@ bool loadFont(char* path_font, unsigned* width_ptr, unsigned* height_ptr, unsign
     *height_ptr = height;
     *width_ptr = width;
 
-	int off = *(int*)&info[14];
+	int off = *((int*)&info[10]);
 
     *font = malloc(sizeof(unsigned char) * (img_width) * (img_height) * 3);
 
     int row_padded = (img_width*3 + 3) & (~3);
 	unsigned char* data = malloc(row_padded);
-	fread(data, sizeof(unsigned char), off-43, f);
+	fread(data, sizeof(unsigned char), off-54, f);
 
     unsigned char temp;
 	for (unsigned y=0;y<img_height;y++) {
@@ -48,15 +48,16 @@ bool loadFont(char* path_font, unsigned* width_ptr, unsigned* height_ptr, unsign
             }
 
             unsigned char_x = x/width;
-            unsigned char_y = y/height;
+            unsigned char_y = (img_height-y)/height;
             unsigned character = char_y * 16 + char_x;
             unsigned pos_x = x % width;
-            unsigned pos_y = y % height;
+            unsigned pos_y = (img_height-y) % height;
 
             *(*font + 3*(character*width*height + pos_y*width + pos_x )) = temp;
             *(*font + 3*(character*width*height + pos_y*width + pos_x ) +1) = temp;
             *(*font + 3*(character*width*height + pos_y*width + pos_x ) +2) = temp;
 		}
 	}
+
     return true;
 }

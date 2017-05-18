@@ -119,7 +119,6 @@ off_t svc_lseek(int fd_i, off_t offset, int whence) {
 
 
 uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
-	kdebug(D_SYSCALL, 5, "WRITE %d %#010x %#010x\n", fd, buf, cnt);
 	//int fd = r[0];
 	if (fd >= MAX_OPEN_FILES
         || get_current_process()->fd[fd].position < 0)
@@ -147,6 +146,7 @@ uint32_t svc_write(uint32_t fd, char* buf, size_t cnt) {
 		if (n == -1) {
 			n = -errno;
 		}
+		//kdebug(D_SYSCALL, 50, "WRITE %d %#010x %#010x => %d\n", fd, buf, cnt, n);
 		return n;
 	} else {
 		return -EBADF;
@@ -210,7 +210,10 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 
 
 	int n = vfs_fread(*p->fd[fd].inode, buf, cnt, p->fd[fd].position);
-	if (n == 0 && p->fd[fd].read_blocking) {
+	kdebug(D_SYSCALL, 1, "READ %d %d\n", n, p->fd[fd].read_blocking);
+
+	if (n == 0 && (p->fd[fd].read_blocking != 0)) {
+		kdebug(D_SYSCALL, 1, "blocked");
 		// block the call.
 		p->status = status_blocked_svc;
 		return 0;

@@ -16,7 +16,7 @@
 #define FB_FLUSH 	5
 #define FB_BUFFERED 6
 
-#define IOCTL_TERMMODE	0
+#define IOCTL_TERMMODE	5000
 #define IOCTL_BLOCKING 	10000
 
 #define TERMMODE_RAW	0
