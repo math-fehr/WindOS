@@ -139,7 +139,7 @@ int main() {
 		int n_chars = screen_width/width;
 		int n_rows = screen_height/height;
 		printf("nchars: %d\nnlines: %d\n", n_chars, screen_height/height);
-		char lines[128][n_chars];
+		char lines[128][n_chars+1];
 
 		_ioctl(0, IOCTL_BLOCKING, 0);
 		_ioctl(read_from_term_fd, IOCTL_BLOCKING, 0);
@@ -148,7 +148,7 @@ int main() {
 		term_raw_enable(true);
 		while (1) {
 			if (_waitpid(pid, NULL, 1) > 0) {
-				printf("Son exited\n");
+				//printf("Son exited\n");
 				break;
 			}
 
@@ -216,11 +216,17 @@ int main() {
 									} else if (params[0] == 1) { // From cursor to beg
 										printf("Not implemented.\n");
 									} else if (params[0] <= 3) { // Clear screen
+										printf("clear screen");
+										int r = _lseek(fd, 0, SEEK_SET);
+										//printf("%d\n",r);
 										for (int j=0;j<n_rows;j++) {
-											for (int i=0;i<n_chars;i++)
-												lines[j][i] = 0;
+											printf("%d\n",j);
+											memset(lines[j], 'B', n_chars);
+											lines[j][0] = 'B';
+											lines[j][n_chars] = 0;
 											line(lines[j], fd, font, height, width, 255, 0);
 										}
+										_lseek(fd, 0, SEEK_SET);
 										cursor_x = 0;
 										cursor_y = 0;
 									} else {
@@ -232,8 +238,9 @@ int main() {
 									} else if (params[0] == 1) {
 										printf("Not implemented.\n");
 									} else if (params[0] == 2) {
-										for (int i=0;i<n_chars;i++)
-											lines[cursor_y][i] = 0;
+										printf("clear line");
+										memset(lines[cursor_y], ' ', n_chars);
+										lines[cursor_y][n_chars] = 0;
 										line(lines[cursor_y], fd, font, height, width, 255, 0);
 									}
 									break;
@@ -257,8 +264,6 @@ int main() {
 								cursor_x++;
 							if (cursor_y < 0)
 								cursor_y++;
-							if (cursor_y >= n_rows)
-								cursor_y--;
 							if (cursor_x >= n_chars)
 								cursor_x--;
 						}
@@ -273,17 +278,32 @@ int main() {
 						cursor_y++;
 						cursor_x=0;
 					}
+
+					if (cursor_y == n_rows) {
+						cursor_y == n_rows/2;
+						_lseek(fd, 0, SEEK_SET);
+						for (int i=0;i<n_rows/2;i++) {
+							memcpy(lines[i], lines[n_rows/2+i], n_chars);
+							line(lines[i], fd, font, height, width, 255, 0);
+						}
+						for (int i=n_rows/2;i<n_rows;i++) {
+							memset(lines[i], ' ', n_chars);
+							line(lines[i], fd, font, height, width, 255, 0);
+						}
+						_lseek(fd, 0, SEEK_SET);
+					}
 				}
 
-				if (cursor_x > 0)
+				if (cursor_x > 0) {
 					line(lines[cursor_y], fd, font, height, width, 255, 0);
+				}
 
 
 				//_ioctl(fd, FB_FLUSH, 0);
 			}
 
 		}
-
+		_ioctl(fd, FB_CLOSE, 0);
 		_close(fd);
 	}
 }

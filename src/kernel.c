@@ -189,7 +189,7 @@ void kernel_main(uint32_t memory) {
 	kernel_printf("P: %d\n", kernel_framebuffer->pitch);
 	char* pos = kernel_framebuffer->bufferPtr;
 
-	int n_1 = Timer_GetTime();
+/*	int n_1 = Timer_GetTime();
 	int n_lines = 0;
     for(int i = 0; i<kernel_framebuffer->bufferSize; i+=3) {
 		int r,g,b;
@@ -232,7 +232,7 @@ void kernel_main(uint32_t memory) {
 
 	kernel_printf("Buffer|position: %p\n", kernel_framebuffer->bufferPtr);
 	kernel_printf("Timer: %d\n", Timer_GetTime() - n_1);
-
+*/
 	dmb();
     //USPiInitialize();
 

@@ -77,7 +77,7 @@ int count;
  *	process' context. When this function returns, the context is restored.
  */
 void interrupt_vector(void* user_context) {
-    callInterruptHandlers();
+    //callInterruptHandlers();
 	serial_irq(); // refresh serial buffer
 	serial2_irq();
 
