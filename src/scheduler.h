@@ -9,7 +9,7 @@ void setup_scheduler();
 int sheduler_add_process(process* p);
 process* get_next_process();
 int kill_process(int const process_id, int wstatus);
-int wait_process(int const process_id, int target_pid, int* wstatus);
+int wait_process(int const process_id, int target_pid, int* wstatus, int options);
 int get_number_active_processes();
 process** get_process_list();
 int* get_active_processes();

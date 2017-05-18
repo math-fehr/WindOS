@@ -271,7 +271,7 @@ pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
 		return -EFAULT;
 	}
 
-	int res = wait_process(get_current_process_id(), pid, wstatus);
+	int res = wait_process(get_current_process_id(), pid, wstatus, options);
 	if (res == -1) {
 		get_next_process();
 	}
@@ -281,9 +281,9 @@ pid_t svc_waitpid(pid_t pid, int* wstatus, int options) {
 uint32_t svc_time(time_t *tloc) {
 	kdebug(D_SYSCALL, 1, "TIME\n");
 	process* p = get_current_process();
-	if (!his_own(p, tloc)) {
+	/*if (!his_own(p, tloc)) {
 		return -EFAULT;
-	}
+	}*/
 
 	if (tloc == NULL) {
 		return Timer_GetTime();

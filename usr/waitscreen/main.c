@@ -47,7 +47,7 @@ int main() {
 	fread(data, sizeof(unsigned char), off-54, f);
 
     for(int i = 0; i<height_bmp; i++) {
-    fread(data,sizeof(unsigned char), row_padded,f);
+    	fread(data,sizeof(unsigned char), row_padded,f);
         for(int j = 0; j<width_bmp; j++) {
             unsigned char r = data[3*j+2];
             unsigned char g = data[3*j+1];
@@ -55,8 +55,8 @@ int main() {
             bmp[((height_bmp - i)*width_bmp + j)*3] = r;
             bmp[((height_bmp - i)*width_bmp + j)*3 + 1] = g;
             bmp[((height_bmp - i)*width_bmp + j)*3 + 2] = b;
-            }
         }
+    }
 
     char blackline[width_frame*3];
     for(int i = 0; i<width_frame*3; i++) {
@@ -74,6 +74,7 @@ int main() {
     int speedx = base_speed_x;
     int speedy = base_speed_y;
 
+	int last_time = _time(NULL);
     while(1) {
         int new_posx = posx + speedx;
         int new_posy = posy + speedy;
@@ -105,6 +106,9 @@ int main() {
             _write(fd,blackline,3*rightsize);
         }
 
+		while (_time(NULL) - last_time < 1000);
+		last_time = _time(NULL);
+		
         posy = new_posy;
         posx = new_posx;
     }

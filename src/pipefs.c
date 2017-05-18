@@ -39,7 +39,7 @@ bool free_pipe(int index) {
 		return false;
 	}
 
-	pipe_block* lst = pipe_buffers[MAX_PIPES];
+	pipe_block* lst = pipe_buffers[index];
 	pipe_block* prev = NULL;
 	while (lst != NULL) {
 		prev = lst;
@@ -49,6 +49,7 @@ bool free_pipe(int index) {
 	pipe_map[index] = false;
 	buffer_begin[index] = 0;
 	buffer_end[index] = 0;
+	pipe_buffers[index] = 0;
 	return true;
 }
 

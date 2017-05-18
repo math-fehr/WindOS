@@ -86,6 +86,7 @@ int main() {
 	pipe(pts_input_pipe);
 
 	int pid = _fork();
+
 	if (pid == 0) {
 		dup2(pts_output_pipe[1], 2);
 		dup2(pts_output_pipe[1], 1);
@@ -146,6 +147,11 @@ int main() {
 
 		term_raw_enable(true);
 		while (1) {
+			if (_waitpid(pid, NULL, 1) > 0) {
+				printf("Son exited\n");
+				break;
+			}
+
 			n = _read(0, buffer, 256); // Read serial input.
 			if (n > 0) {
 				printf("main read %d\n", n);
