@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "vfs.h"
+#include "serial2.h"
 
 
 #define DEV_ROOT    2
 #define DEV_NULL    3
 #define DEV_RANDOM  4
 #define DEV_SERIAL  5
+#define DEV_SERIAL2 8
 #define DEV_ZERO    6
 #define DEV_FB 		7
 

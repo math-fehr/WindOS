@@ -79,6 +79,7 @@ int count;
 void interrupt_vector(void* user_context) {
     callInterruptHandlers();
 	serial_irq(); // refresh serial buffer
+	serial2_irq();
 
     kdebug(D_IRQ,3,"ENTREEIRQ\n");
     kdebug(D_IRQ,3, "=> %d.\n", get_current_process_id());

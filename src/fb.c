@@ -30,7 +30,7 @@ Allocates a window
 */
 int fb_open(int pid) {
 	int w = pid_to_window[pid];
-	if (w != -1 && n_windows != MAX_WINDOWS) {
+	if (w == -1 && n_windows != MAX_WINDOWS) {
 		pid_to_window[pid] = n_windows;
 		n_windows++;
 	}

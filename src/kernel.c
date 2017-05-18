@@ -133,6 +133,7 @@ void kernel_main(uint32_t memory) {
 	}
 
     serial_init();
+	serial2_init();
     setup_scheduler();
 
     enable_interrupts();
@@ -276,12 +277,15 @@ void kernel_main(uint32_t memory) {
 
 	process* p = process_load("/bin/init", vfs_path_to_inode(NULL, "/"), param, env); // init program
 
-	p->fd[0].inode 		= load_inode(vfs_path_to_inode(NULL, "/dev/serial")); // creates an unique inode for serial.
+	p->fd[0].inode 		= load_inode(vfs_path_to_inode(NULL, "/dev/serial2")); // creates an unique inode for serial.
 	p->fd[0].position   = 0;
 
-	p->fd[1].inode      = load_inode(vfs_path_to_inode(NULL, "/dev/serial"));
+	p->fd[1].inode      = load_inode(vfs_path_to_inode(NULL, "/dev/serial2"));
 	p->fd[1].position   = 0;
 
+
+	pipe_init();
+	fb_init();
 
 	if (p != NULL) {
 

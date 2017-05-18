@@ -210,7 +210,10 @@ uint32_t svc_read(uint32_t fd, char* buf, size_t cnt) {
 
 
 	int n = vfs_fread(*p->fd[fd].inode, buf, cnt, p->fd[fd].position);
-	if (n == 0 && p->fd[fd].read_blocking) {
+	kdebug(D_SYSCALL, 1, "READ %d %d\n", n, p->fd[fd].read_blocking);
+
+	if (n == 0 && (p->fd[fd].read_blocking != 0)) {
+		kdebug(D_SYSCALL, 1, "blocked");
 		// block the call.
 		p->status = status_blocked_svc;
 		return 0;
