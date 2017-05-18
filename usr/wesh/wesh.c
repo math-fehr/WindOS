@@ -41,6 +41,7 @@ int exec_blocking(char* command, char* params[], char* input, char* output, bool
 				perror(command);
 			} else {
 				dup2(fd_out, 1);
+				dup2(fd_out, 2);
 			}
 		}
 
@@ -126,7 +127,7 @@ void wesh_readline(char* buffer) {
 		_ioctl(0, IOCTL_BLOCKING, 1);
 		int n = _read(0, &c, 1);
 
-		if (c == 0x7F) { // delete
+		if (c == 0x7F || c == 0x08) { // delete
 			if (pos > 0) {
 				current_buffer[pos--] = 0;
 				printf("\033[D \033[D");

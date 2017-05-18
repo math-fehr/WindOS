@@ -9,6 +9,8 @@ int shown_pid = 0;
 
 extern frameBuffer* kernel_framebuffer;
 
+
+
 void fb_init() {
 	for (int i=0;i<MAX_PROCESSES;i++) {
 		pid_to_window[i] = -1;
@@ -46,6 +48,9 @@ int fb_close(int pid) {
 			}
 		}
 		n_windows--;
+		for (int i=0;i<MAX_PROCESSES;i++) {
+
+		}
 	}
 	return -1;
 }

@@ -12,9 +12,9 @@ volatile rpi_uart_controller_t* getUARTController() {
 
 extern void dmb();
 
-int read_buffer_index;
-char read_buffer[MAX_BUFFER];
-int mode;
+int read_buffer_index_2;
+char read_buffer_2[MAX_BUFFER];
+int mode_2;
 
 void serial2_init() {
 	// disable uart
@@ -55,8 +55,8 @@ void serial2_putc(unsigned char data) {
   // read flag register, wait for ready and write.
 
 
-  if (data == '\n') {
-    serial2_putc('\r');
+  if (data == '\r') {
+    serial2_putc('\n');
   }
   if (data & 0x80) { // ASCII Symbol > 127. Encoding to UTF-8.
 	  char left  = ((data & 0xc0) >> 6) | 0b11000000;
@@ -69,13 +69,9 @@ void serial2_putc(unsigned char data) {
 	  dmb();
 	  getUARTController()->DR = right;
   } else {
-  while (getUARTController()->FR & FR_TXFF);
+  	while (getUARTController()->FR & FR_TXFF);
 	  dmb();
 	  getUARTController()->DR = data;
-
-	  if (data == '\r') {
-		  serial2_putc('\n');
-	  }
   }
 }
 
@@ -92,7 +88,7 @@ unsigned char serial2_readc() {
 
 void serial2_setmode(int arg) {
    if (arg >= 0 && arg < 2) {
-	   mode = arg;
+	   mode_2 = arg;
    }
 }
 
@@ -100,6 +96,7 @@ void serial2_setmode(int arg) {
 void serial2_irq() {
    //kernel_printf("fifo: %d\n", (auxiliary->MU_STAT & 0x000F0000) >> 16);
    while(!(getUARTController()->FR & FR_RXFE)) {
+	//s   kernel_printf("serial2 IRQ\n");
 	   char c = getUARTController()->DR;
 	   //kernel_printf("data ready: %c\n", c);
 	   if (c & 0x80) { // UTF-8 Symbol. Here we do a partial decoding, translating to ASCII.
@@ -142,13 +139,13 @@ void serial2_irq() {
 		   }
 	   }
 
-	   if (mode == 1) { // canon mode
-		   if (c == 0x7F) { // DEL
-			   if (read_buffer_index > 0) {
+	   if (mode_2 == 1) { // canon mode
+		   if (c == 0x7F || c == 0x08) { // DEL
+			   if (read_buffer_index_2 > 0) {
 				   serial2_write("\033[D");
 				   serial2_putc(' ');
 				   serial2_write("\033[D");
-				   read_buffer[read_buffer_index--] = 0;
+				   read_buffer_2[read_buffer_index_2--] = 0;
 			   }
 		   } else if (c == 0x1B) { // ANSI Escape sequence
 			   serial2_readc();
@@ -165,12 +162,12 @@ void serial2_irq() {
 			   }*/
 		   } else {
 			   serial2_putc(c);
-			   read_buffer[read_buffer_index] = c;
-			   read_buffer_index++;
+			   read_buffer_2[read_buffer_index_2] = c;
+			   read_buffer_index_2++;
 		   }
 	   } else {
-		   read_buffer[read_buffer_index] = c;
-		   read_buffer_index++;
+		   read_buffer_2[read_buffer_index_2] = c;
+		   read_buffer_index_2++;
 	   }
 
 	   dmb();
@@ -179,35 +176,36 @@ void serial2_irq() {
 }
 
 int serial2_readline(char* buffer, int buffer_size) {
-   if (read_buffer_index == 0) {
+	serial2_irq();
+	if (read_buffer_index_2 == 0) {
 	   return 0;
-   }
+	}
 
-   if (mode == 0) {
-	   int sz = min(buffer_size, read_buffer_index);
-	   memcpy(buffer, read_buffer, sz);
-	   read_buffer_index -= sz;
-	   return sz;
-   }
+	if (mode_2 == 0) {
+		int sz = min(buffer_size, read_buffer_index_2);
+		memcpy(buffer, read_buffer_2, sz);
+		read_buffer_index_2 -= sz;
+		return sz;
+	}
 
    int i = 0;
 
    if (buffer_size > MAX_BUFFER)
 	   buffer_size = MAX_BUFFER;
 
-   for (;i<buffer_size && i<read_buffer_index && read_buffer[i] != '\r';i++) {}
+   for (;i<buffer_size && i<read_buffer_index_2 && read_buffer_2[i] != '\r';i++) {}
 
-   if (i == read_buffer_index) {
+   if (i == read_buffer_index_2) {
 	   return 0;
    }
-   memcpy(buffer, read_buffer, i+1);
+   memcpy(buffer, read_buffer_2, i+1);
    buffer[i+1] = 0;
    buffer[i] = '\n';
 
-   read_buffer_index -= i+1;
+   read_buffer_index_2 -= i+1;
 
    for (int j=0;j<buffer_size;j++) {
-	   read_buffer[j] = read_buffer[j+i];
+	   read_buffer_2[j] = read_buffer_2[j+i];
    }
    return i+1;
 }

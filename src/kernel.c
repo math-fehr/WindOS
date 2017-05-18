@@ -277,10 +277,10 @@ void kernel_main(uint32_t memory) {
 
 	process* p = process_load("/bin/init", vfs_path_to_inode(NULL, "/"), param, env); // init program
 
-	p->fd[0].inode 		= load_inode(vfs_path_to_inode(NULL, "/dev/serial2")); // creates an unique inode for serial.
+	p->fd[0].inode 		= load_inode(vfs_path_to_inode(NULL, "/dev/serial")); // creates an unique inode for serial.
 	p->fd[0].position   = 0;
 
-	p->fd[1].inode      = load_inode(vfs_path_to_inode(NULL, "/dev/serial2"));
+	p->fd[1].inode      = load_inode(vfs_path_to_inode(NULL, "/dev/serial"));
 	p->fd[1].position   = 0;
 
 
@@ -297,8 +297,8 @@ void kernel_main(uint32_t memory) {
 
 
 		p->parent_id 	= p->asid; // (Badass process)
-		kernel_printf("%p\n", p);
-		kernel_printf("%p %p\n", p->ttb_address, mmu_vir2phy(p->ttb_address));
+		//kernel_printf("%p\n", p);
+		//kernel_printf("%p %p\n", p->ttb_address, mmu_vir2phy(p->ttb_address));
 	    mmu_set_ttb_0(mmu_vir2phy(p->ttb_address), TTBCR_ALIGN);
 		asm volatile(
 			"mov 	r0, %0\n"

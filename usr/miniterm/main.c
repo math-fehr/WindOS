@@ -87,6 +87,7 @@ int main() {
 
 	int pid = _fork();
 	if (pid == 0) {
+		dup2(pts_output_pipe[1], 2);
 		dup2(pts_output_pipe[1], 1);
 		dup2(pts_input_pipe[0], 0);
 		_ioctl(1, IOCTL_BLOCKING, 1);
@@ -157,7 +158,6 @@ int main() {
 				_lseek(fd, cursor_y*screen_width*3*height, SEEK_SET);
 				for (int i=0;i<n;i++) {
 					char c = buffer[i];
-
 					if (c == '\n' || c == '\r') {
 						printf("%c", c);
 					}

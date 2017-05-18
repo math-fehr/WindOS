@@ -164,6 +164,7 @@ void serial_setmode(int arg) {
 void serial_irq() {
 	//kernel_printf("fifo: %d\n", (auxiliary->MU_STAT & 0x000F0000) >> 16);
 	while(auxiliary->MU_LSR & AUX_MULSR_DATA_READY) {
+		//kernel_printf("serial1 IRQ\n");
 		char c = auxiliary->MU_IO;
 		//kernel_printf("\ndata ready: %c\n", c);
 		if (c & 0x80) { // UTF-8 Symbol. Here we do a partial decoding, translating to ASCII.
