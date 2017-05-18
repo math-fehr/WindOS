@@ -101,9 +101,11 @@ void autocomplete(char* currentBuffer, int* pos) {
                 while(entry->d_name[i] != 0 && entry->d_name[i] == best_prefix[i] && i<size_best_prefix) {
                     i++;
                 }
+
                 if(i != size_best_prefix) {
                     size_best_prefix = i;
                     strncpy(best_prefix,best_prefix,i);
+                    best_prefix[i] = 0;
                 }
             }
         }
