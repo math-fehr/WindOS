@@ -124,7 +124,7 @@ $(BUILD)%.o: $(SOURCE)%.c
 # Userspace environment build.
 $(USR_BINDIR)%: $(USR_SRC)%/* $(USR_LIB)
 	@echo "Making $@"
-	@$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) $(HARDWARE_FLAGS) -std=gnu11 -static -o $@  #-g
+	@$(ARMGNU)-gcc $(USR_SRC)$*/*.c $(USR_LIB) $(HARDWARE_FLAGS) -std=gnu11 -static -funsafe-math-optimizations -o $@  #-g
 
 
 
