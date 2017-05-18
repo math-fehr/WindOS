@@ -17,7 +17,7 @@
 #define FB_BUFFERED 6
 
 #define IOCTL_TERMMODE	0
-#define IOCTL_BLOCKING 	1
+#define IOCTL_BLOCKING 	10000
 
 #define TERMMODE_RAW	0
 #define TERMMODE_CANON 	1
