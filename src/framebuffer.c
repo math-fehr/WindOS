@@ -5,11 +5,11 @@
 #include "debug.h"
 #include "malloc.h"
 
+/** \file framebuffer.c
+ *  \brief Functions to communicate with the hardware framebuffer.
+ */
 
 #define MBX_CHANNEL_FB 1
-
-
-
 
 /** \fn bool fb_initialize(unsigned width, unsigned height, unsigned depth)
  *  \brief Initialize the current frameBuffer
@@ -17,6 +17,7 @@
  *  \param width The wanted width (is choosen optimally if =0 or height=0)
  *  \param height The wanted height (is choosen optimally if =0 or width=0)
  *  \param depth The wanted number of bits per pixels (=8 is set to 0)
+ *  \param vir_height Virtual height of the framebuffer. This allows double buffering.
  *  \warning Optimal chose is not yet implemented
  */
 bool fb_initialize(frameBuffer* fb, unsigned width, unsigned height, unsigned depth, unsigned vir_height) {
@@ -67,6 +68,12 @@ typedef struct propTagVirtualOffset {
 #define PROPTAG_SET_VIRTUAL_OFFSET    0x00048009
 #define PROPTAG_GET_VIRTUAL_OFFSET    0x00040009
 
+/** \fn void fb_set_offset_y (unsigned offset)
+ *  \param offset The wanted offset.
+ *  \brief Changes the offset in the virtual framebuffer.
+ *
+ *  \bug Virtual offset is not implemented in QEMU.
+ */
 void fb_set_offset_y (unsigned offset) {
 	propTagVirtualOffset voffset;
 	voffset.x = 0;

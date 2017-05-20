@@ -5,9 +5,12 @@
 #define MAX_PIPES 128
 
 typedef struct pipe_block pipe_block;
+/** \struct pipe_block
+ *  \brief Linked list structure for pipe content.
+ */
 struct pipe_block {
-	char buffer[PIPE_BUFFER_BLOCK_SIZE];
-	pipe_block* next;
+	char buffer[PIPE_BUFFER_BLOCK_SIZE]; ///< Content of the block.
+	pipe_block* next; ///< Pointer to next block.
 };
 
 inode_t mkpipe();

@@ -5,7 +5,7 @@
  *	\brief ARM specifically related code
  *
  * 	This file contains maintenance functions and methods to access ARM special
- *	registers. 
+ *	registers.
  */
 
 

@@ -1,5 +1,7 @@
 #include "procfs.h"
-
+/** \file procfs.c
+ *  \brief A virtual filesystem representing processes.
+ */
 
 static inode_operations_t proc_inode_operations = {
   .read_dir = proc_lsdir,

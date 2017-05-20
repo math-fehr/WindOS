@@ -1,9 +1,29 @@
 #include "pipefs.h"
 #include <stdlib.h>
 
+/** \file pipefs.c
+ *  \brief Pipe features.
+ *  A pipe is a regular inode linked with special functions implemented here.
+ */
+
+/** \var pipe_block* pipe_buffers[MAX_PIPES]
+ *  \brief Content of each pipe, represented as a linked list.
+ */
 pipe_block*		pipe_buffers[MAX_PIPES];
+
+/** \var bool pipe_map[MAX_PIPES]
+ *  \brief Pipe usage map.
+ */
 bool 			pipe_map[MAX_PIPES];
+
+/** \var int buffer_begin[MAX_PIPES]
+ *  \brief Index of content's start in the first block.
+ */
 int 			buffer_begin[MAX_PIPES];
+
+/** \var int buffer_end[MAX_PIPES]
+ *  \brief Index of content's end in the last block.
+ */
 int 			buffer_end[MAX_PIPES];
 
 static inode_operations_t pipe_operations = {
@@ -18,6 +38,10 @@ void pipe_init() {
 	}
 }
 
+/** \fn inode_t mkpipe()
+ *  \brief Allocates a pipe and return the corresponding inode.
+ *  \return The allocated inode.
+ */
 inode_t mkpipe() {
 	inode_t result;
 	result.ref_count = 1;
@@ -34,6 +58,11 @@ inode_t mkpipe() {
 	return result;
 }
 
+/** \fn bool free_pipe(int index)
+ *  \brief Free a pipe.
+ *  \param index The index of a pipe is the inode number of the allocated pipe.
+ *  \return The success of the operation.
+ */
 bool free_pipe(int index) {
 	if (!pipe_map[index]) {
 		return false;
@@ -54,6 +83,9 @@ bool free_pipe(int index) {
 }
 
 // TODO: Checks
+/** \fn int pipe_read(inode_t pipe, char* buffer, int count, int ofs)
+ *  \brief Implementation of the read feature for a pipe.
+ */
 int pipe_read(inode_t pipe, char* buffer, int count, int ofs) {
 	(void) ofs; // No seek on a pipe.
 	int i = pipe.st.st_ino;
@@ -98,8 +130,9 @@ int pipe_read(inode_t pipe, char* buffer, int count, int ofs) {
 	return size_read;
 }
 
-
-
+/** \fn int pipe_write(inode_t pipe, char* buffer, int count, int ofs)
+ *  \brief Implementation of the write feature for a pipe.
+ */
 int pipe_write(inode_t pipe, char* buffer, int count, int ofs) {
 
 	(void) ofs; // No seek on a pipe.
