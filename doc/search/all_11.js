@@ -14,6 +14,7 @@ var searchData=
   ['setup_5fscheduler',['setup_scheduler',['../scheduler_8c.html#ab808af327bcd30f40e54596b72e68979',1,'scheduler.c']]],
   ['sh_5fentry_5ft',['sh_entry_t',['../structsh__entry__t.html',1,'']]],
   ['sheduler_5fadd_5fprocess',['sheduler_add_process',['../scheduler_8c.html#a1df8e9fe3d3d41d032cc7b06065a8735',1,'scheduler.c']]],
+  ['signal_5fhandler_5ft',['signal_handler_t',['../structsignal__handler__t.html',1,'']]],
   ['size',['size',['../structpage__list__t.html#a439227feff9d7f55384e8780cfc2eb82',1,'page_list_t']]],
   ['software_5finterrupt_5fvector',['software_interrupt_vector',['../interrupts_8c.html#ace62ea7f13bb56e30246929115ba683b',1,'interrupts.c']]],
   ['sources',['sources',['../debug_8c.html#aa4be3ae3640860b705589721a4fafdb5',1,'debug.c']]],
@@ -22,7 +23,6 @@ var searchData=
   ['status',['status',['../structprocess.html#a8c265c0f35502e8bad78d110495a83e5',1,'process']]],
   ['storage_5fdriver',['storage_driver',['../structstorage__driver.html',1,'']]],
   ['superblock_5ft',['superblock_t',['../structsuperblock__t.html',1,'']]],
-  ['svc_5fgetdents',['svc_getdents',['../syscalls_8c.html#a9aa9956a9b5f7c819c74ea83b5254340',1,'syscalls.c']]],
   ['sys_5finit',['sys_init',['../initsys_8c.html#a29a81985c051357162ad079023a076cd',1,'initsys.c']]],
   ['syscalls_2ec',['syscalls.c',['../syscalls_8c.html',1,'']]]
 ];

@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -118,22 +118,25 @@ $(document).ready(function(){initNavTree('scheduler_8c.html','');});
 <code>#include &quot;serial.h&quot;</code><br />
 <code>#include &quot;debug.h&quot;</code><br />
 <code>#include &quot;string.h&quot;</code><br />
+<code>#include &quot;fdsyscalls.h&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for scheduler.c:</div>
 <div class="dyncontent">
 <div class="center"><img src="scheduler_8c__incl.png" border="0" usemap="#_2home_2lucas_2_projets_2_wind_o_s_2src_2scheduler_8c" alt=""/></div>
 <map name="_2home_2lucas_2_projets_2_wind_o_s_2src_2scheduler_8c" id="_2home_2lucas_2_projets_2_wind_o_s_2src_2scheduler_8c">
-<area shape="rect" id="node2" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="502,95,591,121"/>
-<area shape="rect" id="node9" href="debug_8h_source.html" title="debug.h" alt="" coords="318,319,386,345"/>
-<area shape="rect" id="node15" href="serial_8h_source.html" title="serial.h" alt="" coords="74,393,138,420"/>
-<area shape="rect" id="node3" href="process_8h_source.html" title="process.h" alt="" coords="547,169,626,196"/>
-<area shape="rect" id="node5" href="vfs_8h_source.html" title="vfs.h" alt="" coords="602,244,653,271"/>
-<area shape="rect" id="node13" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="902,468,991,495"/>
-<area shape="rect" id="node14" href="mmu_8h_source.html" title="mmu.h" alt="" coords="908,543,971,569"/>
-<area shape="rect" id="node17" href="kernel_8h_source.html" title="kernel.h" alt="" coords="80,543,148,569"/>
-<area shape="rect" id="node11" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="622,393,694,420"/>
-<area shape="rect" id="node16" href="gpio_8h_source.html" title="gpio.h" alt="" coords="158,468,215,495"/>
-<area shape="rect" id="node18" href="timer_8h_source.html" title="timer.h" alt="" coords="71,468,134,495"/>
+<area shape="rect" id="node2" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="647,169,737,196"/>
+<area shape="rect" id="node9" href="debug_8h_source.html" title="debug.h" alt="" coords="817,393,885,420"/>
+<area shape="rect" id="node21" href="serial_8h_source.html" title="serial.h" alt="" coords="500,95,564,121"/>
+<area shape="rect" id="node24" href="fdsyscalls_8h_source.html" title="fdsyscalls.h" alt="" coords="1123,169,1215,196"/>
+<area shape="rect" id="node3" href="process_8h_source.html" title="process.h" alt="" coords="493,244,571,271"/>
+<area shape="rect" id="node5" href="vfs_8h_source.html" title="vfs.h" alt="" coords="1185,319,1236,345"/>
+<area shape="rect" id="node13" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="491,543,581,569"/>
+<area shape="rect" id="node14" href="mmu_8h_source.html" title="mmu.h" alt="" coords="502,617,565,644"/>
+<area shape="rect" id="node17" href="kernel_8h_source.html" title="kernel.h" alt="" coords="347,393,415,420"/>
+<area shape="rect" id="node11" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="1040,468,1112,495"/>
+<area shape="rect" id="node22" href="gpio_8h_source.html" title="gpio.h" alt="" coords="745,319,802,345"/>
+<area shape="rect" id="node23" href="timer_8h_source.html" title="timer.h" alt="" coords="222,319,285,345"/>
+<area shape="rect" id="node25" href="pipefs_8h_source.html" title="pipefs.h" alt="" coords="1171,244,1239,271"/>
 </map>
 </div>
 </div><table class="memberdecls">
@@ -152,9 +155,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sche
 <tr class="memitem:a8029adf7602495baa2a5d070c221da39"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scheduler_8c.html#a8029adf7602495baa2a5d070c221da39">kill_process</a> (int const process_id, int wstatus)</td></tr>
 <tr class="memdesc:a8029adf7602495baa2a5d070c221da39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Kill a process.  <a href="#a8029adf7602495baa2a5d070c221da39">More...</a><br /></td></tr>
 <tr class="separator:a8029adf7602495baa2a5d070c221da39"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab43c2700e828f39e2408e3263cbabb8b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scheduler_8c.html#ab43c2700e828f39e2408e3263cbabb8b">wait_process</a> (int const process_id, int target_pid, int *wstatus)</td></tr>
-<tr class="memdesc:ab43c2700e828f39e2408e3263cbabb8b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for a process.  <a href="#ab43c2700e828f39e2408e3263cbabb8b">More...</a><br /></td></tr>
-<tr class="separator:ab43c2700e828f39e2408e3263cbabb8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c4361a7bb5e9d1f29ca6a4317f023ba"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4c4361a7bb5e9d1f29ca6a4317f023ba"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>wait_process</b> (int const process_id, int target_pid, int *wstatus, int options)</td></tr>
+<tr class="separator:a4c4361a7bb5e9d1f29ca6a4317f023ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1df8e9fe3d3d41d032cc7b06065a8735"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="scheduler_8c.html#a1df8e9fe3d3d41d032cc7b06065a8735">sheduler_add_process</a> (<a class="el" href="structprocess.html">process</a> *p)</td></tr>
 <tr class="memdesc:a1df8e9fe3d3d41d032cc7b06065a8735"><td class="mdescLeft">&#160;</td><td class="mdescRight">Put a process in the scheduling structure.  <a href="#a1df8e9fe3d3d41d032cc7b06065a8735">More...</a><br /></td></tr>
 <tr class="separator:a1df8e9fe3d3d41d032cc7b06065a8735"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,6 +170,12 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>get_number_active_proc
 <tr class="memitem:a6a6d0cb382ead21dc159c0ef7a2ec0b9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6a6d0cb382ead21dc159c0ef7a2ec0b9"></a>
 int *&#160;</td><td class="memItemRight" valign="bottom"><b>get_active_processes</b> ()</td></tr>
 <tr class="separator:a6a6d0cb382ead21dc159c0ef7a2ec0b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54becbfff6793ce3582a0b9bd2fc1f70"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a54becbfff6793ce3582a0b9bd2fc1f70"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>get_number_free_processes</b> ()</td></tr>
+<tr class="separator:a54becbfff6793ce3582a0b9bd2fc1f70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae279eb0b9b0a93d1d208c747d13e0e35"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae279eb0b9b0a93d1d208c747d13e0e35"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>get_number_zombie_processes</b> ()</td></tr>
+<tr class="separator:ae279eb0b9b0a93d1d208c747d13e0e35"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adc7a76a40d795fcd0fa399a6d90199dc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adc7a76a40d795fcd0fa399a6d90199dc"></a>
 <a class="el" href="structprocess.html">process</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>get_current_process</b> ()</td></tr>
 <tr class="separator:adc7a76a40d795fcd0fa399a6d90199dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -288,52 +297,6 @@ uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The id given to this process. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ab43c2700e828f39e2408e3263cbabb8b"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int wait_process </td>
-          <td>(</td>
-          <td class="paramtype">int const&#160;</td>
-          <td class="paramname"><em>process_id</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>target_pid</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int *&#160;</td>
-          <td class="paramname"><em>wstatus</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Wait for a process. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">process_id</td><td>The waiting process. </td></tr>
-    <tr><td class="paramname">target_pid</td><td>The waited process. </td></tr>
-    <tr><td class="paramname">wstatus</td><td>Target pointer to return exit status.</td></tr>
-  </table>
-  </dd>
-</dl>
-<p>When waiting for a process, two things can happen:</p><ul>
-<li>if a zombie child is found, free him and return immediately to parent.</li>
-<li>if not, put the parent in wait status. </li>
-</ul>
 
 </div>
 </div>

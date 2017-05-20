@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['gpio_2ec',['gpio.c',['../gpio_8c.html',1,'']]]
+  ['fb_2ec',['fb.c',['../fb_8c.html',1,'']]],
+  ['framebuffer_2ec',['framebuffer.c',['../framebuffer_8c.html',1,'']]]
 ];

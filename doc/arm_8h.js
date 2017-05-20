@@ -34,6 +34,7 @@ var arm_8h =
     [ "flush_instruction_cache", "arm_8h.html#ace48ed10fa746c25ea3ee52de4a33378", null ],
     [ "flush_prefetch_buffer", "arm_8h.html#a74162bfe945e061d9fe23a9d0007462f", null ],
     [ "get_cache_level_id", "arm_8h.html#a75be9bb4ea5f0fe04b177766fdf2a130", null ],
+    [ "invalidateDataCache", "arm_8h.html#a975b7cb42ed2e7ebafb101fd1b083620", null ],
     [ "invalidateInstructionCache", "arm_8h.html#a7facbde39df1d809a5a3d3e58bca5627", null ],
     [ "irq_disable", "arm_8h.html#ab925df19b13ecfb0441d5ea0b4adaf5c", null ],
     [ "irq_enable", "arm_8h.html#a0f683ecd9ce97f150af200d971b14e79", null ],

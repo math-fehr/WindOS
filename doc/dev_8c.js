@@ -5,5 +5,6 @@ var dev_8c =
     [ "dev_fwrite", "dev_8c.html#ab9af7fe0d039f7bd49413198f5bfc1cd", null ],
     [ "dev_initialize", "dev_8c.html#a206905c178b7122b347b512693fe8d95", null ],
     [ "dev_ioctl", "dev_8c.html#af494724324c05121885cbf45f5b2cf88", null ],
-    [ "dev_lsdir", "dev_8c.html#a03c1ad2746c78136e9ed193e487219c9", null ]
+    [ "dev_lsdir", "dev_8c.html#a03c1ad2746c78136e9ed193e487219c9", null ],
+    [ "kernel_framebuffer", "dev_8c.html#a5e3b4ccb502db64d47535db592f3d11d", null ]
 ];

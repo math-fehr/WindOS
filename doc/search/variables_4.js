@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['depth',['depth',['../structframe_buffer.html#af43b771026fceb9a0b28256afc08f69b',1,'frameBuffer']]],
   ['dev_5fto_5fmnt',['dev_to_mnt',['../vfs_8c.html#afc518a17cb0c7bda1dc3fced05120c37',1,'vfs.c']]],
   ['deviceid',['deviceID',['../structprop_tag_power_state.html#afb5f12e594a48db6787ba1756ebf5a90',1,'propTagPowerState']]],
   ['dir_5fentry',['dir_entry',['../structfd__t.html#a0c199ae86fa025cf11a21047a633a9e4',1,'fd_t']]],

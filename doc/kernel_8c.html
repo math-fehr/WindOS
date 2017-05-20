@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -136,30 +136,38 @@ $(document).ready(function(){initNavTree('kernel_8c.html','');});
 <code>#include &quot;mailbox.h&quot;</code><br />
 <code>#include &quot;kernel.h&quot;</code><br />
 <code>#include &quot;procfs.h&quot;</code><br />
+<code>#include &quot;fdsyscalls.h&quot;</code><br />
+<code>#include &quot;framebuffer.h&quot;</code><br />
+<code>#include &quot;fb.h&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for kernel.c:</div>
 <div class="dyncontent">
 <div class="center"><img src="kernel_8c__incl.png" border="0" usemap="#_2home_2lucas_2_projets_2_wind_o_s_2src_2kernel_8c" alt=""/></div>
 <map name="_2home_2lucas_2_projets_2_wind_o_s_2src_2kernel_8c" id="_2home_2lucas_2_projets_2_wind_o_s_2src_2kernel_8c">
-<area shape="rect" id="node9" href="serial_8h_source.html" title="serial.h" alt="" coords="1612,319,1676,345"/>
-<area shape="rect" id="node10" href="gpio_8h_source.html" title="gpio.h" alt="" coords="1662,393,1719,420"/>
-<area shape="rect" id="node11" href="debug_8h_source.html" title="debug.h" alt="" coords="821,468,889,495"/>
-<area shape="rect" id="node16" href="mmu_8h_source.html" title="mmu.h" alt="" coords="326,692,389,719"/>
-<area shape="rect" id="node17" href="kernel_8h_source.html" title="kernel.h" alt="" coords="1933,468,2001,495"/>
-<area shape="rect" id="node18" href="timer_8h_source.html" title="timer.h" alt="" coords="1755,393,1818,420"/>
-<area shape="rect" id="node19" href="interrupts_8h_source.html" title="interrupts.h" alt="" coords="913,95,999,121"/>
-<area shape="rect" id="node21" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="435,244,525,271"/>
-<area shape="rect" id="node22" href="process_8h_source.html" title="process.h" alt="" coords="365,319,443,345"/>
-<area shape="rect" id="node23" href="vfs_8h_source.html" title="vfs.h" alt="" coords="741,393,792,420"/>
-<area shape="rect" id="node30" href="ext2_8h_source.html" title="ext2.h" alt="" coords="917,319,976,345"/>
-<area shape="rect" id="node31" href="storage__driver_8h_source.html" title="storage_driver.h" alt="" coords="1829,543,1944,569"/>
-<area shape="rect" id="node32" href="dev_8h_source.html" title="dev.h" alt="" coords="195,169,250,196"/>
-<area shape="rect" id="node33" href="mailbox_8h_source.html" title="mailbox.h" alt="" coords="2331,543,2410,569"/>
-<area shape="rect" id="node34" href="procfs_8h_source.html" title="procfs.h" alt="" coords="331,95,400,121"/>
-<area shape="rect" id="node13" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="749,543,821,569"/>
-<area shape="rect" id="node15" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="667,617,757,644"/>
-<area shape="rect" id="node25" href="syscalls_8h_source.html" title="syscalls.h" alt="" coords="1197,169,1278,196"/>
-<area shape="rect" id="node29" href="arm_8h.html" title="ARM specifically related code. " alt="" coords="1142,543,1197,569"/>
+<area shape="rect" id="node9" href="serial_8h_source.html" title="serial.h" alt="" coords="1920,244,1984,271"/>
+<area shape="rect" id="node10" href="gpio_8h_source.html" title="gpio.h" alt="" coords="2091,468,2149,495"/>
+<area shape="rect" id="node11" href="debug_8h_source.html" title="debug.h" alt="" coords="1411,543,1479,569"/>
+<area shape="rect" id="node16" href="mmu_8h_source.html" title="mmu.h" alt="" coords="746,767,809,793"/>
+<area shape="rect" id="node17" href="kernel_8h_source.html" title="kernel.h" alt="" coords="2243,543,2311,569"/>
+<area shape="rect" id="node18" href="timer_8h_source.html" title="timer.h" alt="" coords="2497,468,2559,495"/>
+<area shape="rect" id="node19" href="process_8h_source.html" title="process.h" alt="" coords="1227,393,1306,420"/>
+<area shape="rect" id="node20" href="vfs_8h_source.html" title="vfs.h" alt="" coords="892,468,943,495"/>
+<area shape="rect" id="node25" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="1217,319,1306,345"/>
+<area shape="rect" id="node26" href="interrupts_8h_source.html" title="interrupts.h" alt="" coords="1453,95,1539,121"/>
+<area shape="rect" id="node31" href="fdsyscalls_8h_source.html" title="fdsyscalls.h" alt="" coords="618,319,710,345"/>
+<area shape="rect" id="node34" href="ext2_8h_source.html" title="ext2.h" alt="" coords="2344,393,2403,420"/>
+<area shape="rect" id="node35" href="storage__driver_8h_source.html" title="storage_driver.h" alt="" coords="2451,617,2565,644"/>
+<area shape="rect" id="node36" href="dev_8h_source.html" title="dev.h" alt="" coords="2699,319,2754,345"/>
+<area shape="rect" id="node38" href="mailbox_8h_source.html" title="mailbox.h" alt="" coords="2742,617,2821,644"/>
+<area shape="rect" id="node39" href="procfs_8h_source.html" title="procfs.h" alt="" coords="2648,244,2717,271"/>
+<area shape="rect" id="node40" href="framebuffer_8h_source.html" title="framebuffer.h" alt="" coords="2896,617,2995,644"/>
+<area shape="rect" id="node41" href="fb_8h_source.html" title="fb.h" alt="" coords="2326,468,2370,495"/>
+<area shape="rect" id="node13" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="1112,617,1184,644"/>
+<area shape="rect" id="node15" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="1025,692,1114,719"/>
+<area shape="rect" id="node28" href="syscalls_8h_source.html" title="syscalls.h" alt="" coords="1303,169,1385,196"/>
+<area shape="rect" id="node33" href="arm_8h.html" title="ARM specifically related code. " alt="" coords="1657,617,1711,644"/>
+<area shape="rect" id="node32" href="pipefs_8h_source.html" title="pipefs.h" alt="" coords="753,393,821,420"/>
+<area shape="rect" id="node37" href="serial2_8h_source.html" title="serial2.h" alt="" coords="2717,393,2787,420"/>
 </map>
 </div>
 </div><table class="memberdecls">
@@ -200,6 +208,12 @@ char&#160;</td><td class="memItemRight" valign="bottom"><b>__kernel_bss_end</b><
 <tr class="memitem:a7072d2b08c3d9f013d350f6e228522cd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7072d2b08c3d9f013d350f6e228522cd"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>__kernel_phy_end</b></td></tr>
 <tr class="separator:a7072d2b08c3d9f013d350f6e228522cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e3b4ccb502db64d47535db592f3d11d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5e3b4ccb502db64d47535db592f3d11d"></a>
+<a class="el" href="structframe_buffer.html">frameBuffer</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>kernel_framebuffer</b></td></tr>
+<tr class="separator:a5e3b4ccb502db64d47535db592f3d11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1369a6e7b638959cbff856bb59a3b616"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1369a6e7b638959cbff856bb59a3b616"></a>
+uintptr_t&#160;</td><td class="memItemRight" valign="bottom"><b>framebuffer_phy_addr</b></td></tr>
+<tr class="separator:a1369a6e7b638959cbff856bb59a3b616"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Kernel entry point. </p>

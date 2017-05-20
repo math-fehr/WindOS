@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -120,20 +120,22 @@ Include dependency graph for interrupts.c:</div>
 <div class="dyncontent">
 <div class="center"><img src="interrupts_8c__incl.png" border="0" usemap="#_2home_2lucas_2_projets_2_wind_o_s_2src_2interrupts_8c" alt=""/></div>
 <map name="_2home_2lucas_2_projets_2_wind_o_s_2src_2interrupts_8c" id="_2home_2lucas_2_projets_2_wind_o_s_2src_2interrupts_8c">
-<area shape="rect" id="node2" href="interrupts_8h_source.html" title="interrupts.h" alt="" coords="1199,95,1286,121"/>
-<area shape="rect" id="node8" href="kernel_8h_source.html" title="kernel.h" alt="" coords="1310,692,1378,719"/>
-<area shape="rect" id="node9" href="mmu_8h_source.html" title="mmu.h" alt="" coords="247,692,310,719"/>
-<area shape="rect" id="node10" href="debug_8h_source.html" title="debug.h" alt="" coords="699,468,767,495"/>
-<area shape="rect" id="node15" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="387,617,477,644"/>
-<area shape="rect" id="node19" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="209,244,298,271"/>
-<area shape="rect" id="node24" href="syscalls_8h_source.html" title="syscalls.h" alt="" coords="1043,169,1125,196"/>
-<area shape="rect" id="node29" href="arm_8h.html" title="ARM specifically related code. " alt="" coords="1699,617,1754,644"/>
-<area shape="rect" id="node12" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="397,543,469,569"/>
-<area shape="rect" id="node16" href="serial_8h_source.html" title="serial.h" alt="" coords="948,543,1012,569"/>
-<area shape="rect" id="node17" href="gpio_8h_source.html" title="gpio.h" alt="" coords="958,617,1015,644"/>
-<area shape="rect" id="node18" href="timer_8h_source.html" title="timer.h" alt="" coords="1243,617,1306,644"/>
-<area shape="rect" id="node20" href="process_8h_source.html" title="process.h" alt="" coords="277,319,355,345"/>
-<area shape="rect" id="node21" href="vfs_8h_source.html" title="vfs.h" alt="" coords="493,393,544,420"/>
+<area shape="rect" id="node2" href="interrupts_8h_source.html" title="interrupts.h" alt="" coords="786,95,873,121"/>
+<area shape="rect" id="node8" href="kernel_8h_source.html" title="kernel.h" alt="" coords="347,543,415,569"/>
+<area shape="rect" id="node9" href="mmu_8h_source.html" title="mmu.h" alt="" coords="1565,767,1627,793"/>
+<area shape="rect" id="node10" href="debug_8h_source.html" title="debug.h" alt="" coords="865,543,933,569"/>
+<area shape="rect" id="node15" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="1157,692,1246,719"/>
+<area shape="rect" id="node16" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="622,319,711,345"/>
+<area shape="rect" id="node24" href="syscalls_8h_source.html" title="syscalls.h" alt="" coords="861,169,942,196"/>
+<area shape="rect" id="node31" href="fdsyscalls_8h_source.html" title="fdsyscalls.h" alt="" coords="1482,319,1574,345"/>
+<area shape="rect" id="node33" href="arm_8h.html" title="ARM specifically related code. " alt="" coords="2038,617,2093,644"/>
+<area shape="rect" id="node12" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="1344,617,1416,644"/>
+<area shape="rect" id="node17" href="process_8h_source.html" title="process.h" alt="" coords="931,393,1010,420"/>
+<area shape="rect" id="node18" href="vfs_8h_source.html" title="vfs.h" alt="" coords="1320,468,1371,495"/>
+<area shape="rect" id="node25" href="timer_8h_source.html" title="timer.h" alt="" coords="158,468,221,495"/>
+<area shape="rect" id="node26" href="serial_8h_source.html" title="serial.h" alt="" coords="381,244,445,271"/>
+<area shape="rect" id="node27" href="gpio_8h_source.html" title="gpio.h" alt="" coords="499,468,557,495"/>
+<area shape="rect" id="node32" href="pipefs_8h_source.html" title="pipefs.h" alt="" coords="1321,393,1389,420"/>
 </map>
 </div>
 </div><table class="memberdecls">
@@ -328,7 +330,7 @@ uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">=</div><div class="line">  (<a class="code" href="structrpi__irq__controller__t.html">rpi_irq_controller_t</a>*) RPI_INTERRUPT_CONTROLLER_BASE</div><div class="ttc" id="structrpi__irq__controller__t_html"><div class="ttname"><a href="structrpi__irq__controller__t.html">rpi_irq_controller_t</a></div><div class="ttdoc">Memory representation of ARM IRQ controller. </div><div class="ttdef"><b>Definition:</b> interrupts.h:50</div></div>
+<b>Initial value:</b><div class="fragment"><div class="line">=</div><div class="line">  (<a class="code" href="structrpi__irq__controller__t.html">rpi_irq_controller_t</a>*) RPI_INTERRUPT_CONTROLLER_BASE</div><div class="ttc" id="structrpi__irq__controller__t_html"><div class="ttname"><a href="structrpi__irq__controller__t.html">rpi_irq_controller_t</a></div><div class="ttdoc">Memory representation of ARM IRQ controller. </div><div class="ttdef"><b>Definition:</b> interrupts.h:56</div></div>
 </div><!-- fragment -->
 <p>This structure controls the hardware registers ot the interrupt controller. </p>
 

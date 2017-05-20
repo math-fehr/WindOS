@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -121,13 +121,14 @@ Collaboration diagram for process:</div>
 <div class="dyncontent">
 <div class="center"><img src="structprocess__coll__graph.png" border="0" usemap="#process_coll__map" alt="Collaboration graph"/></div>
 <map name="process_coll__map" id="process_coll__map">
-<area shape="rect" id="node2" href="structfd__t.html" title="File descriptor structure. " alt="" coords="116,184,160,211"/>
-<area shape="rect" id="node3" href="structinode__t.html" title="Inode interface. " alt="" coords="86,5,150,32"/>
-<area shape="rect" id="node4" href="structsuperblock__t.html" title="Filesystem interface. " alt="" coords="82,95,178,121"/>
-<area shape="rect" id="node6" href="structvfs__dir__list__t.html" title="A directory listing. " alt="" coords="202,95,298,121"/>
-<area shape="rect" id="node5" href="structinode__operations__t.html" title="Available operations on a given inode. " alt="" coords="184,184,315,211"/>
-<area shape="rect" id="node7" href="structwait__parameters__t.html" title="Options when a parent waits for its children. " alt="" coords="338,184,468,211"/>
-<area shape="rect" id="node8" href="structuser__context__t.html" title="User process data on a context switch. " alt="" coords="492,184,600,211"/>
+<area shape="rect" id="node2" href="structsignal__handler__t.html" title="signal_handler_t" alt="" coords="5,184,121,211"/>
+<area shape="rect" id="node3" href="structfd__t.html" title="File descriptor structure. " alt="" coords="228,184,272,211"/>
+<area shape="rect" id="node4" href="structinode__t.html" title="Inode interface. " alt="" coords="285,5,349,32"/>
+<area shape="rect" id="node5" href="structsuperblock__t.html" title="Filesystem interface. " alt="" coords="281,95,377,121"/>
+<area shape="rect" id="node7" href="structvfs__dir__list__t.html" title="A directory listing. " alt="" coords="401,95,497,121"/>
+<area shape="rect" id="node6" href="structinode__operations__t.html" title="Available operations on a given inode. " alt="" coords="354,184,485,211"/>
+<area shape="rect" id="node8" href="structwait__parameters__t.html" title="Options when a parent waits for its children. " alt="" coords="508,184,637,211"/>
+<area shape="rect" id="node9" href="structuser__context__t.html" title="User process data on a context switch. " alt="" coords="661,184,769,211"/>
 </map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -169,6 +170,10 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struc
 <a class="el" href="structuser__context__t.html">user_context_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprocess.html#aa0dcbc60fbc8ec4f36b7707c844d9372">ctx</a></td></tr>
 <tr class="memdesc:aa0dcbc60fbc8ec4f36b7707c844d9372"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process' execution context. <br /></td></tr>
 <tr class="separator:aa0dcbc60fbc8ec4f36b7707c844d9372"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2a2d14705d8cbb7634e20fc9a6f9dfa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae2a2d14705d8cbb7634e20fc9a6f9dfa"></a>
+<a class="el" href="structuser__context__t.html">user_context_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprocess.html#ae2a2d14705d8cbb7634e20fc9a6f9dfa">old_ctx</a></td></tr>
+<tr class="memdesc:ae2a2d14705d8cbb7634e20fc9a6f9dfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process' execution context before a signal was caught. <br /></td></tr>
+<tr class="separator:ae2a2d14705d8cbb7634e20fc9a6f9dfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae23db1db4e0099835b98e8b07f420594"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae23db1db4e0099835b98e8b07f420594"></a>
 <a class="el" href="structwait__parameters__t.html">wait_parameters_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprocess.html#ae23db1db4e0099835b98e8b07f420594">wait</a></td></tr>
 <tr class="memdesc:ae23db1db4e0099835b98e8b07f420594"><td class="mdescLeft">&#160;</td><td class="mdescRight">When in wait status, wait parameters. When in zombie status, stores exit code. <br /></td></tr>
@@ -181,6 +186,12 @@ int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struc
 char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprocess.html#a5ac083a645d964373f022d03df4849c8">name</a></td></tr>
 <tr class="memdesc:a5ac083a645d964373f022d03df4849c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process name. <br /></td></tr>
 <tr class="separator:a5ac083a645d964373f022d03df4849c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee83e27acf47e63e78db5eded35ef43e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aee83e27acf47e63e78db5eded35ef43e"></a>
+<a class="el" href="structsignal__handler__t.html">signal_handler_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>sighandlers</b> [N_SIGNALS]</td></tr>
+<tr class="separator:aee83e27acf47e63e78db5eded35ef43e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ae9b19671c126239b240b8aea315034"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3ae9b19671c126239b240b8aea315034"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>allocated_framebuffer</b></td></tr>
+<tr class="separator:a3ae9b19671c126239b240b8aea315034"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>All the data representing a process. </p>

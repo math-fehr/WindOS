@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -128,27 +128,19 @@ Include dependency graph for mailbox.c:</div>
 <div class="dyncontent">
 <div class="center"><img src="mailbox_8c__incl.png" border="0" usemap="#_2home_2lucas_2_projets_2_wind_o_s_2src_2mailbox_8c" alt=""/></div>
 <map name="_2home_2lucas_2_projets_2_wind_o_s_2src_2mailbox_8c" id="_2home_2lucas_2_projets_2_wind_o_s_2src_2mailbox_8c">
-<area shape="rect" id="node2" href="mailbox_8h_source.html" title="mailbox.h" alt="" coords="1003,244,1081,271"/>
-<area shape="rect" id="node5" href="arm_8h.html" title="ARM specifically related code. " alt="" coords="1105,244,1160,271"/>
-<area shape="rect" id="node6" href="timer_8h_source.html" title="timer.h" alt="" coords="763,244,825,271"/>
-<area shape="rect" id="node8" href="kernel_8h_source.html" title="kernel.h" alt="" coords="628,319,696,345"/>
-<area shape="rect" id="node10" href="debug_8h_source.html" title="debug.h" alt="" coords="588,95,656,121"/>
-<area shape="rect" id="node12" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="299,169,371,196"/>
-<area shape="rect" id="node16" href="serial_8h_source.html" title="serial.h" alt="" coords="659,169,723,196"/>
-<area shape="rect" id="node14" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="5,244,95,271"/>
-<area shape="rect" id="node15" href="mmu_8h_source.html" title="mmu.h" alt="" coords="85,319,148,345"/>
-<area shape="rect" id="node17" href="gpio_8h_source.html" title="gpio.h" alt="" coords="629,244,687,271"/>
+<area shape="rect" id="node2" href="mailbox_8h_source.html" title="mailbox.h" alt="" coords="604,169,682,196"/>
+<area shape="rect" id="node5" href="arm_8h.html" title="ARM specifically related code. " alt="" coords="706,169,761,196"/>
+<area shape="rect" id="node6" href="timer_8h_source.html" title="timer.h" alt="" coords="785,169,848,196"/>
+<area shape="rect" id="node8" href="kernel_8h_source.html" title="kernel.h" alt="" coords="854,244,922,271"/>
+<area shape="rect" id="node10" href="debug_8h_source.html" title="debug.h" alt="" coords="385,95,453,121"/>
+<area shape="rect" id="node12" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="275,169,347,196"/>
+<area shape="rect" id="node14" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="121,244,210,271"/>
+<area shape="rect" id="node15" href="mmu_8h_source.html" title="mmu.h" alt="" coords="201,319,264,345"/>
 </map>
 </div>
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprop_tag_header.html">propTagHeader</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The header of the property tag.  <a href="structprop_tag_header.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprop_buffer.html">propBuffer</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The property buffer Contains different tags to send to the mailbox.  <a href="structprop_buffer.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structprop_tag_m_a_c_address.html">propTagMACAddress</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The property tag for getting the mac address.  <a href="structprop_tag_m_a_c_address.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -179,29 +171,6 @@ Macros</h2></td></tr>
 <tr class="memitem:aa6d9c4620c3a7e82d410341d3adb56ed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6d9c4620c3a7e82d410341d3adb56ed"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>MBX_STATUS_FULL</b>&#160;&#160;&#160;0x80000000</td></tr>
 <tr class="separator:aa6d9c4620c3a7e82d410341d3adb56ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a583e45ad67794ecee4abed5545c4efd2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a583e45ad67794ecee4abed5545c4efd2"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>MBX_CHANNEL_PM</b>&#160;&#160;&#160;0</td></tr>
-<tr class="separator:a583e45ad67794ecee4abed5545c4efd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa23fba8b81ca35d06fb72c783d6046d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa23fba8b81ca35d06fb72c783d6046d4"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>MBX_CHANNEL_FB</b>&#160;&#160;&#160;1</td></tr>
-<tr class="separator:aa23fba8b81ca35d06fb72c783d6046d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7a1e211a65b893342c7658f7c7a83b22"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7a1e211a65b893342c7658f7c7a83b22"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>MBX_CHANNEL_PROP</b>&#160;&#160;&#160;8</td></tr>
-<tr class="separator:a7a1e211a65b893342c7658f7c7a83b22"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2ad8b0f85979aeca26c2d40600f0667d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2ad8b0f85979aeca26c2d40600f0667d"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>PROPTAG_END</b>&#160;&#160;&#160;0x00000000</td></tr>
-<tr class="separator:a2ad8b0f85979aeca26c2d40600f0667d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a31124914111817df542d2c65307f3ead"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a31124914111817df542d2c65307f3ead"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>VALUE_LENGTH_RESPONSE</b>&#160;&#160;&#160;(1 &lt;&lt; 31)</td></tr>
-<tr class="separator:a31124914111817df542d2c65307f3ead"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad385a76c37882743fb997c426de5989a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mailbox_8c.html#ad385a76c37882743fb997c426de5989a">PROPBUFF_REQUEST</a>&#160;&#160;&#160;0x00000000</td></tr>
-<tr class="separator:ad385a76c37882743fb997c426de5989a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a492a00a4d9c1eca960f53fc366599a47"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a492a00a4d9c1eca960f53fc366599a47"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>PROPBUFF_SUCCESS</b>&#160;&#160;&#160;0x80000000</td></tr>
-<tr class="separator:a492a00a4d9c1eca960f53fc366599a47"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add74d1decc53ff1c37ac09583eeb506c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add74d1decc53ff1c37ac09583eeb506c"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>PROPBUFF_FAILURE</b>&#160;&#160;&#160;0x80000001</td></tr>
-<tr class="separator:add74d1decc53ff1c37ac09583eeb506c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac72f705dd9af46db2e888e773f0faa6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aac72f705dd9af46db2e888e773f0faa6"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>PROPTAG_GET_MAC_ADDRESS</b>&#160;&#160;&#160;0x00010003</td></tr>
 <tr class="separator:aac72f705dd9af46db2e888e773f0faa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -229,12 +198,6 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:af01b1679c08b857031dca289cceb759a"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structprop_tag_header.html">propTagHeader</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mailbox_8c.html#af01b1679c08b857031dca289cceb759a">propTagHeader</a></td></tr>
-<tr class="memdesc:af01b1679c08b857031dca289cceb759a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The header of the property tag.  <a href="#af01b1679c08b857031dca289cceb759a">More...</a><br /></td></tr>
-<tr class="separator:af01b1679c08b857031dca289cceb759a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fd7ac3f9582e8e71e60a22dec25f0b1"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structprop_buffer.html">propBuffer</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mailbox_8c.html#a4fd7ac3f9582e8e71e60a22dec25f0b1">propBuffer</a></td></tr>
-<tr class="memdesc:a4fd7ac3f9582e8e71e60a22dec25f0b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">The property buffer Contains different tags to send to the mailbox.  <a href="#a4fd7ac3f9582e8e71e60a22dec25f0b1">More...</a><br /></td></tr>
-<tr class="separator:a4fd7ac3f9582e8e71e60a22dec25f0b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab4f42519d377ec1e42b5f7f61ca51f9"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structprop_tag_m_a_c_address.html">propTagMACAddress</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mailbox_8c.html#aab4f42519d377ec1e42b5f7f61ca51f9">propTagMACAddress</a></td></tr>
 <tr class="memdesc:aab4f42519d377ec1e42b5f7f61ca51f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">The property tag for getting the mac address.  <a href="#aab4f42519d377ec1e42b5f7f61ca51f9">More...</a><br /></td></tr>
 <tr class="separator:aab4f42519d377ec1e42b5f7f61ca51f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -271,51 +234,7 @@ Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Contains the wrappers to use the mailbox The mailbox is the system to be able to connect the processor to the VideoCore (VC), in order to use the GPU, manipulate the peripherals... The mailbox works with a FIFO to send to a certain place in the RAM The FIFO contains multiple tags, wich represent actions for the VC. We use only one tag per call, to simplify the implementation. </p>
-</div><h2 class="groupheader">Macro Definition Documentation</h2>
-<a class="anchor" id="ad385a76c37882743fb997c426de5989a"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define PROPBUFF_REQUEST&#160;&#160;&#160;0x00000000</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Values used in <a class="el" href="structprop_buffer.html#afe73fa7a655419b386e0a10c7beaace3" title="The code of the message (Response, or send) ">propBuffer.code</a> </p>
-
-</div>
-</div>
-<h2 class="groupheader">Typedef Documentation</h2>
-<a class="anchor" id="a4fd7ac3f9582e8e71e60a22dec25f0b1"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef struct <a class="el" href="structprop_buffer.html">propBuffer</a>  <a class="el" href="structprop_buffer.html">propBuffer</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>The property buffer Contains different tags to send to the mailbox. </p>
-<p><a class="el" href="structprop_buffer.html" title="The property buffer Contains different tags to send to the mailbox. ">propBuffer</a> </p>
-
-</div>
-</div>
-<a class="anchor" id="af01b1679c08b857031dca289cceb759a"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef struct <a class="el" href="structprop_tag_header.html">propTagHeader</a>  <a class="el" href="structprop_tag_header.html">propTagHeader</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>The header of the property tag. </p>
-<p><a class="el" href="structprop_tag_header.html" title="The header of the property tag. ">propTagHeader</a> </p>
-
-</div>
-</div>
+</div><h2 class="groupheader">Typedef Documentation</h2>
 <a class="anchor" id="aab4f42519d377ec1e42b5f7f61ca51f9"></a>
 <div class="memitem">
 <div class="memproto">

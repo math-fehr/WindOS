@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -103,13 +103,15 @@ $(document).ready(function(){initNavTree('bug.html','');});
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><dl class="reflist">
-<dt><a class="anchor" id="_bug000003"></a>Global <a class="el" href="syscalls_8c.html#aee9f25dc0478bbedb72b797f29e5afef">his_own</a>  (process *p, void *pointer)</dt>
+<dt><a class="anchor" id="_bug000001"></a>Global <a class="el" href="framebuffer_8c.html#a319b5e663557ff5c73c5ea15e99aa6ad">fb_set_offset_y</a>  (unsigned offset)</dt>
+<dd>Virtual offset is not implemented in QEMU.  </dd>
+<dt><a class="anchor" id="_bug000004"></a>Global <a class="el" href="syscalls_8c.html#aee9f25dc0478bbedb72b797f29e5afef">his_own</a>  (process *p, void *pointer)</dt>
 <dd>If the pointer is on a boundary, illegal access could be made as the size isn't checked.  </dd>
-<dt><a class="anchor" id="_bug000001"></a>Global <a class="el" href="memalloc_8c.html#a4d786d8d526e33f97c91c892e5465b55">paging_allocate</a>  (int n_pages)</dt>
+<dt><a class="anchor" id="_bug000002"></a>Global <a class="el" href="memalloc_8c.html#a4d786d8d526e33f97c91c892e5465b55">paging_allocate</a>  (int n_pages)</dt>
 <dd>If the kernel sbrk call this function, a loop creates as this function uses malloc.  </dd>
-<dt><a class="anchor" id="_bug000002"></a>Global <a class="el" href="serial_8c.html#aac9a639d35d3ce45546c06593325e4f8">serial_readline</a>  (char *buffer, int buffer_size)</dt>
+<dt><a class="anchor" id="_bug000003"></a>Global <a class="el" href="serial_8c.html#aac9a639d35d3ce45546c06593325e4f8">serial_readline</a>  (char *buffer, int buffer_size)</dt>
 <dd>Buffer overflow in canonical mode.  </dd>
-<dt><a class="anchor" id="_bug000004"></a>Global <a class="el" href="vfs_8c.html#ab7e1e0f2c051c36c98a3ca0260e01a11">vfs_inode_to_path</a>  (<a class="el" href="structinode__t.html" title="Inode interface. ">inode_t</a> base, char *buf, size_t size)</dt>
+<dt><a class="anchor" id="_bug000005"></a>Global <a class="el" href="vfs_8c.html#ab7e1e0f2c051c36c98a3ca0260e01a11">vfs_inode_to_path</a>  (<a class="el" href="structinode__t.html" title="Inode interface. ">inode_t</a> base, char *buf, size_t size)</dt>
 <dd>Size is not used, buffer overflow can occur. </dd>
 </dl>
 </div></div><!-- contents -->

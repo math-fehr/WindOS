@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -119,19 +119,23 @@ $(document).ready(function(){initNavTree('debug_8c.html','');});
 <code>#include &lt;stdarg.h&gt;</code><br />
 <code>#include &lt;stdio.h&gt;</code><br />
 <code>#include &lt;stdlib.h&gt;</code><br />
+<code>#include &quot;serial.h&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for debug.c:</div>
 <div class="dyncontent">
 <div class="center"><img src="debug_8c__incl.png" border="0" usemap="#_2home_2lucas_2_projets_2_wind_o_s_2src_2debug_8c" alt=""/></div>
 <map name="_2home_2lucas_2_projets_2_wind_o_s_2src_2debug_8c" id="_2home_2lucas_2_projets_2_wind_o_s_2src_2debug_8c">
-<area shape="rect" id="node2" href="debug_8h_source.html" title="debug.h" alt="" coords="560,95,628,121"/>
-<area shape="rect" id="node7" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="311,169,383,196"/>
-<area shape="rect" id="node12" href="serial_8h_source.html" title="serial.h" alt="" coords="631,169,695,196"/>
-<area shape="rect" id="node10" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="27,244,116,271"/>
-<area shape="rect" id="node11" href="mmu_8h_source.html" title="mmu.h" alt="" coords="123,319,185,345"/>
-<area shape="rect" id="node13" href="gpio_8h_source.html" title="gpio.h" alt="" coords="600,244,657,271"/>
-<area shape="rect" id="node15" href="timer_8h_source.html" title="timer.h" alt="" coords="681,244,744,271"/>
-<area shape="rect" id="node14" href="kernel_8h_source.html" title="kernel.h" alt="" coords="577,319,645,345"/>
+<area shape="rect" id="node2" href="debug_8h_source.html" title="debug.h" alt="" coords="310,393,378,420"/>
+<area shape="rect" id="node14" href="serial_8h_source.html" title="serial.h" alt="" coords="816,95,880,121"/>
+<area shape="rect" id="node7" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="333,468,405,495"/>
+<area shape="rect" id="node10" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="110,543,199,569"/>
+<area shape="rect" id="node11" href="mmu_8h_source.html" title="mmu.h" alt="" coords="126,617,189,644"/>
+<area shape="rect" id="node15" href="gpio_8h_source.html" title="gpio.h" alt="" coords="819,319,877,345"/>
+<area shape="rect" id="node17" href="timer_8h_source.html" title="timer.h" alt="" coords="1011,319,1074,345"/>
+<area shape="rect" id="node18" href="process_8h_source.html" title="process.h" alt="" coords="446,244,525,271"/>
+<area shape="rect" id="node24" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="610,169,699,196"/>
+<area shape="rect" id="node16" href="kernel_8h_source.html" title="kernel.h" alt="" coords="937,393,1005,420"/>
+<area shape="rect" id="node19" href="vfs_8h_source.html" title="vfs.h" alt="" coords="669,319,720,345"/>
 </map>
 </div>
 </div><table class="memberdecls">
@@ -295,7 +299,7 @@ Variables</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= { 8,8,8,</div><div class="line">                                       8,8,8,</div><div class="line">                                       8,8,8,</div><div class="line">                                       8,8,8,</div><div class="line">                                       8,8}</div></div><!-- fragment -->
+<b>Initial value:</b><div class="fragment"><div class="line">= { 8,8,8,</div><div class="line">                                       8,6,8,</div><div class="line">                                       8,8,8,</div><div class="line">                                       8,8,8,</div><div class="line">                                       8,8}</div></div><!-- fragment -->
 <p>Fixed thresholds for debug output. On a scale from zero to ten (zero showing all errors): </p>
 <ul>
 <li>0-1: high throughput info, low-level debugs</li>

@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -99,8 +99,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="#index_p"><span>p</span></a></li>
       <li><a href="#index_r"><span>r</span></a></li>
       <li><a href="#index_s"><span>s</span></a></li>
-      <li><a href="#index_v"><span>v</span></a></li>
-      <li class="current"><a href="#index_w"><span>w</span></a></li>
+      <li class="current"><a href="#index_v"><span>v</span></a></li>
     </ul>
   </div>
 </div><!-- top -->
@@ -210,6 +209,39 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 
 
 <h3><a class="anchor" id="index_f"></a>- f -</h3><ul>
+<li>fb_buffered()
+: <a class="el" href="fb_8c.html#abcd6d454b301934c8a1432df71b75681">fb.c</a>
+</li>
+<li>fb_close()
+: <a class="el" href="fb_8c.html#afac5934a45224114d4498400c2600312">fb.c</a>
+</li>
+<li>fb_flush()
+: <a class="el" href="fb_8c.html#ac45e1a655be4d87770fe6cdaa913d492">fb.c</a>
+</li>
+<li>fb_init()
+: <a class="el" href="fb_8c.html#a78aa321b4b543d220d125b42e2fdb29b">fb.c</a>
+</li>
+<li>fb_initialize()
+: <a class="el" href="framebuffer_8c.html#a26e26ad46a186746b3bc9a6507dab216">framebuffer.c</a>
+</li>
+<li>fb_offset()
+: <a class="el" href="fb_8c.html#a153a161931fd09eab7c4c8448c4d3196">fb.c</a>
+</li>
+<li>fb_open()
+: <a class="el" href="fb_8c.html#a046fee38cd5d7b0aa748018304c8ba6a">fb.c</a>
+</li>
+<li>fb_set_offset_y()
+: <a class="el" href="framebuffer_8c.html#a319b5e663557ff5c73c5ea15e99aa6ad">framebuffer.c</a>
+</li>
+<li>fb_show()
+: <a class="el" href="fb_8c.html#a6f3a012bd4175a46d3470959c03f5ae0">fb.c</a>
+</li>
+<li>fb_win_to_pid()
+: <a class="el" href="fb_8c.html#aa3ce9038c7c1d2f5f4947d6b849c389b">fb.c</a>
+</li>
+<li>free_pipe()
+: <a class="el" href="pipefs_8c.html#a9e8879c68ab6f583bfc41e818a6cc659">pipefs.c</a>
+</li>
 <li>free_process_data()
 : <a class="el" href="scheduler_8c.html#a3518c90809e32a30468624c1d1816c71">scheduler.c</a>
 </li>
@@ -350,6 +382,9 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 <li>min()
 : <a class="el" href="cstubs_8c.html#a07ba4825e89ace27a9e2782e4415e5b3">cstubs.c</a>
 </li>
+<li>mkpipe()
+: <a class="el" href="pipefs_8c.html#a828ddacb8bc6d623e3e2a26969c2d34c">pipefs.c</a>
+</li>
 </ul>
 
 
@@ -363,8 +398,23 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 <li>paging_init()
 : <a class="el" href="memalloc_8c.html#aad61eb43e1c7221811d07c2d2487c7d9">memalloc.c</a>
 </li>
+<li>pipe_read()
+: <a class="el" href="pipefs_8c.html#ab079a2812d7406755ed29c48780ea3af">pipefs.c</a>
+</li>
+<li>pipe_write()
+: <a class="el" href="pipefs_8c.html#a0735e235f9216e29b1d5fb052a70a6f4">pipefs.c</a>
+</li>
 <li>print_context()
 : <a class="el" href="interrupts_8c.html#a92ca7774388bd98cce91206ee320fe89">interrupts.c</a>
+</li>
+<li>proc_fread()
+: <a class="el" href="procfs_8c.html#a8f24bf1ab0d331054273d6687f09c8ad">procfs.c</a>
+</li>
+<li>proc_initialize()
+: <a class="el" href="procfs_8c.html#a6155d7b25928b4eadc46895fa22098a6">procfs.c</a>
+</li>
+<li>proc_lsdir()
+: <a class="el" href="procfs_8c.html#afff2601bb33649cb76402d917e573f9e">procfs.c</a>
 </li>
 </ul>
 
@@ -410,9 +460,6 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 <li>software_interrupt_vector()
 : <a class="el" href="interrupts_8c.html#ace62ea7f13bb56e30246929115ba683b">interrupts.c</a>
 </li>
-<li>svc_getdents()
-: <a class="el" href="syscalls_8c.html#a9aa9956a9b5f7c819c74ea83b5254340">syscalls.c</a>
-</li>
 <li>sys_init()
 : <a class="el" href="initsys_8c.html#a29a81985c051357162ad079023a076cd">initsys.c</a>
 </li>
@@ -449,13 +496,6 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 </li>
 <li>vkernel_printf()
 : <a class="el" href="debug_8c.html#abc5eecbe5d5a11b311c06ae124ab3a46">debug.c</a>
-</li>
-</ul>
-
-
-<h3><a class="anchor" id="index_w"></a>- w -</h3><ul>
-<li>wait_process()
-: <a class="el" href="scheduler_8c.html#ab43c2700e828f39e2408e3263cbabb8b">scheduler.c</a>
 </li>
 </ul>
 </div><!-- contents -->

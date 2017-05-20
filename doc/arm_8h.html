@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -120,21 +120,20 @@ $(document).ready(function(){initNavTree('arm_8h.html','');});
 Include dependency graph for arm.h:</div>
 <div class="dyncontent">
 <div class="center"><img src="arm_8h__incl.png" border="0" usemap="#_2home_2lucas_2_projets_2_wind_o_s_2src_2arm_8h" alt=""/></div>
-<map name="_2home_2lucas_2_projets_2_wind_o_s_2src_2arm_8h" id="_2home_2lucas_2_projets_2_wind_o_s_2src_2arm_8h">
-</map>
 </div>
 </div><div class="textblock"><div class="dynheader">
 This graph shows which files directly or indirectly include this file:</div>
 <div class="dyncontent">
 <div class="center"><img src="arm_8h__dep__incl.png" border="0" usemap="#_2home_2lucas_2_projets_2_wind_o_s_2src_2arm_8hdep" alt=""/></div>
 <map name="_2home_2lucas_2_projets_2_wind_o_s_2src_2arm_8hdep" id="_2home_2lucas_2_projets_2_wind_o_s_2src_2arm_8hdep">
-<area shape="rect" id="node2" href="initsys_8c.html" title="Initialization features before starting the kernel. Launched by loader.S, this code set up the MMU..." alt="" coords="19,95,169,136"/>
-<area shape="rect" id="node3" href="interrupts_8h_source.html" title="/home/lucas/Projets\l/WindOS/src/interrupts.h" alt="" coords="193,95,360,136"/>
-<area shape="rect" id="node8" href="mailbox_8c.html" title="Contains the wrappers to use the mailbox The mailbox is the system to be able to connect the processo..." alt="" coords="385,95,542,136"/>
-<area shape="rect" id="node4" href="interrupts_8c.html" title="Interrupt handling features. " alt="" coords="5,184,172,225"/>
-<area shape="rect" id="node5" href="syscalls_8h_source.html" title="/home/lucas/Projets\l/WindOS/src/syscalls.h" alt="" coords="197,184,357,225"/>
-<area shape="rect" id="node7" href="kernel_8c.html" title="Kernel entry point. " alt="" coords="381,184,527,225"/>
-<area shape="rect" id="node6" href="syscalls_8c.html" title="System calls. " alt="" coords="197,273,357,315"/>
+<area shape="rect" id="node2" href="interrupts_8h_source.html" title="/home/lucas/Projets\l/WindOS/src/interrupts.h" alt="" coords="95,95,262,136"/>
+<area shape="rect" id="node7" href="framebuffer_8c.html" title="Functions to communicate with the hardware framebuffer. " alt="" coords="287,95,465,136"/>
+<area shape="rect" id="node8" href="initsys_8c.html" title="Initialization features before starting the kernel. Launched by loader.S, this code set up the MMU..." alt="" coords="490,95,641,136"/>
+<area shape="rect" id="node9" href="mailbox_8c.html" title="Contains the wrappers to use the mailbox The mailbox is the system to be able to connect the processo..." alt="" coords="665,95,823,136"/>
+<area shape="rect" id="node3" href="syscalls_8h_source.html" title="/home/lucas/Projets\l/WindOS/src/syscalls.h" alt="" coords="5,184,165,225"/>
+<area shape="rect" id="node5" href="interrupts_8c.html" title="Interrupt handling features. " alt="" coords="190,184,357,225"/>
+<area shape="rect" id="node6" href="kernel_8c.html" title="Kernel entry point. " alt="" coords="381,184,528,225"/>
+<area shape="rect" id="node4" href="syscalls_8c.html" title="System calls. " alt="" coords="5,273,165,315"/>
 </map>
 </div>
 </div>
@@ -265,6 +264,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>cleanDataCache</b> ()
 <tr class="memitem:a7facbde39df1d809a5a3d3e58bca5627"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7facbde39df1d809a5a3d3e58bca5627"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>invalidateInstructionCache</b> ()</td></tr>
 <tr class="separator:a7facbde39df1d809a5a3d3e58bca5627"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a975b7cb42ed2e7ebafb101fd1b083620"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a975b7cb42ed2e7ebafb101fd1b083620"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>invalidateDataCache</b> ()</td></tr>
+<tr class="separator:a975b7cb42ed2e7ebafb101fd1b083620"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>ARM specifically related code. </p>

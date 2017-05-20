@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['vfs_2ec',['vfs.c',['../vfs_8c.html',1,'']]]
+  ['pipefs_2ec',['pipefs.c',['../pipefs_8c.html',1,'']]],
+  ['procfs_2ec',['procfs.c',['../procfs_8c.html',1,'']]]
 ];

@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['scheduler_2ec',['scheduler.c',['../scheduler_8c.html',1,'']]],
-  ['serial_2ec',['serial.c',['../serial_8c.html',1,'']]],
-  ['syscalls_2ec',['syscalls.c',['../syscalls_8c.html',1,'']]]
+  ['mailbox_2ec',['mailbox.c',['../mailbox_8c.html',1,'']]],
+  ['memalloc_2ec',['memalloc.c',['../memalloc_8c.html',1,'']]]
 ];

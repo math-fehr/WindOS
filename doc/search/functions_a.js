@@ -12,5 +12,6 @@ var searchData=
   ['memalloc',['memalloc',['../memalloc_8c.html#a7482766785e4d3d477d901a5f854ee4d',1,'memalloc.c']]],
   ['memory_5fread',['memory_read',['../kernel_8c.html#a465d19654d3cc1f6667c1aabf32213b9',1,'kernel.c']]],
   ['memory_5fwrite',['memory_write',['../kernel_8c.html#a60feb3c61f9c6c2795efab7c60da5d11',1,'kernel.c']]],
-  ['min',['min',['../cstubs_8c.html#a07ba4825e89ace27a9e2782e4415e5b3',1,'cstubs.c']]]
+  ['min',['min',['../cstubs_8c.html#a07ba4825e89ace27a9e2782e4415e5b3',1,'cstubs.c']]],
+  ['mkpipe',['mkpipe',['../pipefs_8c.html#a828ddacb8bc6d623e3e2a26969c2d34c',1,'pipefs.c']]]
 ];

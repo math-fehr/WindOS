@@ -5,6 +5,7 @@ var searchData=
   ['read_5fbuffer',['read_buffer',['../serial_8c.html#a408170b55475455a88bbfeb65b87f770',1,'serial.c']]],
   ['read_5fbuffer_5findex',['read_buffer_index',['../serial_8c.html#a62871a6c0bbdc8b3200e4df42a11f90a',1,'serial.c']]],
   ['read_5fdir',['read_dir',['../structinode__operations__t.html#a5e177f8c64f394a943700f3222b428b5',1,'inode_operations_t']]],
+  ['ref_5fcount',['ref_count',['../structinode__t.html#a223a278e0bf3b42ae887efe07bfbeac0',1,'inode_t']]],
   ['reload',['reload',['../structrpi__arm__timer__t.html#a5b46031c29cb7c3fc7c5f65eca66c536',1,'rpi_arm_timer_t']]],
   ['resize',['resize',['../structinode__operations__t.html#ab1e83debdf0538cc3e1ab42f757839ea',1,'inode_operations_t']]],
   ['rm',['rm',['../structinode__operations__t.html#a10db336b5173763b278f947b0260d635',1,'inode_operations_t']]],
@@ -15,5 +16,6 @@ var searchData=
   ['rpi_5fgpio_5fcontroller_5ft',['rpi_gpio_controller_t',['../structrpi__gpio__controller__t.html',1,'']]],
   ['rpi_5firq_5fcontroller_5ft',['rpi_irq_controller_t',['../structrpi__irq__controller__t.html',1,'']]],
   ['rpi_5fsys_5ftimer_5ft',['rpi_sys_timer_t',['../structrpi__sys__timer__t.html',1,'']]],
+  ['rpi_5fuart_5fcontroller_5ft',['rpi_uart_controller_t',['../structrpi__uart__controller__t.html',1,'']]],
   ['rpiirqcontroller',['rpiIRQController',['../interrupts_8c.html#a1a60b13c08287220a154b2ab8f175257',1,'interrupts.c']]]
 ];

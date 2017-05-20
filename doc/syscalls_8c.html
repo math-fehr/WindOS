@@ -33,7 +33,7 @@
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">WindOS
    </div>
-   <div id="projectbrief">WindOS is a Bare-metal OS for Raspberry Pi environment.</div>
+   <div id="projectbrief">WindOS is a bare-metal operating system for Raspberry Pi.</div>
   </td>
  </tr>
  </tbody>
@@ -124,20 +124,22 @@ Include dependency graph for syscalls.c:</div>
 <div class="dyncontent">
 <div class="center"><img src="syscalls_8c__incl.png" border="0" usemap="#_2home_2lucas_2_projets_2_wind_o_s_2src_2syscalls_8c" alt=""/></div>
 <map name="_2home_2lucas_2_projets_2_wind_o_s_2src_2syscalls_8c" id="_2home_2lucas_2_projets_2_wind_o_s_2src_2syscalls_8c">
-<area shape="rect" id="node2" href="syscalls_8h_source.html" title="syscalls.h" alt="" coords="1330,95,1411,121"/>
-<area shape="rect" id="node6" href="kernel_8h_source.html" title="kernel.h" alt="" coords="1387,692,1455,719"/>
-<area shape="rect" id="node7" href="interrupts_8h_source.html" title="interrupts.h" alt="" coords="859,169,946,196"/>
-<area shape="rect" id="node10" href="mmu_8h_source.html" title="mmu.h" alt="" coords="167,692,230,719"/>
-<area shape="rect" id="node11" href="debug_8h_source.html" title="debug.h" alt="" coords="595,468,663,495"/>
-<area shape="rect" id="node17" href="serial_8h_source.html" title="serial.h" alt="" coords="944,543,1008,569"/>
-<area shape="rect" id="node19" href="timer_8h_source.html" title="timer.h" alt="" coords="1321,617,1383,644"/>
-<area shape="rect" id="node20" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="219,244,309,271"/>
-<area shape="rect" id="node16" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="195,617,285,644"/>
-<area shape="rect" id="node25" href="arm_8h.html" title="ARM specifically related code. " alt="" coords="1242,617,1297,644"/>
-<area shape="rect" id="node13" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="412,543,484,569"/>
-<area shape="rect" id="node18" href="gpio_8h_source.html" title="gpio.h" alt="" coords="906,617,963,644"/>
-<area shape="rect" id="node21" href="process_8h_source.html" title="process.h" alt="" coords="206,319,285,345"/>
-<area shape="rect" id="node22" href="vfs_8h_source.html" title="vfs.h" alt="" coords="407,393,457,420"/>
+<area shape="rect" id="node2" href="syscalls_8h_source.html" title="syscalls.h" alt="" coords="1347,95,1428,121"/>
+<area shape="rect" id="node3" href="kernel_8h_source.html" title="kernel.h" alt="" coords="1810,468,1878,495"/>
+<area shape="rect" id="node4" href="interrupts_8h_source.html" title="interrupts.h" alt="" coords="567,169,654,196"/>
+<area shape="rect" id="node10" href="mmu_8h_source.html" title="mmu.h" alt="" coords="468,692,531,719"/>
+<area shape="rect" id="node11" href="debug_8h_source.html" title="debug.h" alt="" coords="1210,468,1278,495"/>
+<area shape="rect" id="node17" href="scheduler_8h_source.html" title="scheduler.h" alt="" coords="1426,244,1515,271"/>
+<area shape="rect" id="node30" href="timer_8h_source.html" title="timer.h" alt="" coords="2135,393,2198,420"/>
+<area shape="rect" id="node31" href="serial_8h_source.html" title="serial.h" alt="" coords="1641,169,1705,196"/>
+<area shape="rect" id="node16" href="memalloc_8h_source.html" title="memalloc.h" alt="" coords="850,617,939,644"/>
+<area shape="rect" id="node25" href="fdsyscalls_8h_source.html" title="fdsyscalls.h" alt="" coords="818,244,910,271"/>
+<area shape="rect" id="node29" href="arm_8h.html" title="ARM specifically related code. " alt="" coords="426,543,480,569"/>
+<area shape="rect" id="node13" href="cstubs_8h_source.html" title="cstubs.h" alt="" coords="657,543,729,569"/>
+<area shape="rect" id="node18" href="process_8h_source.html" title="process.h" alt="" coords="1431,319,1510,345"/>
+<area shape="rect" id="node19" href="vfs_8h_source.html" title="vfs.h" alt="" coords="945,393,996,420"/>
+<area shape="rect" id="node26" href="pipefs_8h_source.html" title="pipefs.h" alt="" coords="927,319,995,345"/>
+<area shape="rect" id="node32" href="gpio_8h_source.html" title="gpio.h" alt="" coords="1554,393,1611,420"/>
 </map>
 </div>
 </div><table class="memberdecls">
@@ -146,15 +148,9 @@ Functions</h2></td></tr>
 <tr class="memitem:aee9f25dc0478bbedb72b797f29e5afef"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="syscalls_8c.html#aee9f25dc0478bbedb72b797f29e5afef">his_own</a> (<a class="el" href="structprocess.html">process</a> *p, void *pointer)</td></tr>
 <tr class="memdesc:aee9f25dc0478bbedb72b797f29e5afef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the pointer effectively points to the process' allowed userspace.  <a href="#aee9f25dc0478bbedb72b797f29e5afef">More...</a><br /></td></tr>
 <tr class="separator:aee9f25dc0478bbedb72b797f29e5afef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4ca6f1dc590127e54d680396f458a59"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab4ca6f1dc590127e54d680396f458a59"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_exit</b> ()</td></tr>
-<tr class="separator:ab4ca6f1dc590127e54d680396f458a59"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98c39d3bea1930c66b98921c387acde2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a98c39d3bea1930c66b98921c387acde2"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>svc_ioctl</b> (int fd, int cmd, int arg)</td></tr>
-<tr class="separator:a98c39d3bea1930c66b98921c387acde2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af1ba773b8d472ed7a30acff5cbd558b9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1ba773b8d472ed7a30acff5cbd558b9"></a>
-off_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_lseek</b> (int fd_i, off_t offset, int whence)</td></tr>
-<tr class="separator:af1ba773b8d472ed7a30acff5cbd558b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0475dc80de9681b58fcaa4eff5f0302e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0475dc80de9681b58fcaa4eff5f0302e"></a>
+uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_exit</b> (int code)</td></tr>
+<tr class="separator:a0475dc80de9681b58fcaa4eff5f0302e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaaaccd96bd31e83591ba4aaf5631740a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaaaccd96bd31e83591ba4aaf5631740a"></a>
 uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_execve</b> (char *path, const char **argv, const char **envp)</td></tr>
 <tr class="separator:aaaaccd96bd31e83591ba4aaf5631740a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -173,39 +169,18 @@ uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_fork</b> ()</
 <tr class="memitem:ae20fd6f4702d1e54a697ab80db2d16a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae20fd6f4702d1e54a697ab80db2d16a8"></a>
 pid_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_waitpid</b> (pid_t pid, int *wstatus, int options)</td></tr>
 <tr class="separator:ae20fd6f4702d1e54a697ab80db2d16a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a1cf6e1d6adcd3aa8b752d41b04f7d6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3a1cf6e1d6adcd3aa8b752d41b04f7d6"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_write</b> (uint32_t fd, char *buf, size_t cnt)</td></tr>
-<tr class="separator:a3a1cf6e1d6adcd3aa8b752d41b04f7d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a203aa690aa478df4c2f704ea59d8f9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a203aa690aa478df4c2f704ea59d8f9"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_close</b> (uint32_t fd)</td></tr>
-<tr class="separator:a2a203aa690aa478df4c2f704ea59d8f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3803466b41295f1632bb59e683a4449"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa3803466b41295f1632bb59e683a4449"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_fstat</b> (uint32_t fd, struct stat *dest)</td></tr>
-<tr class="separator:aa3803466b41295f1632bb59e683a4449"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8af1c9aef0bfa0e4d700bff281545aa3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8af1c9aef0bfa0e4d700bff281545aa3"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_read</b> (uint32_t fd, char *buf, size_t cnt)</td></tr>
-<tr class="separator:a8af1c9aef0bfa0e4d700bff281545aa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab52c877bdd172729ba6abb52b64635c2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab52c877bdd172729ba6abb52b64635c2"></a>
 uint32_t&#160;</td><td class="memItemRight" valign="bottom"><b>svc_time</b> (time_t *tloc)</td></tr>
 <tr class="separator:ab52c877bdd172729ba6abb52b64635c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9aa9956a9b5f7c819c74ea83b5254340"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="syscalls_8c.html#a9aa9956a9b5f7c819c74ea83b5254340">svc_getdents</a> (uint32_t fd, struct dirent *user_entry)</td></tr>
-<tr class="memdesc:a9aa9956a9b5f7c819c74ea83b5254340"><td class="mdescLeft">&#160;</td><td class="mdescRight">Explore the directory described by fd.  <a href="#a9aa9956a9b5f7c819c74ea83b5254340">More...</a><br /></td></tr>
-<tr class="separator:a9aa9956a9b5f7c819c74ea83b5254340"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aebbf6b0379006ed6b2713864ac18a5fd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aebbf6b0379006ed6b2713864ac18a5fd"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>svc_openat</b> (int dirfd, char *path_c, int flags)</td></tr>
-<tr class="separator:aebbf6b0379006ed6b2713864ac18a5fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae55a1238288ccc062b416e8fc0767bf5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae55a1238288ccc062b416e8fc0767bf5"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>svc_unlinkat</b> (int dirfd, char *name, int flag)</td></tr>
-<tr class="separator:ae55a1238288ccc062b416e8fc0767bf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f86398a32ef23894e672e7e22349e31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9f86398a32ef23894e672e7e22349e31"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>svc_mknodat</b> (int dirfd, char *pathname, mode_t <a class="el" href="serial_8c.html#a1ea5d0cb93f22f7d0fdf804bd68c3326">mode</a>, dev_t dev)</td></tr>
-<tr class="separator:a9f86398a32ef23894e672e7e22349e31"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa950e992c9b725742b16b9db04990dc0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa950e992c9b725742b16b9db04990dc0"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>svc_dup</b> (int oldfd)</td></tr>
-<tr class="separator:aa950e992c9b725742b16b9db04990dc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff302c180f57a63f7bcc4ef520f69598"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aff302c180f57a63f7bcc4ef520f69598"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>svc_dup2</b> (int oldfd, int newfd)</td></tr>
-<tr class="separator:aff302c180f57a63f7bcc4ef520f69598"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29960c6a73e52d6706b877d9399387ed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a29960c6a73e52d6706b877d9399387ed"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>svc_kill</b> (pid_t pid, int sig)</td></tr>
+<tr class="separator:a29960c6a73e52d6706b877d9399387ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d15a0e1efd0121ef0a98e6da78c2410"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9d15a0e1efd0121ef0a98e6da78c2410"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>svc_sigaction</b> (int signum, void(*handler)(int), siginfo_t *siginfo)</td></tr>
+<tr class="separator:a9d15a0e1efd0121ef0a98e6da78c2410"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa5feda547001580be3dee5f9839c8a31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa5feda547001580be3dee5f9839c8a31"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>svc_sigreturn</b> ()</td></tr>
+<tr class="separator:aa5feda547001580be3dee5f9839c8a31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -256,43 +231,7 @@ uintptr_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href=
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>True if this pointer refers to process' userspace, false otherwise.</dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>This is not fully implemented. </dd></dl>
-<dl class="bug"><dt><b><a class="el" href="bug.html#_bug000003">Bug:</a></b></dt><dd>If the pointer is on a boundary, illegal access could be made as the size isn't checked. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="a9aa9956a9b5f7c819c74ea83b5254340"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint32_t svc_getdents </td>
-          <td>(</td>
-          <td class="paramtype">uint32_t&#160;</td>
-          <td class="paramname"><em>fd</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">struct dirent *&#160;</td>
-          <td class="paramname"><em>user_entry</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Explore the directory described by fd. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">fd</td><td>A directory file descriptor. </td></tr>
-    <tr><td class="paramname">user_entry</td><td>Where the entry should be written to. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Zero on success, -errno on error. </dd></dl>
+<dl class="bug"><dt><b><a class="el" href="bug.html#_bug000004">Bug:</a></b></dt><dd>If the pointer is on a boundary, illegal access could be made as the size isn't checked. </dd></dl>
 
 </div>
 </div>

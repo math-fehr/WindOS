@@ -2,6 +2,7 @@ var searchData=
 [
   ['data_5fabort_5fvector',['data_abort_vector',['../interrupts_8c.html#af65f0252a8fe7659e8d8e9df12124956',1,'interrupts.c']]],
   ['debug_2ec',['debug.c',['../debug_8c.html',1,'']]],
+  ['depth',['depth',['../structframe_buffer.html#af43b771026fceb9a0b28256afc08f69b',1,'frameBuffer']]],
   ['dev_2ec',['dev.c',['../dev_8c.html',1,'']]],
   ['dev_5ffread',['dev_fread',['../dev_8c.html#a68465387ca779980a98ba1d494b6fd1e',1,'dev.c']]],
   ['dev_5ffwrite',['dev_fwrite',['../dev_8c.html#ab9af7fe0d039f7bd49413198f5bfc1cd',1,'dev.c']]],

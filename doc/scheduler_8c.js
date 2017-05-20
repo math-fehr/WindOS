@@ -6,10 +6,12 @@ var scheduler_8c =
     [ "get_current_process_id", "scheduler_8c.html#a4277efc017375a8db057306d196d5bbf", null ],
     [ "get_next_process", "scheduler_8c.html#a42ef379ded142f4cfc0f8283dab4d474", null ],
     [ "get_number_active_processes", "scheduler_8c.html#a39585fa830c0b809792a4498b046c38f", null ],
+    [ "get_number_free_processes", "scheduler_8c.html#a54becbfff6793ce3582a0b9bd2fc1f70", null ],
+    [ "get_number_zombie_processes", "scheduler_8c.html#ae279eb0b9b0a93d1d208c747d13e0e35", null ],
     [ "get_process_list", "scheduler_8c.html#a5c45f0d726baad0d7fd84f6151a0ed68", null ],
     [ "kill_process", "scheduler_8c.html#a8029adf7602495baa2a5d070c221da39", null ],
     [ "setup_scheduler", "scheduler_8c.html#ab808af327bcd30f40e54596b72e68979", null ],
     [ "sheduler_add_process", "scheduler_8c.html#a1df8e9fe3d3d41d032cc7b06065a8735", null ],
-    [ "wait_process", "scheduler_8c.html#ab43c2700e828f39e2408e3263cbabb8b", null ],
+    [ "wait_process", "scheduler_8c.html#a4c4361a7bb5e9d1f29ca6a4317f023ba", null ],
     [ "__ram_size", "scheduler_8c.html#a53e7e81d4596aecda970afc35729a698", null ]
 ];

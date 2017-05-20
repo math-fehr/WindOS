@@ -13,5 +13,7 @@ var searchData=
   ['vfs_5fparent',['vfs_parent',['../vfs_8c.html#a211a784fbf436ee165ef5b10645f33c5',1,'vfs.c']]],
   ['vfs_5fpath_5fto_5finode',['vfs_path_to_inode',['../vfs_8c.html#abedcb93cebfaf3ae66d5ed849002f2dd',1,'vfs.c']]],
   ['vfs_5freaddir',['vfs_readdir',['../vfs_8c.html#a09e6a7edcedb7b865bc3ef63462534bb',1,'vfs.c']]],
+  ['virtualheight',['virtualHeight',['../structframe_buffer.html#a8a64390f86b80b47f879a90bdef57f44',1,'frameBuffer']]],
+  ['virtualwidth',['virtualWidth',['../structframe_buffer.html#ae5e51d97fa48b6f6fd58776cfb0351d2',1,'frameBuffer']]],
   ['vkernel_5fprintf',['vkernel_printf',['../debug_8c.html#abc5eecbe5d5a11b311c06ae124ab3a46',1,'debug.c']]]
 ];

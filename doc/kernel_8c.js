@@ -9,5 +9,7 @@ var kernel_8c =
     [ "__kernel_bss_start", "kernel_8c.html#a7fa7dce77bac2e0ecba16cd715a57cde", null ],
     [ "__kernel_phy_end", "kernel_8c.html#a7072d2b08c3d9f013d350f6e228522cd", null ],
     [ "__ram_size", "kernel_8c.html#a2c2e04ce28d522d7524c523ea1fe8d54", null ],
-    [ "__ramfs_start", "kernel_8c.html#a97c09ac1ffbea9a6025ad8d31f24ca86", null ]
+    [ "__ramfs_start", "kernel_8c.html#a97c09ac1ffbea9a6025ad8d31f24ca86", null ],
+    [ "framebuffer_phy_addr", "kernel_8c.html#a1369a6e7b638959cbff856bb59a3b616", null ],
+    [ "kernel_framebuffer", "kernel_8c.html#a5e3b4ccb502db64d47535db592f3d11d", null ]
 ];

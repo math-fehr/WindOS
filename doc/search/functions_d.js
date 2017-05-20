@@ -11,6 +11,5 @@ var searchData=
   ['setup_5fscheduler',['setup_scheduler',['../scheduler_8c.html#ab808af327bcd30f40e54596b72e68979',1,'scheduler.c']]],
   ['sheduler_5fadd_5fprocess',['sheduler_add_process',['../scheduler_8c.html#a1df8e9fe3d3d41d032cc7b06065a8735',1,'scheduler.c']]],
   ['software_5finterrupt_5fvector',['software_interrupt_vector',['../interrupts_8c.html#ace62ea7f13bb56e30246929115ba683b',1,'interrupts.c']]],
-  ['svc_5fgetdents',['svc_getdents',['../syscalls_8c.html#a9aa9956a9b5f7c819c74ea83b5254340',1,'syscalls.c']]],
   ['sys_5finit',['sys_init',['../initsys_8c.html#a29a81985c051357162ad079023a076cd',1,'initsys.c']]]
 ];
