@@ -138,13 +138,13 @@ int main() {
 
 
 		int n_chars = screen_width/width-15;
-		int n_rows = 32;
+		int n_rows = 40;
 
 		printf("%d\n", n_chars);
 		perror("miniterm");
 
-		char* lines[32];
-		for (int i=0;i<32;i++) {
+		char* lines[n_rows];
+		for (int i=0;i<n_rows;i++) {
 			lines[i] = malloc(n_chars+1);
 			for (int j=0;j<n_chars-1;j++) {
 				lines[i][j] = ' ';
@@ -287,12 +287,10 @@ int main() {
 							printf("Failed reading control sequence: %c\n", buffer[i]);
 						}
 					} else {
-						printf("|%c|", buffer[i]);
+						//printf("%d %d|%c|\n", cursor_x, cursor_y, buffer[i]);
 						lines[cursor_y][cursor_x] = buffer[i];
 						cursor_x++;
 					}
-
-					printf("cx: %d cy: %d\n", cursor_x, cursor_y);
 
 					if (c == '\r' || c == '\n' || cursor_x == n_chars) {
 						_lseek(fd, cursor_y*screen_width*3*height, SEEK_SET);
@@ -303,17 +301,18 @@ int main() {
 					}
 
 					if (cursor_y == n_rows) {
-						cursor_y == n_rows/2;
+						cursor_y = n_rows/2;
 						_lseek(fd, 0, SEEK_SET);
 						for (int i=0;i<n_rows/2;i++) {
 							memcpy(lines[i], lines[n_rows/2+i], n_chars);
 							line(lines[i], fd, font, height, width, 255, 0);
 						}
+
 						for (int i=n_rows/2;i<n_rows;i++) {
 							memset(lines[i], ' ', n_chars);
 							line(lines[i], fd, font, height, width, 255, 0);
 						}
-						_lseek(fd, 0, SEEK_SET);
+						_lseek(fd, cursor_y*screen_width*3*height, SEEK_SET);
 					}
 				}
 
@@ -321,9 +320,6 @@ int main() {
 					_lseek(fd, cursor_y*screen_width*3*height, SEEK_SET);
 					line(lines[cursor_y], fd, font, height, width, 255, 0);
 				}
-
-
-				//_ioctl(fd, FB_FLUSH, 0);
 			}
 
 		}
